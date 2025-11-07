@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Permisos de Trabajo Seguro (PTS)</title>
+    <!-- Carga de Tailwind CSS CDN para un diseño moderno y responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo Inter para consistencia */
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fc; }
+        /* Efecto hover en filas de la tabla */
+        .table-row-hover:hover { 
+            background-color: #f0f4f8; 
+            cursor: pointer; 
+            transition: background-color 0.2s;
+        }
+        /* Estilo de botón flotante para el botón de creación */
+        .floating-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen p-4 sm:p-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-extrabold text-gray-900 border-b-4 border-yellow-500 pb-2 inline-block">
+                Panel de PTS
+            </h1>
+            <p class="mt-2 text-gray-600">
+                Visualización en tiempo real de los Permisos de Trabajo Seguro emitidos.
+            </p>
+        </header>
+
+        <div id="loadingMessage" class="text-center p-6 text-xl text-gray-500">
+            Cargando permisos... 
+        </div>
+
+        <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-md relative" role="alert">
+            <strong class="font-bold">Error al cargar:</strong>
+            <span class="block sm:inline" id="errorDetails"></span>
+            <p class="text-sm mt-1">
+                Asegúrate de que tu backend de Spring Boot esté corriendo y accesible en http://localhost:8080.
+            </p>
+        </div>
+        
+        <div id="tableContainer" class="hidden overflow-x-auto bg-white rounded-xl shadow-2xl">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ubicación</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solicitante ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="ptsTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Los datos se insertarán aquí por JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Botón flotante de creación -->
+        <button onclick="window.location.href='pts_creation.html'" 
+                class="floating-button bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 transform hover:scale-105">
+            <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Crear PTS
+        </button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchPTS();
+        });
+
+        // NOTA: Si el frontend (HTML) se abre directamente en el navegador, 
+        // y el backend corre en 8080, esta URL es correcta.
+        const API_URL = 'http://localhost:8080/api/pts'; 
+        
+        // Simulación de estados para la Prioridad 3 (Visualización de Estado)
+        function getStatusBadge(id) {
+            // Utilizamos el ID para simular un estado simple
+            if (id === 'PTS-001') return '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Aprobado</span>';
+            if (id === 'PTS-002') return '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pendiente</span>';
+            // Los PTS creados dinámicamente o con otros IDs serán 'Borrador'
+            return '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Borrador</span>';
+        }
+
+        async function fetchPTS() {
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const tableContainer = document.getElementById('tableContainer');
+            const errorDetails = document.getElementById('errorDetails');
+            const tableBody = document.getElementById('ptsTableBody');
+            
+            loadingMessage.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            tableContainer.classList.add('hidden');
+            tableBody.innerHTML = ''; // Limpiar la tabla
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                renderTable(data);
+                if (data.length > 0) {
+                    tableContainer.classList.remove('hidden');
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No hay Permisos de Trabajo Seguro creados. Usa el botón "Crear PTS" para empezar.</td></tr>';
+                    tableContainer.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error("Error al obtener los PTS:", error);
+                errorDetails.textContent = error.message;
+                errorMessage.classList.remove('hidden');
+            } finally {
+                loadingMessage.classList.add('hidden');
+            }
+        }
+
+        function renderTable(permisos) {
+            const tableBody = document.getElementById('ptsTableBody');
+            
+            permisos.forEach(pts => {
+                const row = document.createElement('tr');
+                row.classList.add('table-row-hover'); 
+                
+                // PRÓXIMO PASO: Crear pts_detail.html para visualizar el detalle al hacer clic
+                // Aquí solo mostramos un log en la consola
+                row.onclick = () => {
+                    console.log(`Simulando navegación al detalle del PTS: ${pts.id}`);
+                    // window.location.href = 'pts_detail.html?id=' + pts.id; // Activaremos esto luego
+                    alert(`Navegando al detalle de ${pts.id}. La implementación de pts_detail.html es el próximo paso.`);
+                }; 
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${pts.id || 'N/A'}</td>
+                    <td class="px-6 py-4 text-sm text-gray-700 max-w-xs truncate" title="${pts.descripcionTrabajo || ''}">${pts.descripcionTrabajo || 'Sin descripción'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${pts.fechaInicio || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${pts.ubicacion || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${pts.solicitante || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${getStatusBadge(pts.id)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>

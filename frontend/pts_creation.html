@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creación de Permiso de Trabajo Seguro (PTS)</title>
+    <!-- Incluir Tailwind CSS para estilos modernos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo base de fuente Inter */
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f9; }
+        /* Animación simple para el botón al hacer click */
+        .btn-press:active { transform: scale(0.98); }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#1c7ed6',
+                        'secondary-gray': '#e9ecef',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
+
+    <div class="max-w-4xl w-full bg-white rounded-xl shadow-2xl p-6 md:p-10 border-t-4 border-primary-blue">
+        <h1 class="text-3xl font-extrabold text-gray-800 mb-2 border-b pb-2">
+            Nuevo Permiso de Trabajo Seguro (PTS)
+        </h1>
+        <p class="text-gray-500 mb-6">
+            Completa los detalles para crear un nuevo permiso en el sistema.
+        </p>
+        
+        <form id="ptsForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Título del Trabajo -->
+            <div>
+                <label for="tituloTrabajo" class="block text-sm font-medium text-gray-700 mb-1">Título del Trabajo</label>
+                <input type="text" id="tituloTrabajo" name="tituloTrabajo" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary-blue focus:border-primary-blue transition duration-150"
+                       placeholder="Ej: Reemplazo de válvula V-302">
+            </div>
+
+            <!-- Sector de la Planta -->
+            <div>
+                <label for="sectorPlanta" class="block text-sm font-medium text-gray-700 mb-1">Sector de la Planta</label>
+                <input type="text" id="sectorPlanta" name="sectorPlanta" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary-blue focus:border-primary-blue transition duration-150"
+                       placeholder="Ej: Unidad de Cracking Catalítico">
+            </div>
+
+            <!-- Fecha de Inicio -->
+            <div>
+                <label for="fechaInicio" class="block text-sm font-medium text-gray-700 mb-1">Fecha de Inicio</label>
+                <input type="date" id="fechaInicio" name="fechaInicio" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary-blue focus:border-primary-blue transition duration-150">
+            </div>
+
+            <!-- Fecha de Finalización -->
+            <div>
+                <label for="fechaFin" class="block text-sm font-medium text-gray-700 mb-1">Fecha de Finalización</label>
+                <input type="date" id="fechaFin" name="fechaFin" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary-blue focus:border-primary-blue transition duration-150">
+            </div>
+
+            <!-- Riesgos Identificados (Texto largo) -->
+            <div class="md:col-span-2">
+                <label for="riesgosIdentificados" class="block text-sm font-medium text-gray-700 mb-1">Riesgos Identificados</label>
+                <textarea id="riesgosIdentificados" name="riesgosIdentificados" rows="3" required
+                          class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary-blue focus:border-primary-blue transition duration-150"
+                          placeholder="Ej: Caída de altura, exposición a químicos, ruido excesivo."></textarea>
+            </div>
+
+            <!-- Medidas de Control (Texto largo) -->
+            <div class="md:col-span-2">
+                <label for="medidasControl" class="block text-sm font-medium text-gray-700 mb-1">Medidas de Control</label>
+                <textarea id="medidasControl" name="medidasControl" rows="3" required
+                          class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary-blue focus:border-primary-blue transition duration-150"
+                          placeholder="Ej: Uso obligatorio de arnés, monitoreo de atmósfera, protectores auditivos."></textarea>
+            </div>
+
+            <!-- Campo de estado de la solicitud -->
+            <div class="md:col-span-2 mt-4">
+                <p id="statusMessage" class="px-4 py-3 rounded-lg font-semibold hidden transition-all duration-300">
+                    <!-- Mensajes de estado (éxito o error) aparecerán aquí -->
+                </p>
+            </div>
+
+            <!-- Botón de Envío -->
+            <div class="md:col-span-2 flex justify-end">
+                <button type="submit" id="submitButton"
+                        class="btn-press bg-primary-blue text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition duration-150 ease-in-out">
+                    Enviar Solicitud PTS
+                </button>
+            </div>
+            
+        </form>
+
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080/api/pts/crear'; // URL exacta del endpoint
+        const form = document.getElementById('ptsForm');
+        const statusMessage = document.getElementById('statusMessage');
+        const submitButton = document.getElementById('submitButton');
+
+        /**
+         * Muestra un mensaje de estado en la interfaz de usuario.
+         * @param {string} message - El texto a mostrar.
+         * @param {string} type - 'success' o 'error'.
+         */
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'px-4 py-3 rounded-lg font-semibold mt-4 transition-all duration-300';
+            
+            if (type === 'success') {
+                statusMessage.classList.add('bg-green-100', 'text-green-700');
+            } else if (type === 'error') {
+                statusMessage.classList.add('bg-red-100', 'text-red-700');
+            }
+
+            statusMessage.classList.remove('hidden');
+            
+            // Ocultar el mensaje después de 5 segundos
+            setTimeout(() => {
+                statusMessage.classList.add('hidden');
+            }, 5000);
+        }
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            submitButton.disabled = true;
+            submitButton.textContent = 'Enviando...';
+            statusMessage.classList.add('hidden');
+            
+            // 1. Recolectar datos del formulario
+            const data = {
+                tituloTrabajo: document.getElementById('tituloTrabajo').value,
+                sectorPlanta: document.getElementById('sectorPlanta').value,
+                fechaInicio: document.getElementById('fechaInicio').value,
+                fechaFin: document.getElementById('fechaFin').value,
+                riesgosIdentificados: document.getElementById('riesgosIdentificados').value,
+                medidasControl: document.getElementById('medidasControl').value,
+                // El estado inicial es PENDIENTE (o el que defina el backend)
+            };
+
+            console.log('Datos a enviar:', data);
+            
+            try {
+                // 2. Realizar la solicitud POST a la API
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+                
+                // 3. Verificar el estado de la respuesta HTTP
+                if (response.ok) {
+                    // La solicitud fue exitosa (código 200-299)
+                    const result = await response.json();
+                    showStatus(`¡PTS Creado con Éxito! ID: ${result.id || 'N/A'}`, 'success');
+                    form.reset(); // Limpiar el formulario
+                } else {
+                    // El backend respondió con un error (código 4xx o 5xx)
+                    const errorText = await response.text();
+                    console.error('Error del servidor:', response.status, errorText);
+                    showStatus(`Error del Servidor (${response.status}): ${errorText.substring(0, 100)}...`, 'error');
+                }
+
+            } catch (error) {
+                // 4. Manejo de fallos de red (Failed to fetch, CORS, etc.)
+                console.error('Fallo de Conexión (Red/CORS):', error);
+                
+                // *** MENSAJE DE DEPURACIÓN CRÍTICO ***
+                const debugMessage = `Fallo de conexión. Revisa: 1. Backend (localhost:8080) esté corriendo. 2. La URL del frontend está en la whitelist de CORS. Endpoint usado: ${API_URL}`;
+                showStatus(debugMessage, 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Enviar Solicitud PTS';
+            }
+        });
+    </script>
+
+</body>
+</html>
