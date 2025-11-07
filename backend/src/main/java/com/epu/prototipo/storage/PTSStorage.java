@@ -25,7 +25,7 @@ public class PTSStorage {
         PermisoTrabajoSeguro pts001 = new PermisoTrabajoSeguro();
         pts001.setId("PTS-001");
         pts001.setDescripcionTrabajo("Mantenimiento de bomba P-101");
-        pts001.setSolicitante("VINF011422"); // ID Solicitante
+        pts001.setSolicitanteLegajo("VINF011422"); // ID Solicitante
         pts001.setNombreSolicitante("Sergio Capella"); // Nombre Solicitante
         pts001.setFechaInicio("2025-11-06");
         pts001.setHoraInicio("10:00");
@@ -54,7 +54,7 @@ public class PTSStorage {
         PermisoTrabajoSeguro pts002 = new PermisoTrabajoSeguro();
         pts002.setId("PTS-002");
         pts002.setDescripcionTrabajo("Inspección tanque T-305");
-        pts002.setSolicitante("SUP222"); // ID Solicitante
+        pts002.setSolicitanteLegajo("SUP222"); // ID Solicitante
         pts002.setNombreSolicitante("Supervisor Dos"); // Nombre Solicitante
         pts002.setFechaInicio("2025-11-07");
         pts002.setHoraInicio("08:00");

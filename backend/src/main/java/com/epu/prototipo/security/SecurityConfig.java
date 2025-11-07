@@ -39,7 +39,7 @@ public class SecurityConfig {
             // 3. Configuración de autorización de rutas
             .authorizeHttpRequests(auth -> auth
                 // Permite acceso libre a la ruta de autenticación y al listado de PTS
-                .requestMatchers("/api/auth/**", "/api/pts").permitAll()
+                .requestMatchers("/api/auth/**", "/api/pts", "/api/pts/**").permitAll()
                 // Cualquier otra solicitud debe estar autenticada
                 .anyRequest().authenticated()
             )

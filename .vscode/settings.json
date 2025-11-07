@@ -1,3 +1,8 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "git.enabled": true,
+    "git.decorations.enabled": true,
+    "scm.defaultViewMode": "tree",
+    "explorer.decorations.badges": true,
+    "explorer.decorations.colors": true
 }

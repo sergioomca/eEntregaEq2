@@ -1,16 +1,20 @@
 package com.epu.prototipo.service;
 
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import java.util.concurrent.ExecutionException;
 import java.util.List;
 import java.util.ArrayList;
+import java.time.LocalDateTime;
 
 @Service
 @Profile("prod")
-public class FirestorePtsService implements PtsService {
+public class FirestorePtsService implements IPtsService {
 
     private final Firestore firestore;
     private static final String COLLECTION_NAME = "permisos-trabajo-seguro";
@@ -55,18 +59,80 @@ public class FirestorePtsService implements PtsService {
 
     @Override
     public PermisoTrabajoSeguro getPtsById(String id) {
+        if (id == null) {
+            throw new IllegalArgumentException("ID del PTS no puede ser nulo");
+        }
+        
         try {
             var future = firestore.collection(COLLECTION_NAME).document(id).get();
             var document = future.get();
             if (document.exists()) {
                 var pts = document.toObject(PermisoTrabajoSeguro.class);
-                pts.setId(document.getId());
+                if (pts != null) {
+                    pts.setId(document.getId());
+                }
                 return pts;
             }
             return null;
         } catch (InterruptedException | ExecutionException e) {
             System.err.println("Error al obtener PTS de Firestore: " + e.getMessage());
             throw new RuntimeException("Error al obtener el Permiso de Trabajo Seguro.", e);
+        }
+    }
+
+    @Override
+    public PermisoTrabajoSeguro firmarPts(FirmaPtsRequest request) {
+        if (request.getPtsId() == null || request.getDniFirmante() == null) {
+            throw new IllegalArgumentException("PTS ID y DNI del firmante son requeridos.");
+        }
+
+        String ptsId = request.getPtsId();
+        if (ptsId == null) {
+            throw new IllegalArgumentException("PTS ID no puede ser nulo");
+        }
+        DocumentReference docRef = firestore.collection(COLLECTION_NAME).document(ptsId);
+        
+        try {
+            // 1. Obtener el PTS actual
+            var future = docRef.get();
+            DocumentSnapshot document = future.get();
+
+            if (!document.exists()) {
+                return null; 
+            }
+
+            PermisoTrabajoSeguro pts = document.toObject(PermisoTrabajoSeguro.class);
+            if (pts == null) {
+                throw new RuntimeException("Error al deserializar el documento PTS");
+            }
+
+            // 2. Validación de Seguridad: ¿El firmante es el supervisor asignado?
+            if (!request.getDniFirmante().equals(pts.getSupervisorLegajo())) {
+                throw new SecurityException("El DNI/Legajo del firmante no corresponde al supervisor asignado para este PTS (" + pts.getSupervisorLegajo() + ").");
+            }
+            
+            // 3. Validación de Estado: ¿Ya está firmado?
+            if (pts.getFirmaSupervisorBase64() != null) {
+                throw new IllegalStateException("El PTS ID " + request.getPtsId() + " ya ha sido firmado.");
+            }
+
+            // 4. Actualizar el documento con los datos de la firma
+            docRef.update(
+                "firmaSupervisorBase64", request.getFirmaBase64(),
+                "dniSupervisorFirmante", request.getDniFirmante(),
+                "fechaHoraFirmaSupervisor", LocalDateTime.now()
+            ).get(); // El .get() bloquea hasta que la actualización esté completa
+
+            // 5. Devolver el objeto actualizado
+            pts.setFirmaSupervisorBase64(request.getFirmaBase64());
+            pts.setDniSupervisorFirmante(request.getDniFirmante());
+            pts.setFechaHoraFirmaSupervisor(LocalDateTime.now());
+            pts.setId(document.getId());
+
+            return pts;
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Error al firmar el PTS ID: " + request.getPtsId(), e);
         }
     }
 }

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Backend - PTS</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; white-space: pre-wrap; }
+        .error { background: #ffebee; color: red; }
+        .success { background: #e8f5e8; color: green; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Prueba de Funcionalidad Backend PTS</h1>
+    
+    <div class="test-section">
+        <h2>1. Probar Conexión Backend</h2>
+        <button onclick="testBackend()">Probar GET /api/pts</button>
+        <div id="backend-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Probar Login</h2>
+        <button onclick="testLogin()">Probar Login (SUP222)</button>
+        <div id="login-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Probar Firma Biométrica (Simulada)</h2>
+        <input type="text" id="ptsId" placeholder="ID del PTS (ej: PTS-001)" value="PTS-001">
+        <button onclick="testFirma()">Probar Firma</button>
+        <div id="firma-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+
+        async function testBackend() {
+            const resultDiv = document.getElementById('backend-result');
+            resultDiv.textContent = 'Probando...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/pts`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Backend funciona!\nDatos: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Error: ${response.status} - ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error de conexión: ${error.message}`;
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('login-result');
+            resultDiv.textContent = 'Probando login...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ legajo: 'SUP222', password: 'SUP222' })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Login exitoso!\nToken: ${data.token ? 'Recibido' : 'No recibido'}`;
+                    localStorage.setItem('authToken', data.token);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Error login: ${response.status} - ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error de conexión: ${error.message}`;
+            }
+        }
+
+        async function testFirma() {
+            const resultDiv = document.getElementById('firma-result');
+            const ptsId = document.getElementById('ptsId').value;
+            resultDiv.textContent = 'Probando firma...';
+            
+            if (!ptsId) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Por favor ingresa un ID de PTS';
+                return;
+            }
+            
+            const token = localStorage.getItem('authToken');
+            
+            try {
+                const firmaData = {
+                    ptsId: ptsId,
+                    dniFirmante: '12345678', // DNI de prueba
+                    firmaBase64: btoa(`FIRMA_SIMULADA_${new Date().getTime()}`)
+                };
+
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch(`${API_BASE}/api/pts/firmar`, {
+                    method: 'PUT',
+                    headers: headers,
+                    body: JSON.stringify(firmaData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Firma exitosa!\nPTS actualizado: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Error firma: ${response.status} - ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error de conexión: ${error.message}`;
+            }
+        }
+
+        // Auto-test al cargar
+        window.onload = function() {
+            console.log('🧪 Página de prueba cargada. Backend debería estar en http://localhost:8080');
+        };
+    </script>
+</body>
+</html>

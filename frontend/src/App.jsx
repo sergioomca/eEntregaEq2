@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import FirmaBiometrica from './components/FirmaDigital';
 
 // Constantes de Configuración
 const API_URL = 'http://localhost:8080/api/auth/login';
@@ -16,6 +17,7 @@ const getRoutes = (role) => {
         ],
         'SUPERVISOR': [
             { id: 'aprobacion', title: 'Aprobación', roles: ['SUPERVISOR'], content: 'approval-list-view' },
+            { id: 'firma-biometrica', title: 'Firma Biométrica', roles: ['SUPERVISOR'], content: 'firma-biometrica-view' },
             { id: 'auditoria', title: 'Auditoría', roles: ['SUPERVISOR'], content: 'auditoria-view' }
         ],
         'EJECUTANTE': [
@@ -116,9 +118,93 @@ const LoginView = ({ handleLogin }) => {
     );
 };
 
+// Componente para mostrar PTS pendientes de firma
+const PendingApprovalList = ({ onSelectPts }) => {
+    const [ptsList, setPtsList] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchPendingPTS();
+    }, []);
+
+    const fetchPendingPTS = async () => {
+        setLoading(true);
+        setError(null);
+        
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('http://localhost:8080/api/pts', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            // Filtrar solo PTS sin firmar (para supervisores)
+            const pendingPts = data.filter(pts => !pts.firmaSupervisorBase64);
+            setPtsList(pendingPts);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) return <div className="text-center p-4">Cargando PTS pendientes...</div>;
+    if (error) return <div className="text-red-600 p-4">Error: {error}</div>;
+    if (ptsList.length === 0) return <div className="text-gray-600 p-4">No hay PTS pendientes de aprobación.</div>;
+
+    return (
+        <div className="space-y-4">
+            <h4 className="text-lg font-semibold text-gray-800 mb-4">PTS Pendientes de Firma</h4>
+            {ptsList.map(pts => (
+                <div key={pts.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h5 className="font-medium text-gray-900">PTS: {pts.id}</h5>
+                            <p className="text-sm text-gray-600">{pts.descripcionTrabajo}</p>
+                            <p className="text-xs text-gray-500">
+                                Supervisor asignado: {pts.supervisorLegajo} | Ubicación: {pts.ubicacion}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => onSelectPts(pts)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                        >
+                            Firmar
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
 // Componente para el contenido de la aplicación
 const AppContent = ({ user, currentView, setCurrentView }) => {
     const { legajo, role } = user;
+    const [selectedPts, setSelectedPts] = useState(null);
+    const [showFirmaComponent, setShowFirmaComponent] = useState(false);
+
+    // Función para manejar la selección de PTS para firmar
+    const handleSelectPts = (pts) => {
+        setSelectedPts(pts);
+        setShowFirmaComponent(true);
+    };
+
+    // Función para manejar el éxito de la firma
+    const handleFirmaExitosa = () => {
+        setSelectedPts(null);
+        setShowFirmaComponent(false);
+        // Refrescar la vista de aprobación
+        setCurrentView({ title: 'Aprobación', content: 'approval-list-view' });
+    };
 
     // Lógica para cargar el contenido simulado (HU-002)
     const loadContent = (viewId) => {
@@ -142,7 +228,43 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                 return (
                     <>
                         <h3 className="text-2xl font-bold mb-4 text-primary-epu">Aprobación de PTS (SUPERVISOR)</h3>
-                        <p className="text-gray-700">Listado de Permisos pendientes de su revisión y firma.</p>
+                        <p className="text-gray-700 mb-6">Listado de Permisos pendientes de su revisión y firma.</p>
+                        <PendingApprovalList onSelectPts={handleSelectPts} />
+                    </>
+                );
+            case 'firma-biometrica-view':
+                return (
+                    <>
+                        <h3 className="text-2xl font-bold mb-4 text-primary-epu">Firma Biométrica de PTS</h3>
+                        {showFirmaComponent && selectedPts ? (
+                            <div>
+                                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                    <h4 className="font-semibold text-blue-900">PTS Seleccionado:</h4>
+                                    <p className="text-blue-800">{selectedPts.id} - {selectedPts.descripcionTrabajo}</p>
+                                    <p className="text-sm text-blue-600">Supervisor asignado: {selectedPts.supervisorLegajo}</p>
+                                </div>
+                                <FirmaBiometrica 
+                                    ptsId={selectedPts.id} 
+                                    onFirmaExitosa={handleFirmaExitosa}
+                                />
+                                <button 
+                                    onClick={() => { setSelectedPts(null); setShowFirmaComponent(false); }}
+                                    className="mt-4 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="text-center p-8 bg-gray-50 rounded-lg">
+                                <p className="text-gray-600 mb-4">No hay PTS seleccionado para firmar.</p>
+                                <button 
+                                    onClick={() => setCurrentView({ title: 'Aprobación', content: 'approval-list-view' })}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md"
+                                >
+                                    Ir a Lista de Aprobaciones
+                                </button>
+                            </div>
+                        )}
                     </>
                 );
             case 'execution-view':
@@ -187,11 +309,18 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                     </button>
                 )}
                 {role === 'SUPERVISOR' && (
-                    <button
-                        onClick={() => setCurrentView({ title: 'Aprobación', content: 'approval-list-view' })}
-                        className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]">
-                        Revisar Aprobaciones
-                    </button>
+                    <>
+                        <button
+                            onClick={() => setCurrentView({ title: 'Aprobación', content: 'approval-list-view' })}
+                            className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]">
+                            Revisar Aprobaciones
+                        </button>
+                        <button
+                            onClick={() => setCurrentView({ title: 'Firma Biométrica', content: 'firma-biometrica-view' })}
+                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]">
+                            🖐️ Firma Biométrica
+                        </button>
+                    </>
                 )}
                 {role === 'EJECUTANTE' && (
                     <button

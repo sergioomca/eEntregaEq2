@@ -1,13 +1,13 @@
 package com.epu.prototipo.controller;
 
+import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
-import com.epu.prototipo.service.PtsService;
+import com.epu.prototipo.service.IPtsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.context.annotation.Profile;
 
-import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -15,10 +15,10 @@ import java.util.List;
 @Profile("prod")
 public class PtsController {
 
-    private final PtsService ptsService;
+    private final IPtsService ptsService;
 
     // Inyección del servicio para manejar la lógica de Firestore
-    public PtsController(PtsService ptsService) {
+    public PtsController(IPtsService ptsService) {
         this.ptsService = ptsService;
     }
 
@@ -45,6 +45,31 @@ public class PtsController {
         } catch (RuntimeException e) {
             // Manejo de errores de Firestore
             return new ResponseEntity<>("Error al crear el PTS: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // *******************************************************************
+    // 3. ENDPOINT: FIRMAR PTS (HU-005 - Firma Biométrica)
+    // *******************************************************************
+    @PutMapping("/firmar")
+    public ResponseEntity<?> firmarPts(@RequestBody FirmaPtsRequest request) {
+        try {
+            // Llama al servicio para firmar el PTS
+            PermisoTrabajoSeguro ptsActualizado = ptsService.firmarPts(request);
+            
+            if (ptsActualizado == null) {
+                return new ResponseEntity<>("PTS no encontrado", HttpStatus.NOT_FOUND);
+            }
+            
+            return ResponseEntity.ok(ptsActualizado);
+        } catch (SecurityException e) {
+            return new ResponseEntity<>("Error de autorización: " + e.getMessage(), HttpStatus.FORBIDDEN);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("Datos inválidos: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (IllegalStateException e) {
+            return new ResponseEntity<>("Estado inválido: " + e.getMessage(), HttpStatus.CONFLICT);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>("Error interno: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
