@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/pts")
-@Profile("prod")
+@Profile({"prod", "test"})
 public class PtsController {
 
     private final IPtsService ptsService;

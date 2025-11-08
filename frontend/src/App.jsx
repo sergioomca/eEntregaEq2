@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import FirmaBiometrica from './components/FirmaDigital';
 import CierreRTO from './components/CierreRTO';
+import CrearPTS from './components/CrearPTS';
+import ListaPTS from './components/ListaPTS';
 
 // Constantes de Configuración
 const API_URL = 'http://localhost:8080/api/auth/login';
@@ -13,16 +15,19 @@ const getRoutes = (role) => {
 
     const roleSpecific = {
         'EMISOR': [
+            { id: 'dashboard', title: 'Dashboard PTS', roles: ['EMISOR'], content: 'pts-dashboard-view' },
             { id: 'crear-pts', title: 'Crear PTS', roles: ['EMISOR'], content: 'pts-form-view' },
             { id: 'mis-pts', title: 'Mis PTS', roles: ['EMISOR'], content: 'my-pts-list-view' }
         ],
         'SUPERVISOR': [
+            { id: 'dashboard', title: 'Dashboard PTS', roles: ['SUPERVISOR'], content: 'pts-dashboard-view' },
             { id: 'aprobacion', title: 'Aprobación', roles: ['SUPERVISOR'], content: 'approval-list-view' },
             { id: 'firma-biometrica', title: 'Firma Biométrica', roles: ['SUPERVISOR'], content: 'firma-biometrica-view' },
             { id: 'cierre-rto', title: 'Cierre RTO', roles: ['SUPERVISOR'], content: 'cierre-rto-view' },
             { id: 'auditoria', title: 'Auditoría', roles: ['SUPERVISOR'], content: 'auditoria-view' }
         ],
         'EJECUTANTE': [
+            { id: 'dashboard', title: 'Dashboard PTS', roles: ['EJECUTANTE'], content: 'pts-dashboard-view' },
             { id: 'ejecucion', title: 'Tareas', roles: ['EJECUTANTE'], content: 'execution-view' }
         ]
     };
@@ -333,21 +338,10 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
     // Lógica para cargar el contenido simulado (HU-002)
     const loadContent = (viewId) => {
         switch (viewId) {
+            case 'pts-dashboard-view':
+                return <ListaPTS />;
             case 'pts-form-view':
-                return (
-                    <>
-                        <h3 className="text-2xl font-bold mb-4 text-primary-epu">Formulario: Creación de PTS (HU-003)</h3>
-                        <p className="text-gray-700">Aquí se desarrollará el formulario para que el Emisor complete la información necesaria para un Permiso de Trabajo Seguro.</p>
-                        <div className="mt-6 p-4 bg-gray-50 rounded-lg border-l-4 border-secondary-epu">
-                            <p className="font-semibold text-primary-epu">Requisitos de la HU-003:</p>
-                            <ul className="list-disc ml-6 text-gray-600">
-                                <li>Registro de datos de la tarea (tipo, ubicación, equipos).</li>
-                                <li>Evaluación de riesgos inicial.</li>
-                                <li>Definición de barreras de seguridad.</li>
-                            </ul>
-                        </div>
-                    </>
-                );
+                return <CrearPTS />;
             case 'approval-list-view':
                 return (
                     <>
@@ -419,6 +413,8 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                         )}
                     </>
                 );
+            case 'my-pts-list-view':
+                return React.createElement(ListaPTS, { defaultFilter: 'MIS_PTS' });
             case 'execution-view':
                 return (
                     <>

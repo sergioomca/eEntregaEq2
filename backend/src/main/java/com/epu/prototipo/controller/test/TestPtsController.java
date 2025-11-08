@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pts")
+@RequestMapping("/api/pts-test")
 @Profile("test")
 public class TestPtsController {
 

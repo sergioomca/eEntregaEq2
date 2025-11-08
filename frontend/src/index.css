@@ -41,11 +41,39 @@ nav button:hover {
 .flex-col { flex-direction: column; }
 .justify-between { justify-content: space-between; }
 .justify-center { justify-content: center; }
+.justify-end { justify-content: flex-end; }
 .items-center { align-items: center; }
 .space-x-4 > * + * { margin-left: 1rem; }
 .space-x-6 > * + * { margin-left: 1.5rem; }
 .space-y-4 > * + * { margin-top: 1rem; }
 .space-y-6 > * + * { margin-top: 1.5rem; }
+
+/* Grid System */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+
+/* Responsive Grid */
+@media (min-width: 768px) {
+  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .md\:col-span-2 { grid-column: span 2 / span 2; }
+}
+
+/* Colores específicos para el proyecto */
+.bg-epu-primary { background-color: var(--primary-epu); }
+.bg-epu-primary-dark { background-color: #002244; }
+.text-epu-primary { color: var(--primary-epu); }
+.bg-epu-secondary { background-color: var(--secondary-epu); }
+.hover\:bg-epu-primary-dark:hover { background-color: #002244; }
+.hover\:bg-yellow-600:hover { background-color: #d97706; }
+.focus\:ring-epu-primary:focus { 
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.3);
+}
 
 /* Contenedores */
 .container { 

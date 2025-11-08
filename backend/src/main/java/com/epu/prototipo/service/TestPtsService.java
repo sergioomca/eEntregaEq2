@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -14,9 +15,15 @@ import java.util.List;
 @Profile("test")
 public class TestPtsService implements IPtsService {
 
-    @Override
-    public List<PermisoTrabajoSeguro> getAllPts() {
-        // Retornar datos de prueba
+    // Lista en memoria para almacenar PTS creados durante la sesión de prueba
+    private final List<PermisoTrabajoSeguro> ptsInMemory = new ArrayList<>();
+
+    public TestPtsService() {
+        // Inicializar con datos de prueba
+        initializeTestData();
+    }
+
+    private void initializeTestData() {
         PermisoTrabajoSeguro pts1 = new PermisoTrabajoSeguro();
         pts1.setId("PTS-001");
         pts1.setDescripcionTrabajo("Mantenimiento de equipo eléctrico");
@@ -35,29 +42,32 @@ public class TestPtsService implements IPtsService {
         pts2.setTipoTrabajo("MECANICO");
         pts2.setArea("Producción");
 
-        return Arrays.asList(pts1, pts2);
+        ptsInMemory.add(pts1);
+        ptsInMemory.add(pts2);
+    }
+
+    @Override
+    public List<PermisoTrabajoSeguro> getAllPts() {
+        // Retornar copia de la lista para evitar modificaciones externas
+        return new ArrayList<>(ptsInMemory);
     }
 
     @Override
     public PermisoTrabajoSeguro createPts(PermisoTrabajoSeguro pts) {
-        // En modo de prueba, solo devolvemos el mismo PTS con un ID asignado
+        // Generar ID único y agregar a la lista en memoria
         pts.setId("PTS-" + System.currentTimeMillis());
+        ptsInMemory.add(pts);
+        System.out.println("PTS creado en modo test: " + pts.getId() + " - " + pts.getDescripcionTrabajo());
         return pts;
     }
 
     @Override
     public PermisoTrabajoSeguro getPtsById(String id) {
-        // En modo de prueba, devolvemos un PTS simulado si el ID coincide
-        if ("PTS-001".equals(id) || "PTS-002".equals(id)) {
-            PermisoTrabajoSeguro pts = new PermisoTrabajoSeguro();
-            pts.setId(id);
-            pts.setDescripcionTrabajo("PTS de prueba");
-            pts.setFechaInicio("2025-11-07");
-            pts.setUbicacion("Ubicación de prueba");
-            pts.setSupervisorLegajo("12345678"); // Supervisor de prueba
-            return pts;
-        }
-        return null;
+        // Buscar en la lista en memoria
+        return ptsInMemory.stream()
+                .filter(pts -> id.equals(pts.getId()))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
