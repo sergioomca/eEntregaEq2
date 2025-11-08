@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import FirmaBiometrica from './components/FirmaDigital';
+import CierreRTO from './components/CierreRTO';
 
 // Constantes de Configuración
 const API_URL = 'http://localhost:8080/api/auth/login';
@@ -18,6 +19,7 @@ const getRoutes = (role) => {
         'SUPERVISOR': [
             { id: 'aprobacion', title: 'Aprobación', roles: ['SUPERVISOR'], content: 'approval-list-view' },
             { id: 'firma-biometrica', title: 'Firma Biométrica', roles: ['SUPERVISOR'], content: 'firma-biometrica-view' },
+            { id: 'cierre-rto', title: 'Cierre RTO', roles: ['SUPERVISOR'], content: 'cierre-rto-view' },
             { id: 'auditoria', title: 'Auditoría', roles: ['SUPERVISOR'], content: 'auditoria-view' }
         ],
         'EJECUTANTE': [
@@ -38,7 +40,7 @@ const Navigation = ({ role, handleNavigate }) => {
                 <button
                     key={route.id}
                     onClick={() => handleNavigate(route.title, route.content || route.id + '-view')}
-                    className="text-white hover:text-secondary-epu font-medium transition duration-150"
+                    className="text-white hover:text-primary-epu font-medium transition duration-150 px-3 py-2 rounded-md bg-secondary-epu bg-opacity-80 hover:bg-secondary-epu hover:bg-opacity-100 shadow-md"
                 >
                     {route.title}
                 </button>
@@ -118,6 +120,105 @@ const LoginView = ({ handleLogin }) => {
     );
 };
 
+// Componente para mostrar PTS listos para cierre RTO
+const RTOClosureList = ({ onSelectPts }) => {
+    const [ptsList, setPtsList] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchSignedPTS();
+    }, []);
+
+    const fetchSignedPTS = async () => {
+        setLoading(true);
+        setError(null);
+        
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('http://localhost:8080/api/pts', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('DEBUG RTO - Todos los PTS:', data);
+            
+            // SIMULACIÓN TEMPORAL: Crear un PTS firmado para testing
+            // Solo simular firma si no está ya cerrado
+            if (data.length > 0 && !data[0].firmaSupervisorBase64 && (!data[0].rtoEstado || data[0].rtoEstado !== 'CERRADO')) {
+                data[0].firmaSupervisorBase64 = 'FIRMA_SIMULADA_BASE64';
+                data[0].dniSupervisorFirmante = 'SUP222';
+                data[0].fechaHoraFirmaSupervisor = new Date().toISOString();
+                console.log('DEBUG RTO - PTS simulado como firmado para testing:', data[0].id);
+            }
+            
+            // Verificar si hay PTS marcados como cerrados en sessionStorage (simulación de persistencia)
+            const closedPtsIds = JSON.parse(sessionStorage.getItem('closedPtsIds') || '[]');
+            data.forEach(pts => {
+                if (closedPtsIds.includes(pts.id)) {
+                    pts.rtoEstado = 'CERRADO';
+                    pts.rtoFechaHoraCierre = new Date().toISOString();
+                    pts.rtoResponsableCierreLegajo = 'SUP222';
+                    console.log('DEBUG RTO - PTS marcado como cerrado desde sessionStorage:', pts.id);
+                }
+            });
+            
+            // Filtrar PTS firmados pero no cerrados (listos para RTO)
+            const readyForRTO = data.filter(pts => {
+                const hasFirma = pts.firmaSupervisorBase64;
+                const notClosed = (!pts.rtoEstado || pts.rtoEstado !== 'CERRADO');
+                console.log(`DEBUG RTO - PTS ${pts.id}: hasFirma=${hasFirma}, notClosed=${notClosed}, rtoEstado=${pts.rtoEstado}`);
+                return hasFirma && notClosed;
+            });
+            console.log('DEBUG RTO - PTS listos para RTO:', readyForRTO);
+            setPtsList(readyForRTO);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) return <div className="text-center p-4">Cargando PTS listos para cierre...</div>;
+    if (error) return <div className="text-red-600 p-4">Error: {error}</div>;
+    if (ptsList.length === 0) return <div className="text-gray-600 p-4">No hay PTS listos para cierre RTO.</div>;
+
+    return (
+        <div className="space-y-4">
+            <h4 className="text-lg font-semibold text-gray-800 mb-4">PTS Firmados - Listos para Cierre RTO</h4>
+            {ptsList.map(pts => (
+                <div key={pts.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h5 className="font-medium text-gray-900">PTS: {pts.id}</h5>
+                            <p className="text-sm text-gray-600">{pts.descripcionTrabajo}</p>
+                            <p className="text-xs text-gray-500">
+                                Firmado por: {pts.dniSupervisorFirmante} | Ubicación: {pts.ubicacion}
+                            </p>
+                            <p className="text-xs text-green-600">
+                                ✅ Firmado el: {pts.fechaHoraFirmaSupervisor ? new Date(pts.fechaHoraFirmaSupervisor).toLocaleString() : 'Fecha no disponible'}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => onSelectPts(pts)}
+                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                        >
+                            🔒 Cerrar RTO
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
 // Componente para mostrar PTS pendientes de firma
 const PendingApprovalList = ({ onSelectPts }) => {
     const [ptsList, setPtsList] = useState([]);
@@ -174,7 +275,10 @@ const PendingApprovalList = ({ onSelectPts }) => {
                             </p>
                         </div>
                         <button
-                            onClick={() => onSelectPts(pts)}
+                            onClick={() => {
+                                console.log('DEBUG - Click en Firmar, PTS:', pts.id);
+                                onSelectPts(pts);
+                            }}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
                         >
                             Firmar
@@ -191,19 +295,39 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
     const { legajo, role } = user;
     const [selectedPts, setSelectedPts] = useState(null);
     const [showFirmaComponent, setShowFirmaComponent] = useState(false);
+    const [selectedPtsForRTO, setSelectedPtsForRTO] = useState(null);
+    const [showRTOComponent, setShowRTOComponent] = useState(false);
 
     // Función para manejar la selección de PTS para firmar
     const handleSelectPts = (pts) => {
+        console.log('DEBUG - handleSelectPts llamado con:', pts);
         setSelectedPts(pts);
         setShowFirmaComponent(true);
+        // Cambiar a la vista de firma biométrica
+        setCurrentView({ title: 'Firma Biométrica', content: 'firma-biometrica-view' });
+        console.log('DEBUG - Estados actualizados: selectedPts, showFirmaComponent = true y vista cambiada a firma-biometrica-view');
+    };
+
+    // Función para manejar la selección de PTS para cerrar RTO
+    const handleSelectPtsForRTO = (pts) => {
+        setSelectedPtsForRTO(pts);
+        setShowRTOComponent(true);
     };
 
     // Función para manejar el éxito de la firma
     const handleFirmaExitosa = () => {
         setSelectedPts(null);
         setShowFirmaComponent(false);
-        // Refrescar la vista de aprobación
-        setCurrentView({ title: 'Aprobación', content: 'approval-list-view' });
+        // Refrescar la vista de aprobación y forzar recarga
+        setCurrentView({ title: 'Aprobación', content: 'approval-list-view', refresh: Date.now() });
+    };
+
+    // Función para manejar el éxito del cierre RTO
+    const handleRTOExitoso = () => {
+        setSelectedPtsForRTO(null);
+        setShowRTOComponent(false);
+        // Refrescar la vista de cierre RTO
+        setCurrentView({ title: 'Cierre RTO', content: 'cierre-rto-view' });
     };
 
     // Lógica para cargar el contenido simulado (HU-002)
@@ -245,6 +369,7 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                                 </div>
                                 <FirmaBiometrica 
                                     ptsId={selectedPts.id} 
+                                    dniFirmante={legajo}
                                     onFirmaExitosa={handleFirmaExitosa}
                                 />
                                 <button 
@@ -263,6 +388,33 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                                 >
                                     Ir a Lista de Aprobaciones
                                 </button>
+                            </div>
+                        )}
+                    </>
+                );
+            case 'cierre-rto-view':
+                return (
+                    <>
+                        <h3 className="text-2xl font-bold mb-4 text-primary-epu">Cierre RTO - Retorno a Operaciones</h3>
+                        {showRTOComponent && selectedPtsForRTO ? (
+                            <div>
+                                <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                                    <h4 className="font-semibold text-red-900">PTS Seleccionado para Cierre:</h4>
+                                    <p className="text-red-800">{selectedPtsForRTO.id} - {selectedPtsForRTO.descripcionTrabajo}</p>
+                                    <p className="text-sm text-red-600">Firmado por: {selectedPtsForRTO.dniSupervisorFirmante}</p>
+                                    <p className="text-sm text-red-600">Fecha de firma: {selectedPtsForRTO.fechaHoraFirmaSupervisor ? new Date(selectedPtsForRTO.fechaHoraFirmaSupervisor).toLocaleString() : 'No disponible'}</p>
+                                </div>
+                                <CierreRTO 
+                                    ptsId={selectedPtsForRTO.id} 
+                                    responsableLegajo={legajo}
+                                    onSuccess={handleRTOExitoso}
+                                    onCancel={() => { setSelectedPtsForRTO(null); setShowRTOComponent(false); }}
+                                />
+                            </div>
+                        ) : (
+                            <div>
+                                <p className="text-gray-700 mb-6">Listado de PTS firmados y listos para cierre (Retorno a Operaciones).</p>
+                                <RTOClosureList onSelectPts={handleSelectPtsForRTO} />
                             </div>
                         )}
                     </>
@@ -320,6 +472,11 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                             className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]">
                             🖐️ Firma Biométrica
                         </button>
+                        <button
+                            onClick={() => setCurrentView({ title: 'Cierre RTO', content: 'cierre-rto-view' })}
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]">
+                            🔒 Cierre RTO
+                        </button>
                     </>
                 )}
                 {role === 'EJECUTANTE' && (
@@ -368,10 +525,17 @@ const App = () => {
         }
 
         const claims = decodeToken(token);
+        console.log('DEBUG - Claims del token JWT:', claims); // DEBUG
         if (claims && claims.exp * 1000 > Date.now()) { // Verificar expiración
+            // Extraer rol del array y quitar el prefijo "ROLE_"
+            const roleWithPrefix = claims.roles && claims.roles[0]; // "ROLE_SUPERVISOR"
+            const role = roleWithPrefix ? roleWithPrefix.replace('ROLE_', '') : null; // "SUPERVISOR"
+            
+            console.log('DEBUG - rol extraído:', role); // DEBUG
+            console.log('DEBUG - Contenido completo del claims:', JSON.stringify(claims, null, 2)); // DEBUG
             setUser({
                 legajo: claims.sub,
-                role: claims.rol_principal, // EMISOR, SUPERVISOR, EJECUTANTE
+                role: role, // EMISOR, SUPERVISOR, EJECUTANTE
             });
             return true;
         } else {
@@ -410,7 +574,8 @@ const App = () => {
 
             // Establece la vista por defecto basada en el rol recién logueado
             const claims = decodeToken(newToken);
-            const role = claims?.rol_principal;
+            const roleWithPrefix = claims?.roles && claims.roles[0]; // "ROLE_SUPERVISOR"
+            const role = roleWithPrefix ? roleWithPrefix.replace('ROLE_', '') : null; // "SUPERVISOR"
             const routes = getRoutes(role);
             const defaultRoute = routes.find(r => r.defaultView) || routes[0];
             handleNavigate(defaultRoute.title, defaultRoute.content || defaultRoute.id + '-view');
@@ -434,15 +599,15 @@ const App = () => {
         <div className="bg-gray-100 min-h-screen flex flex-col">
             
             {/* Encabezado (Header) */}
-            <header className="bg-[#003366] text-white shadow-lg p-4 sticky top-0 z-10">
+            <header style={{backgroundColor: '#003366'}} className="text-white shadow-lg p-4 sticky top-0 z-10">
                 <div className="container mx-auto flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">PTS Prototipo EPU</h1>
+                    <h1 className="text-2xl font-bold text-white">PTS Prototipo EPU</h1>
                     <div className="flex items-center space-x-6">
                         {user && <Navigation role={user.role} handleNavigate={handleNavigate} />}
                         <div className="text-sm flex items-center">
                             {user ? (
                                 <>
-                                    <span className="font-semibold mr-4 hidden sm:inline">Usuario: {user.legajo} ({user.role})</span>
+                                    <span className="font-semibold mr-4 hidden sm:inline text-white">Usuario: {user.legajo} ({user.role})</span>
                                     <button
                                         onClick={handleLogout}
                                         className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md shadow-md transition duration-150"

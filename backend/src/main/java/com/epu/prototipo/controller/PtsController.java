@@ -1,5 +1,6 @@
 package com.epu.prototipo.controller;
 
+import com.epu.prototipo.dto.CerrarPtsRequest;
 import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
 import com.epu.prototipo.service.IPtsService;
@@ -70,6 +71,40 @@ public class PtsController {
             return new ResponseEntity<>("Estado inválido: " + e.getMessage(), HttpStatus.CONFLICT);
         } catch (RuntimeException e) {
             return new ResponseEntity<>("Error interno: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // *******************************************************************
+    // 4. ENDPOINT: CERRAR PTS (HU-019 - Retorno a Operaciones)
+    // *******************************************************************
+    @PutMapping("/cerrar")
+    public ResponseEntity<?> cerrarPts(@RequestBody CerrarPtsRequest request) {
+        try {
+            // Validar que los datos requeridos estén presentes
+            if (request.getPtsId() == null || request.getPtsId().trim().isEmpty()) {
+                return new ResponseEntity<>("El ID del PTS es requerido", HttpStatus.BAD_REQUEST);
+            }
+            
+            if (request.getRtoResponsableCierreLegajo() == null || request.getRtoResponsableCierreLegajo().trim().isEmpty()) {
+                return new ResponseEntity<>("El legajo del responsable de cierre es requerido", HttpStatus.BAD_REQUEST);
+            }
+            
+            // Llama al servicio para cerrar el PTS
+            PermisoTrabajoSeguro ptsCerrado = ptsService.cerrarPts(request);
+            
+            if (ptsCerrado == null) {
+                return new ResponseEntity<>("PTS no encontrado", HttpStatus.NOT_FOUND);
+            }
+            
+            return ResponseEntity.ok(ptsCerrado);
+        } catch (SecurityException e) {
+            return new ResponseEntity<>("Error de autorización: " + e.getMessage(), HttpStatus.FORBIDDEN);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("Datos inválidos: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (IllegalStateException e) {
+            return new ResponseEntity<>("Estado inválido del PTS: " + e.getMessage(), HttpStatus.CONFLICT);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>("Error interno al cerrar PTS: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

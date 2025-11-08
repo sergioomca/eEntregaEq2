@@ -10,16 +10,14 @@ import React, { useState } from 'react';
  * @param {string} props.ptsId - ID del Permiso de Trabajo Seguro a firmar.
  * @param {function} props.onFirmaExitosa - Callback al finalizar la firma.
  */
-function FirmaBiometrica({ ptsId, onFirmaExitosa }) {
+function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
     
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [biometricoValidado, setBiometricoValidado] = useState(false);
     
-    // Simulación: Obtener el DNI/Legajo del usuario logueado.
-    // En un proyecto real, se decodificaría el JWT del Contexto/Auth.
-    const dniFirmante = "12345678"; // <--- REEMPLAZAR con el DNI/Legajo real del usuario logueado
-    const nombreFirmante = "Supervisor Demo"; 
+    // DNI/Legajo del usuario logueado recibido como prop
+    const nombreFirmante = `Supervisor ${dniFirmante}`; 
 
     /**
      * Simula la lectura de la huella digital.
@@ -69,7 +67,7 @@ function FirmaBiometrica({ ptsId, onFirmaExitosa }) {
         };
 
         // 2. Obtener el token de autenticación
-        const token = localStorage.getItem('jwtToken');
+        const token = localStorage.getItem('authToken');
         if (!token) {
             setError('Error de autenticación. No se encontró el token.');
             setLoading(false);
@@ -77,6 +75,9 @@ function FirmaBiometrica({ ptsId, onFirmaExitosa }) {
         }
 
         try {
+            console.log('DEBUG FIRMA - Datos enviados al backend:', firmaData);
+            console.log('DEBUG FIRMA - Token:', token ? 'Presente' : 'Ausente');
+            
             // 3. Petición PUT al endpoint del PtsController
             const response = await fetch('http://localhost:8080/api/pts/firmar', {
                 method: 'PUT',
@@ -86,6 +87,8 @@ function FirmaBiometrica({ ptsId, onFirmaExitosa }) {
                 },
                 body: JSON.stringify(firmaData),
             });
+            
+            console.log('DEBUG FIRMA - Response status:', response.status);
 
             if (!response.ok) {
                 const errorBody = await response.text();

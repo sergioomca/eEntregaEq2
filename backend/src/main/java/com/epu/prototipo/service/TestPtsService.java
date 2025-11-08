@@ -1,5 +1,6 @@
 package com.epu.prototipo.service;
 
+import com.epu.prototipo.dto.CerrarPtsRequest;
 import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
 import org.springframework.context.annotation.Profile;
@@ -88,6 +89,54 @@ public class TestPtsService implements IPtsService {
         pts.setFechaHoraFirmaSupervisor(LocalDateTime.now());
 
         System.out.println("PTS firmado en modo test: " + request.getPtsId());
+        return pts;
+    }
+
+    @Override
+    public PermisoTrabajoSeguro cerrarPts(CerrarPtsRequest request) {
+        // En modo de prueba, simulamos el cierre del PTS sin validaciones complejas
+        if (request == null) {
+            throw new IllegalArgumentException("La solicitud de cierre no puede ser nula");
+        }
+        
+        if (request.getPtsId() == null || request.getPtsId().trim().isEmpty()) {
+            throw new IllegalArgumentException("El ID del PTS es requerido para el cierre");
+        }
+        
+        if (request.getRtoResponsableCierreLegajo() == null || request.getRtoResponsableCierreLegajo().trim().isEmpty()) {
+            throw new IllegalArgumentException("El legajo del responsable de cierre es requerido");
+        }
+
+        // Simular que encontramos el PTS
+        PermisoTrabajoSeguro pts = getPtsById(request.getPtsId());
+        if (pts == null) {
+            return null; // PTS no encontrado
+        }
+
+        // Validaciones básicas en modo test
+        if ("CERRADO".equals(pts.getRtoEstado())) {
+            throw new IllegalStateException("El PTS ID " + request.getPtsId() + " ya ha sido cerrado.");
+        }
+        
+        if ("CANCELADO".equals(pts.getRtoEstado())) {
+            throw new IllegalStateException("El PTS ID " + request.getPtsId() + " está cancelado y no puede ser cerrado.");
+        }
+
+        // Simular que el PTS debe estar firmado (en test mode, agregamos firma si no existe)
+        if (pts.getFirmaSupervisorBase64() == null || pts.getFirmaSupervisorBase64().trim().isEmpty()) {
+            // En modo test, simulamos que hay una firma para permitir el cierre
+            pts.setFirmaSupervisorBase64("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==");
+            pts.setDniSupervisorFirmante("12345678");
+            pts.setFechaHoraFirmaSupervisor(LocalDateTime.now().minusMinutes(5)); // Firmado hace 5 minutos
+        }
+
+        // Aplicar el cierre simulado
+        pts.setRtoEstado("CERRADO");
+        pts.setRtoResponsableCierreLegajo(request.getRtoResponsableCierreLegajo());
+        pts.setRtoObservaciones(request.getRtoObservaciones());
+        pts.setRtoFechaHoraCierre(LocalDateTime.now());
+
+        System.out.println("PTS cerrado en modo test: " + request.getPtsId() + " por responsable: " + request.getRtoResponsableCierreLegajo());
         return pts;
     }
 }

@@ -1,5 +1,6 @@
 package com.epu.prototipo.service;
 
+import com.epu.prototipo.dto.CerrarPtsRequest;
 import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
 import com.google.api.core.ApiFuture;
@@ -205,6 +206,79 @@ public class PtsService implements IPtsService {
                     .filter(pts -> id.equals(pts.getId()))
                     .findFirst()
                     .orElse(null);
+        }
+    }
+
+    /**
+     * Cierra un PTS y lo marca como "Retorno a Operaciones" (RTO).
+     * 
+     * @param request Datos del cierre incluyendo responsable y observaciones
+     * @return El PTS cerrado y actualizado
+     */
+    @Override
+    public PermisoTrabajoSeguro cerrarPts(CerrarPtsRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("La solicitud de cierre no puede ser nula");
+        }
+        
+        if (request.getPtsId() == null || request.getPtsId().trim().isEmpty()) {
+            throw new IllegalArgumentException("El ID del PTS es requerido para el cierre");
+        }
+        
+        if (request.getRtoResponsableCierreLegajo() == null || request.getRtoResponsableCierreLegajo().trim().isEmpty()) {
+            throw new IllegalArgumentException("El legajo del responsable de cierre es requerido");
+        }
+
+        try {
+            // 1. Obtener referencia del documento
+            DocumentReference docRef = firestore.collection(COLLECTION_NAME).document(request.getPtsId());
+            ApiFuture<DocumentSnapshot> future = docRef.get();
+            DocumentSnapshot document = future.get();
+
+            // 2. Verificar si el documento existe
+            if (!document.exists()) {
+                return null; // El controlador manejará el 404
+            }
+
+            // 3. Convertir a objeto para validaciones
+            PermisoTrabajoSeguro pts = document.toObject(PermisoTrabajoSeguro.class);
+            if (pts == null) {
+                throw new RuntimeException("Error al procesar el PTS ID: " + request.getPtsId());
+            }
+
+            // 4. Validaciones de estado del PTS
+            if ("CERRADO".equals(pts.getRtoEstado())) {
+                throw new IllegalStateException("El PTS ID " + request.getPtsId() + " ya ha sido cerrado.");
+            }
+            
+            if ("CANCELADO".equals(pts.getRtoEstado())) {
+                throw new IllegalStateException("El PTS ID " + request.getPtsId() + " está cancelado y no puede ser cerrado.");
+            }
+
+            // 5. Validación de seguridad: verificar que el PTS esté firmado antes del cierre
+            if (pts.getFirmaSupervisorBase64() == null || pts.getFirmaSupervisorBase64().trim().isEmpty()) {
+                throw new IllegalStateException("El PTS debe estar firmado antes de ser cerrado. Use /api/pts/firmar primero.");
+            }
+
+            // 6. Actualizar el documento con los datos de cierre
+            docRef.update(
+                "rtoEstado", "CERRADO",
+                "rtoResponsableCierreLegajo", request.getRtoResponsableCierreLegajo(),
+                "rtoObservaciones", request.getRtoObservaciones(),
+                "rtoFechaHoraCierre", LocalDateTime.now()
+            ).get(); // El .get() bloquea hasta que la actualización esté completa
+
+            // 7. Devolver el objeto actualizado
+            pts.setRtoEstado("CERRADO");
+            pts.setRtoResponsableCierreLegajo(request.getRtoResponsableCierreLegajo());
+            pts.setRtoObservaciones(request.getRtoObservaciones());
+            pts.setRtoFechaHoraCierre(LocalDateTime.now());
+            pts.setId(document.getId());
+
+            return pts;
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Error al cerrar el PTS ID: " + request.getPtsId(), e);
         }
     }
 }

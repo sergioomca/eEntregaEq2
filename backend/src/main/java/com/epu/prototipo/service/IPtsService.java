@@ -1,5 +1,6 @@
 package com.epu.prototipo.service;
 
+import com.epu.prototipo.dto.CerrarPtsRequest;
 import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
 import java.util.List;
@@ -35,4 +36,14 @@ public interface IPtsService {
      * @return El PTS firmado actualizado
      */
     PermisoTrabajoSeguro firmarPts(FirmaPtsRequest request);
+    
+    /**
+     * Cierra un PTS y lo marca como "Retorno a Operaciones" (RTO).
+     * @param request Datos del cierre incluyendo responsable y observaciones
+     * @return El PTS cerrado actualizado
+     * @throws SecurityException si el usuario no tiene permisos para cerrar el PTS
+     * @throws IllegalStateException si el PTS no está en estado válido para cierre
+     * @throws IllegalArgumentException si los datos de entrada son inválidos
+     */
+    PermisoTrabajoSeguro cerrarPts(CerrarPtsRequest request);
 }

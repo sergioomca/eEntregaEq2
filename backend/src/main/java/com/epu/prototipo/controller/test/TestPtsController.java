@@ -1,5 +1,6 @@
 package com.epu.prototipo.controller.test;
 
+import com.epu.prototipo.dto.CerrarPtsRequest;
 import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
 import org.springframework.context.annotation.Profile;
@@ -60,6 +61,39 @@ public class TestPtsController {
             return ResponseEntity.ok(ptsFirmado);
         } catch (Exception e) {
             return new ResponseEntity<>("Error en firma de prueba: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // *******************************************************************
+    // ENDPOINT: CERRAR PTS (HU-019 - Retorno a Operaciones) - VERSIÓN TEST
+    // *******************************************************************
+    @PutMapping("/cerrar")
+    public ResponseEntity<?> cerrarPts(@RequestBody CerrarPtsRequest request) {
+        try {
+            // Validaciones básicas para pruebas
+            if (request.getPtsId() == null || request.getPtsId().trim().isEmpty()) {
+                return new ResponseEntity<>("El ID del PTS es requerido", HttpStatus.BAD_REQUEST);
+            }
+            
+            if (request.getRtoResponsableCierreLegajo() == null || request.getRtoResponsableCierreLegajo().trim().isEmpty()) {
+                return new ResponseEntity<>("El legajo del responsable de cierre es requerido", HttpStatus.BAD_REQUEST);
+            }
+            
+            // Simulación para pruebas: crear un PTS cerrado
+            PermisoTrabajoSeguro ptsCerrado = new PermisoTrabajoSeguro();
+            ptsCerrado.setId(request.getPtsId());
+            ptsCerrado.setDescripcionTrabajo("PTS de prueba - CERRADO");
+            ptsCerrado.setRtoEstado("CERRADO");
+            ptsCerrado.setRtoResponsableCierreLegajo(request.getRtoResponsableCierreLegajo());
+            ptsCerrado.setRtoObservaciones(request.getRtoObservaciones());
+            ptsCerrado.setRtoFechaHoraCierre(LocalDateTime.now());
+            ptsCerrado.setUbicacion("Área de pruebas");
+            ptsCerrado.setTipoTrabajo("TEST");
+            ptsCerrado.setArea("Test - Cerrado");
+            
+            return ResponseEntity.ok(ptsCerrado);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error en cierre de prueba: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
