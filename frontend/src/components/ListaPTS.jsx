@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Link } from 'react-router-dom';
 
 // Versión simple sin componente separado - evita problemas de re-render
 
@@ -739,7 +740,12 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                         onClick={() => handleRowClick(pts)}
                       >
                         <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {pts.id || 'N/A'}
+                          <Link 
+                            to={`/pts/${pts.id}`}
+                            className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                          >
+                            {pts.id || 'N/A'}
+                          </Link>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <span 

@@ -4,6 +4,8 @@ import FirmaBiometrica from './components/FirmaDigital';
 import CierreRTO from './components/CierreRTO';
 import CrearPTS from './components/CrearPTS';
 import ListaPTS from './components/ListaPTS';
+import DetallePTS from './components/DetallePTS';
+import ReportesView from './components/ReportesView';
 
 // Constantes de Configuración
 const API_URL = 'http://localhost:8080/api/auth/login';
@@ -11,7 +13,8 @@ const API_URL = 'http://localhost:8080/api/auth/login';
 // Estructura de navegación basada en roles
 const getRoutes = (role) => {
     const base = [
-        { id: 'inicio', title: 'Inicio', roles: ['EMISOR', 'SUPERVISOR', 'EJECUTANTE', 'ADMIN'], defaultView: true }
+        { id: 'inicio', title: 'Inicio', roles: ['EMISOR', 'SUPERVISOR', 'EJECUTANTE', 'ADMIN'], defaultView: true },
+        { id: 'reportes', title: 'Reportes', roles: ['EMISOR', 'SUPERVISOR', 'EJECUTANTE', 'ADMIN'], content: 'reportes-view' }
     ];
 
     const roleSpecific = {
@@ -54,6 +57,8 @@ const Navigation = ({ role }) => {
                 return '/firma-biometrica';
             case 'cierre-rto':
                 return '/cierre-rto';
+            case 'reportes':
+                return '/reportes';
             case 'dashboard':
                 return '/?view=dashboard'; // Dashboard PTS con parámetro
             case 'inicio':
@@ -460,6 +465,8 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                         <p className="text-gray-700">Tareas asignadas por el PTS para inicio, pausa y finalización.</p>
                     </>
                 );
+            case 'reportes-view':
+                return <ReportesView />;
             case 'inicio-view':
             default:
                 return (
@@ -729,6 +736,26 @@ const App = () => {
                         element={
                             <ProtectedRoute>
                                 <CrearPTS onPtsCreado={handleSuccess} />
+                            </ProtectedRoute>
+                        } 
+                    />
+                    
+                    {/* Ruta detalle de PTS */}
+                    <Route 
+                        path="/pts/:id" 
+                        element={
+                            <ProtectedRoute>
+                                <DetallePTS />
+                            </ProtectedRoute>
+                        } 
+                    />
+                    
+                    {/* Ruta de reportes */}
+                    <Route 
+                        path="/reportes" 
+                        element={
+                            <ProtectedRoute>
+                                <ReportesView />
                             </ProtectedRoute>
                         } 
                     />

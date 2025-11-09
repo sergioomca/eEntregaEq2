@@ -64,7 +64,30 @@ public class PtsController {
     }
 
     // *******************************************************************
-    // 2. ENDPOINT: CREAR NUEVO PTS (Nuevo método para el formulario)
+    // 2. ENDPOINT: OBTENER PTS POR ID (Para DetallePTS)
+    // *******************************************************************
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getPtsById(@PathVariable String id) {
+        try {
+            System.out.println("Buscando PTS con ID: " + id);
+            
+            PermisoTrabajoSeguro pts = ptsService.getPtsById(id);
+            
+            if (pts == null) {
+                System.out.println("PTS no encontrado: " + id);
+                return new ResponseEntity<>("PTS no encontrado", HttpStatus.NOT_FOUND);
+            }
+            
+            System.out.println("PTS encontrado: " + pts.getId() + " - " + pts.getDescripcionTrabajo());
+            return ResponseEntity.ok(pts);
+        } catch (RuntimeException e) {
+            System.err.println("Error al buscar PTS " + id + ": " + e.getMessage());
+            return new ResponseEntity<>("Error interno: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // *******************************************************************
+    // 3. ENDPOINT: CREAR NUEVO PTS (Nuevo método para el formulario)
     // *******************************************************************
     @PostMapping
     public ResponseEntity<?> createPts(@RequestBody PermisoTrabajoSeguro pts) {
