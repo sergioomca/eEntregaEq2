@@ -208,4 +208,15 @@ public class FirestorePtsService implements IPtsService {
             throw new RuntimeException("Error al cerrar el PTS ID: " + request.getPtsId(), e);
         }
     }
+
+    @Override
+    public List<PermisoTrabajoSeguro> buscarPts(String equipo, String usuario, String area, String estado, String fechaInicio) {
+        // En entorno de producción, por ahora delegamos a getAllPts()
+        // En una implementación completa, se implementarían queries de Firestore optimizadas
+        System.out.println("Búsqueda de PTS en Firestore - parámetros: equipo=" + equipo + 
+                          ", usuario=" + usuario + ", area=" + area + 
+                          ", estado=" + estado + ", fechaInicio=" + fechaInicio);
+        
+        return getAllPts();
+    }
 }

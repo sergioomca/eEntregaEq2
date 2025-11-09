@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-// import { useNavigate } from 'react-router-dom'; // Se usará en la Parte 9 (Routing)
+import { useNavigate } from 'react-router-dom';
+
 /**
- * Componente funcional para el formulario de inicio de sesión.
+ * Componente funcional para el formulario de inicio de sesión con React Router.
  */
-function Login() {
+function Login({ onLoginSuccess }) {
     // 1. Estados para capturar los datos del formulario y el manejo de errores.
     const [legajo, setLegajo] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
     
-    // const navigate = useNavigate(); // Descomentar en Parte 9
+    const navigate = useNavigate();
 /**
      * 2. Manejador del envío del formulario (al hacer clic en "Ingresar").
      * @param {Event} e Evento de formulario.
@@ -24,7 +25,7 @@ try {
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // Envía el DTO LoginRequest al backend
+                // Envía el DTO LoginRequest al backend (campo correcto: legajo)
                 body: JSON.stringify({ legajo, password }),
             });
 // 4. Manejo de Errores de la API
@@ -36,13 +37,17 @@ try {
 // 5. Autenticación Exitosa (HTTP 200 OK)
             const data = await response.json(); // { token, requiresPasswordChange }
 // 6. Almacenamiento y Redirección (HU-001 y HU-002)
-            localStorage.setItem('jwtToken', data.token); // Guardar el token en el navegador
-if (data.requiresPasswordChange) {
-                // navigate('/cambiar-contrasena'); // Redirigir a cambio de contraseña
-                alert("Login exitoso. ¡Primer Ingreso! Redirigiendo a cambio de contraseña. (Token: " + data.token + ")");
+            localStorage.setItem('authToken', data.token); // Guardar el token en el navegador
+            
+            // Notificar al componente padre del login exitoso
+            if (onLoginSuccess) {
+                onLoginSuccess(data.token);
+            }
+            
+            if (data.requiresPasswordChange) {
+                navigate('/cambiar-contrasena'); // Redirigir a cambio de contraseña
             } else {
-                // navigate('/dashboard'); // Redirigir al Panel Principal
-                alert("Login exitoso. Redirigiendo al Dashboard. (Token: " + data.token + ")");
+                navigate('/'); // Redirigir al Dashboard
             }
 } catch (err) {
             // Manejo de errores de red o la excepción lanzada en el paso 4.

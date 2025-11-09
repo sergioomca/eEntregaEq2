@@ -21,16 +21,58 @@ const CierreRTO = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [errors, setErrors] = useState({}); // Estado para validaciones
+
+  /**
+   * Función de validación del formulario RTO
+   * Verifica campos obligatorios y reglas de negocio
+   */
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Validaciones obligatorias
+    if (!ptsId || ptsId.toString().trim() === '') {
+      newErrors.ptsId = 'El ID del PTS es obligatorio';
+    }
+
+    if (!responsableLegajo || responsableLegajo.toString().trim() === '') {
+      newErrors.responsableLegajo = 'El legajo del responsable es obligatorio';
+    }
+
+    // Validaciones opcionales para observaciones
+    if (observaciones && observaciones.length > 500) {
+      newErrors.observaciones = 'Las observaciones no pueden exceder los 500 caracteres';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  /**
+   * Maneja cambios en el campo de observaciones con limpieza de errores
+   */
+  const handleObservacionesChange = (e) => {
+    const value = e.target.value;
+    setObservaciones(value);
+
+    // Limpiar error de observaciones si existe
+    if (errors.observaciones) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.observaciones;
+        return newErrors;
+      });
+    }
+  };
 
   /**
    * Maneja el cierre del PTS (RTO)
    * Envía una petición PUT al endpoint /api/pts/cerrar
    */
   const handleCierreRTO = async () => {
-    // Validaciones previas
-    if (!ptsId) {
-      setError('ID del PTS es requerido');
-      alert('Error: ID del PTS es requerido');
+    // Validación del formulario
+    if (!validateForm()) {
+      setError('Por favor, corrige los errores en el formulario.');
       return;
     }
 
@@ -62,6 +104,7 @@ const CierreRTO = ({
     setLoading(true);
     setError(null);
     setSuccess(false);
+    setErrors({}); // Limpiar errores de validación
 
     try {
       console.log('DEBUG CIERRE - Enviando petición de cierre RTO:', cerrarPtsRequest);
@@ -175,18 +218,33 @@ const CierreRTO = ({
           <textarea
             id="rtoObservaciones"
             value={observaciones}
-            onChange={(e) => setObservaciones(e.target.value)}
+            onChange={handleObservacionesChange}
             placeholder="Ingrese observaciones finales sobre el cierre del PTS..."
             rows={4}
             cols={50}
             maxLength={500}
             disabled={loading}
-            className="observaciones-textarea"
+            className={`observaciones-textarea ${errors.observaciones ? 'error-border' : ''}`}
           />
           <small className="char-count">
             {observaciones.length}/500 caracteres
           </small>
+          {errors.observaciones && (
+            <p className="error-validacion">{errors.observaciones}</p>
+          )}
         </div>
+
+        {/* Errores de validación generales */}
+        {errors.ptsId && (
+          <div className="error-validacion">
+            ❌ {errors.ptsId}
+          </div>
+        )}
+        {errors.responsableLegajo && (
+          <div className="error-validacion">
+            ❌ {errors.responsableLegajo}
+          </div>
+        )}
 
         {/* Mensajes de estado */}
         {error && (
@@ -384,6 +442,19 @@ const CierreRTO = ({
 
         .info-note small {
           color: #e65100;
+        }
+
+        /* Estilos para validación */
+        .error-validacion {
+          color: #ef4444;
+          font-size: 0.875rem;
+          margin-top: 0.25rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .error-border {
+          border-color: #ef4444 !important;
+          box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
         }
       `}</style>
     </div>

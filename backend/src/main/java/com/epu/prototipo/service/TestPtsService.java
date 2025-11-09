@@ -30,20 +30,40 @@ public class TestPtsService implements IPtsService {
         pts1.setFechaInicio("2025-11-07");
         pts1.setUbicacion("Sala de máquinas");
         pts1.setSolicitanteLegajo("USR001");
+        pts1.setNombreSolicitante("Juan Pérez");
         pts1.setTipoTrabajo("ELECTRICO");
         pts1.setArea("Mantenimiento");
+        pts1.setEquipoOInstalacion("Bomba Principal A1");
+        pts1.setRtoEstado("PENDIENTE");
 
         PermisoTrabajoSeguro pts2 = new PermisoTrabajoSeguro();
         pts2.setId("PTS-002");
         pts2.setDescripcionTrabajo("Reparación de tubería");
-        pts2.setFechaInicio("2025-11-07");
+        pts2.setFechaInicio("2025-11-08");
         pts2.setUbicacion("Área de producción");
         pts2.setSolicitanteLegajo("USR002");
+        pts2.setNombreSolicitante("María González");
         pts2.setTipoTrabajo("MECANICO");
         pts2.setArea("Producción");
+        pts2.setEquipoOInstalacion("Reactor Principal B2");
+        pts2.setRtoEstado("CERRADO");
+
+        // Agregar un tercer PTS para probar mejor los filtros
+        PermisoTrabajoSeguro pts3 = new PermisoTrabajoSeguro();
+        pts3.setId("PTS-003");
+        pts3.setDescripcionTrabajo("Inspección de bomba secundaria");
+        pts3.setFechaInicio("2025-11-07");
+        pts3.setUbicacion("Planta de tratamiento");
+        pts3.setSolicitanteLegajo("VINF011422");
+        pts3.setNombreSolicitante("Carlos Martínez");
+        pts3.setTipoTrabajo("INSPECCION");
+        pts3.setArea("Mantenimiento");
+        pts3.setEquipoOInstalacion("Bomba Secundaria C3");
+        pts3.setRtoEstado("PENDIENTE");
 
         ptsInMemory.add(pts1);
         ptsInMemory.add(pts2);
+        ptsInMemory.add(pts3);
     }
 
     @Override
@@ -148,5 +168,62 @@ public class TestPtsService implements IPtsService {
 
         System.out.println("PTS cerrado en modo test: " + request.getPtsId() + " por responsable: " + request.getRtoResponsableCierreLegajo());
         return pts;
+    }
+
+    @Override
+    public List<PermisoTrabajoSeguro> buscarPts(String equipo, String usuario, String area, String estado, String fechaInicio) {
+        System.out.println("Búsqueda de PTS en modo test - parámetros: equipo=" + equipo + 
+                          ", usuario=" + usuario + ", area=" + area + 
+                          ", estado=" + estado + ", fechaInicio=" + fechaInicio);
+        
+        // Obtener todos los PTS y aplicar filtros en memoria
+        List<PermisoTrabajoSeguro> todosLosPts = getAllPts();
+        List<PermisoTrabajoSeguro> resultado = new ArrayList<>(todosLosPts);
+        
+        // Aplicar filtros solo si los parámetros no están vacíos
+        if (equipo != null && !equipo.trim().isEmpty()) {
+            System.out.println("Filtrando por equipo: '" + equipo + "'");
+            int antesDelFiltro = resultado.size();
+            resultado = resultado.stream()
+                .filter(pts -> {
+                    boolean coincide = pts.getEquipoOInstalacion() != null && 
+                                     pts.getEquipoOInstalacion().toLowerCase().contains(equipo.toLowerCase());
+                    System.out.println("PTS " + pts.getId() + " - Equipo: '" + pts.getEquipoOInstalacion() + "' - Coincide: " + coincide);
+                    return coincide;
+                })
+                .collect(java.util.stream.Collectors.toList());
+            System.out.println("Resultados después del filtro equipo: " + antesDelFiltro + " -> " + resultado.size());
+        }
+        
+        if (usuario != null && !usuario.trim().isEmpty()) {
+            resultado = resultado.stream()
+                .filter(pts -> (pts.getSolicitanteLegajo() != null && 
+                               pts.getSolicitanteLegajo().toLowerCase().contains(usuario.toLowerCase())) ||
+                              (pts.getNombreSolicitante() != null &&
+                               pts.getNombreSolicitante().toLowerCase().contains(usuario.toLowerCase())))
+                .collect(java.util.stream.Collectors.toList());
+        }
+        
+        if (area != null && !area.trim().isEmpty()) {
+            resultado = resultado.stream()
+                .filter(pts -> pts.getArea() != null && 
+                             pts.getArea().toLowerCase().contains(area.toLowerCase()))
+                .collect(java.util.stream.Collectors.toList());
+        }
+        
+        if (estado != null && !estado.trim().isEmpty()) {
+            resultado = resultado.stream()
+                .filter(pts -> estado.equals(pts.getRtoEstado()))
+                .collect(java.util.stream.Collectors.toList());
+        }
+        
+        if (fechaInicio != null && !fechaInicio.trim().isEmpty()) {
+            resultado = resultado.stream()
+                .filter(pts -> fechaInicio.equals(pts.getFechaInicio()))
+                .collect(java.util.stream.Collectors.toList());
+        }
+        
+        System.out.println("Resultados encontrados en modo test: " + resultado.size());
+        return resultado;
     }
 }

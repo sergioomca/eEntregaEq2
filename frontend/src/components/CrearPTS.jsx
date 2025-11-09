@@ -4,11 +4,14 @@ const CrearPTS = () => {
   // Estado para los datos del formulario
   const [formData, setFormData] = useState({
     numeroPermiso: '',
-    fecha: new Date().toISOString().split('T')[0], // Fecha actual por defecto
+    fecha: new Date().toISOString().split('T')[0], // Fecha actual por defecto (fechaInicio)
     horaInicio: '',
     horaFin: '',
     ubicacion: '',
     descripcionTrabajo: '',
+    solicitanteLegajo: '',
+    nombreSolicitante: '',
+    area: '',
     solicitante: '',
     supervisor: '',
     responsableAreaTrabajo: '',
@@ -23,6 +26,10 @@ const CrearPTS = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
+
+  // Estados para autocompletado de usuarios
+  const [searchError, setSearchError] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // Estado de autenticación
   const [user, setUser] = useState(null);
@@ -112,27 +119,130 @@ const CrearPTS = () => {
     }));
   };
 
+  // Función para buscar usuario por legajo (Autocompletado HU-010)
+  const handleBuscarLegajo = async (legajo) => {
+    // Validar y limpiar entrada
+    const legajoTrimmed = legajo?.trim();
+    if (!legajoTrimmed) {
+      setSearchError('Por favor, ingrese un número de legajo');
+      return;
+    }
+
+    setSearchLoading(true);
+    setSearchError(null);
+
+    try {
+      // Obtener token de localStorage
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setSearchError('No está autenticado. Por favor, inicie sesión nuevamente.');
+        return;
+      }
+
+      // Llamar al endpoint de usuarios con legajo limpio
+      const response = await fetch(`http://localhost:8080/api/usuarios/${legajoTrimmed}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Success: usuario encontrado
+        const data = await response.json();
+        
+        // Actualizar formulario con datos del usuario
+        setFormData(prev => ({
+          ...prev,
+          nombreSolicitante: data.nombreCompleto,
+          area: data.sector // Mapear sector a area
+        }));
+        
+        // Limpiar error
+        setSearchError(null);
+        
+      } else if (response.status === 404) {
+        // Failure: usuario no encontrado (Criterio AC 2 y 3)
+        setFormData(prev => ({
+          ...prev,
+          nombreSolicitante: '',
+          area: ''
+        }));
+        
+        setSearchError('Legajo no encontrado. Verifique el número.');
+        
+      } else if (response.status === 401) {
+        // Token inválido o expirado
+        setFormData(prev => ({
+          ...prev,
+          nombreSolicitante: '',
+          area: ''
+        }));
+        
+        setSearchError('Sesión expirada. Por favor, inicie sesión nuevamente.');
+        
+      } else {
+        // Otros errores de respuesta
+        setFormData(prev => ({
+          ...prev,
+          nombreSolicitante: '',
+          area: ''
+        }));
+        
+        setSearchError(`Error del servidor (${response.status}). Intente nuevamente.`);
+      }
+      
+    } catch (error) {
+      console.error('Error al buscar usuario:', error);
+      
+      // Limpiar campos en caso de error
+      setFormData(prev => ({
+        ...prev,
+        nombreSolicitante: '',
+        area: ''
+      }));
+      
+      // Mostrar error de conexión más específico
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        setSearchError('Error de conexión. Verifique que el servidor esté funcionando.');
+      } else {
+        setSearchError('Error inesperado. Por favor, intente nuevamente.');
+      }
+      
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
   // Validación del formulario
   const validateForm = () => {
     const newErrors = {};
 
-    // Campos requeridos
-    if (!formData.numeroPermiso.trim()) newErrors.numeroPermiso = 'Número de permiso es requerido';
-    if (!formData.fecha) newErrors.fecha = 'Fecha es requerida';
-    if (!formData.horaInicio) newErrors.horaInicio = 'Hora de inicio es requerida';
-    if (!formData.horaFin) newErrors.horaFin = 'Hora de fin es requerida';
-    if (!formData.ubicacion.trim()) newErrors.ubicacion = 'Ubicación es requerida';
-    if (!formData.descripcionTrabajo.trim()) newErrors.descripcionTrabajo = 'Descripción del trabajo es requerida';
-    if (!formData.solicitante.trim()) newErrors.solicitante = 'Solicitante es requerido';
-    if (!formData.supervisor.trim()) newErrors.supervisor = 'Supervisor es requerido';
-    if (!formData.responsableAreaTrabajo.trim()) newErrors.responsableAreaTrabajo = 'Responsable del área de trabajo es requerido';
+    // Campos requeridos según especificación HU-011
+    if (!formData.descripcionTrabajo.trim()) newErrors.descripcionTrabajo = 'La descripción del trabajo es obligatoria';
+    if (!formData.solicitante.trim()) newErrors.solicitante = 'El solicitante es obligatorio';
+    if (!formData.supervisor.trim()) newErrors.supervisor = 'El supervisor es obligatorio';
+    
+    // Validaciones para autocompletado HU-010
+    if (!formData.solicitanteLegajo.trim()) newErrors.solicitanteLegajo = 'El legajo del solicitante es obligatorio';
+    if (!formData.nombreSolicitante.trim()) newErrors.nombreSolicitante = 'Debe buscar un usuario válido por legajo';
+    if (!formData.area.trim()) newErrors.area = 'El área se completa automáticamente al buscar el legajo';
+    
+    // Campos adicionales requeridos (manteniendo validaciones existentes)
+    if (!formData.numeroPermiso.trim()) newErrors.numeroPermiso = 'El número de permiso es obligatorio';
+    if (!formData.fecha) newErrors.fecha = 'La fecha es obligatoria';
+    if (!formData.horaInicio) newErrors.horaInicio = 'La hora de inicio es obligatoria';
+    if (!formData.horaFin) newErrors.horaFin = 'La hora de fin es obligatoria';
+    if (!formData.ubicacion.trim()) newErrors.ubicacion = 'La ubicación es obligatoria';
+    if (!formData.responsableAreaTrabajo.trim()) newErrors.responsableAreaTrabajo = 'El responsable del área de trabajo es obligatorio';
 
     // Validar horas
     if (formData.horaInicio && formData.horaFin && formData.horaInicio >= formData.horaFin) {
       newErrors.horaFin = 'La hora de fin debe ser posterior a la hora de inicio';
     }
 
-    // Validar que al menos haya un riesgo/control
+    // Validar que la lista de riesgos no esté vacía (según especificación HU-011)
     if (formData.riesgosControles.length === 0 || !formData.riesgosControles[0].riesgo.trim()) {
       newErrors.riesgosControles = 'Debe especificar al menos un riesgo y su control';
     }
@@ -244,6 +354,9 @@ const CrearPTS = () => {
       horaFin: '',
       ubicacion: '',
       descripcionTrabajo: '',
+      solicitanteLegajo: '',
+      nombreSolicitante: '',
+      area: '',
       solicitante: user?.nombre || '',
       supervisor: '',
       responsableAreaTrabajo: '',
@@ -255,6 +368,7 @@ const CrearPTS = () => {
     });
     setErrors({});
     setSubmitMessage('');
+    setSearchError(null);
   };
 
   if (!user) {
@@ -308,7 +422,7 @@ const CrearPTS = () => {
                   }`}
                   placeholder="Ej: PTS-2025-001"
                 />
-                {errors.numeroPermiso && <p className="mt-1 text-sm text-red-600">{errors.numeroPermiso}</p>}
+                {errors.numeroPermiso && <p className="error-validacion">{errors.numeroPermiso}</p>}
               </div>
 
               <div>
@@ -324,7 +438,7 @@ const CrearPTS = () => {
                     errors.fecha ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
-                {errors.fecha && <p className="mt-1 text-sm text-red-600">{errors.fecha}</p>}
+                {errors.fecha && <p className="error-validacion">{errors.fecha}</p>}
               </div>
             </div>
 
@@ -343,7 +457,7 @@ const CrearPTS = () => {
                     errors.horaInicio ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
-                {errors.horaInicio && <p className="mt-1 text-sm text-red-600">{errors.horaInicio}</p>}
+                {errors.horaInicio && <p className="error-validacion">{errors.horaInicio}</p>}
               </div>
 
               <div>
@@ -395,14 +509,86 @@ const CrearPTS = () => {
                 }`}
                 placeholder="Describe detalladamente el trabajo a realizar..."
               />
-              {errors.descripcionTrabajo && <p className="mt-1 text-sm text-red-600">{errors.descripcionTrabajo}</p>}
+              {errors.descripcionTrabajo && <p className="error-validacion">{errors.descripcionTrabajo}</p>}
             </div>
 
-            {/* Responsables */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Información del Solicitante - Autocompletado */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Información del Solicitante</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Legajo Solicitante con botón de búsqueda */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Legajo Solicitante *
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="solicitanteLegajo"
+                      value={formData.solicitanteLegajo}
+                      onChange={handleInputChange}
+                      className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary ${
+                        errors.solicitanteLegajo ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Ej: 12345"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleBuscarLegajo(formData.solicitanteLegajo)}
+                      disabled={searchLoading || !formData.solicitanteLegajo.trim()}
+                      className="px-4 py-2 bg-epu-secondary text-white rounded-md hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {searchLoading ? 'Buscando...' : 'Buscar'}
+                    </button>
+                  </div>
+                  {errors.solicitanteLegajo && <p className="error-validacion">{errors.solicitanteLegajo}</p>}
+                  {searchError && <p className="error-validacion">{searchError}</p>}
+                </div>
+
+                {/* Nombre Solicitante - Solo lectura */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre Solicitante *
+                  </label>
+                  <input
+                    type="text"
+                    name="nombreSolicitante"
+                    value={formData.nombreSolicitante}
+                    readOnly
+                    className={`w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed ${
+                      errors.nombreSolicitante ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Se completa automáticamente"
+                  />
+                  {errors.nombreSolicitante && <p className="error-validacion">{errors.nombreSolicitante}</p>}
+                </div>
+
+                {/* Área - Solo lectura */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Área *
+                  </label>
+                  <input
+                    type="text"
+                    name="area"
+                    value={formData.area}
+                    readOnly
+                    className={`w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed ${
+                      errors.area ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Se completa automáticamente"
+                  />
+                  {errors.area && <p className="error-validacion">{errors.area}</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* Otros Responsables */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Solicitante *
+                  Solicitante (Campo Legacy) *
                 </label>
                 <input
                   type="text"
@@ -414,7 +600,7 @@ const CrearPTS = () => {
                   }`}
                   placeholder="Nombre del solicitante"
                 />
-                {errors.solicitante && <p className="mt-1 text-sm text-red-600">{errors.solicitante}</p>}
+                {errors.solicitante && <p className="error-validacion">{errors.solicitante}</p>}
               </div>
 
               <div>
@@ -431,7 +617,7 @@ const CrearPTS = () => {
                   }`}
                   placeholder="Nombre del supervisor"
                 />
-                {errors.supervisor && <p className="mt-1 text-sm text-red-600">{errors.supervisor}</p>}
+                {errors.supervisor && <p className="error-validacion">{errors.supervisor}</p>}
               </div>
 
               <div>
@@ -533,7 +719,7 @@ const CrearPTS = () => {
                   </div>
                 </div>
               ))}
-              {errors.riesgosControles && <p className="mt-1 text-sm text-red-600">{errors.riesgosControles}</p>}
+              {errors.riesgosControles && <p className="error-validacion">{errors.riesgosControles}</p>}
             </div>
 
             {/* Equipos de Seguridad */}
@@ -639,5 +825,22 @@ const CrearPTS = () => {
     </div>
   );
 };
+
+// Estilos CSS para validación
+const styles = `
+.error-validacion {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+`;
+
+// Añadir estilos al documento si no existen
+if (!document.querySelector('#pts-validation-styles')) {
+  const styleSheet = document.createElement('style');
+  styleSheet.id = 'pts-validation-styles';
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
+}
 
 export default CrearPTS;

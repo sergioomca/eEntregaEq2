@@ -17,6 +17,19 @@ public interface IPtsService {
     List<PermisoTrabajoSeguro> getAllPts();
     
     /**
+     * Busca PTS aplicando filtros opcionales.
+     * Todos los parámetros son opcionales (@Nullable).
+     * 
+     * @param equipo Filtro por nombre de equipo (búsqueda parcial, case-insensitive)
+     * @param usuario Filtro por nombre o legajo de solicitante (búsqueda parcial, case-insensitive) 
+     * @param area Filtro por área (búsqueda parcial, case-insensitive)
+     * @param estado Filtro por estado RTO: PENDIENTE, CERRADO (búsqueda exacta)
+     * @param fechaInicio Filtro por fecha de inicio en formato YYYY-MM-DD (búsqueda exacta)
+     * @return Lista filtrada de PTS que cumplen con los criterios especificados
+     */
+    List<PermisoTrabajoSeguro> buscarPts(String equipo, String usuario, String area, String estado, String fechaInicio);
+    
+    /**
      * Crea un nuevo PTS.
      * @param pts El PTS a crear
      * @return El PTS creado con su ID asignado

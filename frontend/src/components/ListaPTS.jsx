@@ -1,16 +1,39 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+
+// Versión simple sin componente separado - evita problemas de re-render
 
 const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter = 'TODOS' }) => {
   // Estados principales
   const [ptsList, setPtsList] = useState([]);
   const [filter, setFilter] = useState(defaultFilter);
   const [searchTerm, setSearchTerm] = useState('');
+  // Tipo de búsqueda rápida: 'equipo' o 'usuario'
+  const [searchType, setSearchType] = useState('equipo');
   const [sortConfig, setSortConfig] = useState({ key: 'fechaInicio', direction: 'desc' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedPts, setSelectedPts] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSearching, setIsSearching] = useState(false);
   const itemsPerPage = 10;
+
+  // Estados de búsqueda avanzada - separados para evitar re-renders
+  const [searchFilters, setSearchFilters] = useState({
+    equipo: '',
+    usuario: '',
+    area: '',
+    estado: '',
+    fechaInicio: ''
+  });
+  // Estados locales para los inputs (no causan búsquedas automáticas)
+  const [localFilters, setLocalFilters] = useState({
+    equipo: '',
+    usuario: '',
+    area: '',
+    estado: '',
+    fechaInicio: ''
+  });
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
 
   // Usuario actual para filtros personalizados
   const [currentUser, setCurrentUser] = useState(null);
@@ -71,12 +94,16 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
     }
   }, [defaultFilter]);
 
-  // Cargar PTS al montar componente
+  // Refs para timeouts separados para evitar interferencias
+  const searchTimeoutRef = useRef(null);
+  const filterTimeoutRef = useRef(null);
+
+  // Cargar PTS al montar componente y cuando cambie el filtro principal
   useEffect(() => {
     fetchPTS();
-  }, []);
+  }, [filter]);
 
-  const fetchPTS = async () => {
+  const fetchPTS = async (term = null, type = null, customFilters = null) => {
     setLoading(true);
     setError('');
 
@@ -88,9 +115,35 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
         return;
       }
 
-      console.log('Obteniendo lista de PTS...');
+      // Prioridad de filtros:
+      // 1) si customFilters se provee, usarlo
+      // 2) si term + type provistos, construir query con equipo o usuario
+      // 3) si no, usar los searchFilters del estado
+      const filters = customFilters || searchFilters;
+
+      const queryParams = [];
+
+      // Si se pasó un término rápido (term) y el type ('equipo'|'usuario'), lo incluimos
+      if (term && term.toString().trim()) {
+        const q = type === 'usuario' ? `usuario=${encodeURIComponent(term.trim())}` : `equipo=${encodeURIComponent(term.trim())}`;
+        queryParams.push(q);
+      }
+
+      // Añadir filtros avanzados si existen (no sobreescriben term/type)
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value && value.toString().trim()) {
+          // Evitar duplicar params equipo/usuario si ya vienen por term/type
+          if ((key === 'equipo' || key === 'usuario') && term && term.toString().trim()) return;
+          queryParams.push(`${key}=${encodeURIComponent(value.toString().trim())}`);
+        }
+      });
+
+      const queryString = queryParams.length > 0 ? '?' + queryParams.join('&') : '';
+      const url = `http://localhost:8080/api/pts${queryString}`;
       
-      const response = await fetch('http://localhost:8080/api/pts', {
+      console.log('Obteniendo lista de PTS con filtros:', url);
+      
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -138,7 +191,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
   const filteredAndSortedPTS = useMemo(() => {
     let filtered = ptsList;
 
-    // Aplicar filtro por estado
+    // Aplicar filtro por estado (pestañas superiores)
     if (filter !== 'TODOS') {
       filtered = filtered.filter(pts => {
         const estado = getPtsEstado(pts);
@@ -158,7 +211,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
       });
     }
 
-    // Aplicar búsqueda por texto
+    // Aplicar búsqueda simple por texto (complementaria a los filtros del backend)
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(pts => 
@@ -166,7 +219,8 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
         (pts.descripcionTrabajo && pts.descripcionTrabajo.toLowerCase().includes(term)) ||
         (pts.ubicacion && pts.ubicacion.toLowerCase().includes(term)) ||
         (pts.nombreSolicitante && pts.nombreSolicitante.toLowerCase().includes(term)) ||
-        (pts.equipoOInstalacion && pts.equipoOInstalacion.toLowerCase().includes(term))
+        (pts.equipoOInstalacion && pts.equipoOInstalacion.toLowerCase().includes(term)) ||
+        (pts.area && pts.area.toLowerCase().includes(term))
       );
     }
 
@@ -208,6 +262,95 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
       key,
       direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
     }));
+  };
+
+  // Manejar filtros locales (solo actualiza UI, no dispara búsqueda)
+  const handleLocalFilterChange = (field, value) => {
+    // Actualizar localFilters inmediatamente para UI responsiva
+    setLocalFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Mostrar indicador de búsqueda pendiente
+    setIsSearching(true);
+    
+    // Limpiar timeout anterior de filtros
+    if (filterTimeoutRef.current) {
+      clearTimeout(filterTimeoutRef.current);
+    }
+    
+    // Programar nueva búsqueda con debounce
+    filterTimeoutRef.current = setTimeout(() => {
+      setSearchFilters(currentFilters => {
+        const newSearchFilters = {
+          ...currentFilters,
+          [field]: value
+        };
+        
+        // Solo buscar si hay al menos un filtro con valor
+        const hasFilters = Object.values(newSearchFilters).some(val => val && val.toString().trim());
+        
+        if (hasFilters) {
+          fetchPTS(null, null, newSearchFilters);
+        } else {
+          fetchPTS(); // Sin filtros, cargar todos
+        }
+        setCurrentPage(1);
+        setIsSearching(false); // Ocultar indicador al completar búsqueda
+        
+        return newSearchFilters;
+      });
+    }, 1500); // Debounce de 1.5 segundos optimizado
+  };
+
+  // Manejar búsqueda rápida con debounce
+  const handleSearchTermChange = (value) => {
+    setSearchTerm(value);
+    
+    // Mostrar indicador de búsqueda pendiente
+    setIsSearching(true);
+    
+    // Limpiar timeout anterior
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Programar nueva búsqueda con debounce (mismo tiempo que filtros avanzados)
+    searchTimeoutRef.current = setTimeout(() => {
+      if (value.trim()) {
+        fetchPTS(value, searchType);
+      } else {
+        fetchPTS(); // Sin término, cargar todos
+      }
+      setIsSearching(false); // Ocultar indicador al completar búsqueda
+    }, 1500); // Debounce de 1.5 segundos consistente
+  };
+
+  // Limpiar todos los filtros de búsqueda (memoizada)
+  const clearAllSearchFilters = () => {
+    const emptyFilters = {
+      equipo: '',
+      usuario: '',
+      area: '',
+      estado: '',
+      fechaInicio: ''
+    };
+    
+    setSearchFilters(emptyFilters);
+    setLocalFilters(emptyFilters);
+    setSearchTerm('');
+    setCurrentPage(1);
+    
+    // Limpiar ambos timeouts si existen
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    if (filterTimeoutRef.current) {
+      clearTimeout(filterTimeoutRef.current);
+    }
+    
+    fetchPTS(); // Cargar todos sin filtros
   };
 
   // Manejar clic en fila
@@ -268,9 +411,9 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
         <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
           <h2 className="text-2xl font-bold text-center text-red-600 mb-4">Error</h2>
           <p className="text-gray-600 text-center mb-4">{error}</p>
-          <div className="text-center">
+            <div className="text-center">
             <button 
-              onClick={fetchPTS}
+              onClick={() => fetchPTS(searchTerm, searchType)}
               className="bg-epu-primary text-white px-4 py-2 rounded hover:bg-epu-primary-dark transition-colors mr-2"
             >
               Reintentar
@@ -347,28 +490,157 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
               })}
             </div>
 
-            {/* Barra de Búsqueda */}
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Buscar por ID, descripción, ubicación, solicitante..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
-                />
+            {/* Barra de Búsqueda Avanzada (HU-014) */}
+            <div className="space-y-4">
+              {/* Búsqueda Simple */}
+              <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="flex-1">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        placeholder="Búsqueda rápida por ID, descripción, ubicación, solicitante..."
+                        value={searchTerm}
+                        onChange={(e) => handleSearchTermChange(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
+                      />
+                      {isSearching && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-epu-primary"></div>
+                        </div>
+                      )}
+                    </div>
+                    <select
+                      value={searchType}
+                      onChange={(e) => setSearchType(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
+                    >
+                      <option value="equipo">Equipo</option>
+                      <option value="usuario">Usuario</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+                    className="bg-gray-500 text-white px-3 py-2 rounded-md hover:bg-gray-600 transition-colors text-sm"
+                  >
+                    {showAdvancedSearch ? '🔼 Ocultar' : '🔽 Filtros'} Avanzados
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    {paginatedPTS.length} de {filteredAndSortedPTS.length} PTS
+                  </span>
+                  <button
+                    onClick={() => fetchPTS(searchTerm, searchType)}
+                    className="bg-epu-secondary text-white px-3 py-2 rounded-md hover:bg-yellow-600 transition-colors text-sm"
+                  >
+                    🔄 Actualizar
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">
-                  Mostrando {paginatedPTS.length} de {filteredAndSortedPTS.length} PTS
-                </span>
-                <button
-                  onClick={fetchPTS}
-                  className="bg-epu-secondary text-white px-3 py-2 rounded-md hover:bg-yellow-600 transition-colors text-sm"
-                >
-                  🔄 Actualizar
-                </button>
-              </div>
+
+              {/* Búsqueda Avanzada - Colapsable */}
+              {showAdvancedSearch && (
+                <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {/* Equipo/Instalación */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Equipo/Instalación
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="ej: bomba, reactor..."
+                        value={localFilters.equipo}
+                        onChange={(e) => handleLocalFilterChange('equipo', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary text-sm"
+                      />
+                    </div>
+
+                    {/* Usuario/Solicitante */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Usuario/Solicitante
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="ej: Juan, VINF..."
+                        value={localFilters.usuario}
+                        onChange={(e) => handleLocalFilterChange('usuario', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary text-sm"
+                      />
+                    </div>
+
+                    {/* Área */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Área
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="ej: Mantenimiento..."
+                        value={localFilters.area}
+                        onChange={(e) => handleLocalFilterChange('area', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary text-sm"
+                      />
+                    </div>
+
+                    {/* Estado RTO */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Estado RTO
+                      </label>
+                      <select
+                        value={localFilters.estado}
+                        onChange={(e) => handleLocalFilterChange('estado', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary text-sm"
+                      >
+                        <option value="">Todos los estados</option>
+                        <option value="PENDIENTE">PENDIENTE</option>
+                        <option value="CERRADO">CERRADO</option>
+                      </select>
+                    </div>
+
+                    {/* Fecha de Inicio */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Fecha de Inicio
+                      </label>
+                      <input
+                        type="date"
+                        value={localFilters.fechaInicio}
+                        onChange={(e) => handleLocalFilterChange('fechaInicio', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Botones de acción */}
+                  <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-center gap-3 text-sm text-gray-600">
+                      {Object.values(searchFilters).some(val => val) && (
+                        <span className="text-epu-primary font-medium">
+                          🔍 Filtros activos: {Object.values(searchFilters).filter(val => val).length}
+                        </span>
+                      )}
+                      {isSearching && (
+                        <div className="flex items-center gap-2 text-epu-secondary">
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-epu-secondary"></div>
+                          <span className="text-xs">Buscando...</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={clearAllSearchFilters}
+                        className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors text-sm"
+                      >
+                        🗑️ Limpiar Filtros
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -418,10 +690,38 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedPTS.length === 0 ? (
+                {filteredAndSortedPTS.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
-                      {searchTerm ? 'No se encontraron PTS que coincidan con la búsqueda.' : 'No hay PTS disponibles.'}
+                    <td colSpan="8" className="px-4 py-12 text-center">
+                      <div className="text-gray-500">
+                        {/* Mensaje específico según tipo de búsqueda */}
+                        {(!loading && filteredAndSortedPTS.length === 0 && (searchTerm || Object.values(searchFilters).some(val => val))) ? (
+                          <div>
+                            <div className="text-lg mb-2">🔍</div>
+                            <div className="font-medium text-gray-700 mb-1">
+                              No se encontraron Permisos de Trabajo Seguro que coincidan con la búsqueda
+                            </div>
+                            <div className="text-sm text-gray-500 mb-4">
+                              {searchTerm && `Búsqueda: "${searchTerm}"`}
+                              {searchTerm && Object.values(searchFilters).some(val => val) && ' • '}
+                              {Object.values(searchFilters).some(val => val) && 'Filtros avanzados activos'}
+                            </div>
+                            <button
+                              onClick={clearAllSearchFilters}
+                              className="bg-epu-primary text-white px-4 py-2 rounded-md hover:bg-epu-primary-dark transition-colors text-sm"
+                            >
+                              🗑️ Limpiar búsqueda y filtros
+                            </button>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="text-lg mb-2">📋</div>
+                            <div className="font-medium text-gray-700">
+                              No hay PTS disponibles en este momento
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ) : (

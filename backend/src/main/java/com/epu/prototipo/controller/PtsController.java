@@ -24,11 +24,43 @@ public class PtsController {
     }
 
     // *******************************************************************
-    // 1. ENDPOINT: LISTADO DE PTS (ya lo tenías, mantenemos el @GetMapping)
+    // 1. ENDPOINT: BÚSQUEDA DE PTS CON FILTROS OPCIONALES
     // *******************************************************************
+    /**
+     * Busca PTS aplicando filtros opcionales.
+     * Todos los parámetros son opcionales - sin parámetros devuelve todos los PTS.
+     * 
+     * @param equipo Filtro por nombre de equipo (búsqueda parcial)
+     * @param usuario Filtro por nombre o legajo de solicitante (búsqueda parcial)
+     * @param area Filtro por área (búsqueda parcial)
+     * @param estado Filtro por estado RTO: PENDIENTE, CERRADO (búsqueda exacta)
+     * @param fechaInicio Filtro por fecha de inicio en formato YYYY-MM-DD (búsqueda exacta)
+     * @return Lista filtrada de PTS
+     * 
+     * Ejemplos de uso:
+     * GET /api/pts - Todos los PTS
+     * GET /api/pts?equipo=bomba - PTS que contengan "bomba" en equipoOInstalacion
+     * GET /api/pts?usuario=juan - PTS del solicitante que contenga "juan"
+     * GET /api/pts?estado=PENDIENTE - Solo PTS pendientes
+     * GET /api/pts?area=mantenimiento&estado=CERRADO - PTS cerrados del área mantenimiento
+     */
     @GetMapping
-    public ResponseEntity<List<PermisoTrabajoSeguro>> getAllPts() {
-        return ResponseEntity.ok(ptsService.getAllPts());
+    public ResponseEntity<List<PermisoTrabajoSeguro>> searchPts(
+            @RequestParam(required = false) String equipo,
+            @RequestParam(required = false) String usuario,
+            @RequestParam(required = false) String area,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String fechaInicio) {
+        
+        try {
+            // Llama al nuevo método de búsqueda del servicio
+            List<PermisoTrabajoSeguro> resultados = ptsService.buscarPts(equipo, usuario, area, estado, fechaInicio);
+            return ResponseEntity.ok(resultados);
+        } catch (RuntimeException e) {
+            // En caso de error, devolver lista vacía y log del error
+            System.err.println("Error en búsqueda de PTS: " + e.getMessage());
+            return ResponseEntity.ok(java.util.Collections.emptyList());
+        }
     }
 
     // *******************************************************************

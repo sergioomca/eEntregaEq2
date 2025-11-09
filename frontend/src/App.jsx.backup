@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import FirmaBiometrica from './components/FirmaDigital';
 import CierreRTO from './components/CierreRTO';
 import CrearPTS from './components/CrearPTS';
@@ -38,40 +37,18 @@ const getRoutes = (role) => {
 };
 
 // Componente para la Navegación (Menú superior)
-const Navigation = ({ role }) => {
+const Navigation = ({ role, handleNavigate }) => {
     const routes = getRoutes(role);
-    
-    // Función para mapear rutas internas a URLs de React Router
-    const getRouterPath = (route) => {
-        switch (route.id) {
-            case 'crear-pts':
-                return '/pts/nuevo';
-            case 'mis-pts':
-                return '/mis-pts';
-            case 'aprobacion':
-                return '/aprobacion';
-            case 'firma-biometrica':
-                return '/firma-biometrica';
-            case 'cierre-rto':
-                return '/cierre-rto';
-            case 'dashboard':
-                return '/?view=dashboard'; // Dashboard PTS con parámetro
-            case 'inicio':
-            default:
-                return '/'; // Dashboard principal/inicio
-        }
-    };
-    
     return (
         <nav className="flex items-center space-x-4">
             {routes.map(route => (
-                <Link
+                <button
                     key={route.id}
-                    to={getRouterPath(route)}
+                    onClick={() => handleNavigate(route.title, route.content || route.id + '-view')}
                     className="text-white hover:text-primary-epu font-medium transition duration-150 px-3 py-2 rounded-md bg-secondary-epu bg-opacity-80 hover:bg-secondary-epu hover:bg-opacity-100 shadow-md"
                 >
                     {route.title}
-                </Link>
+                </button>
             ))}
         </nav>
     );
@@ -320,26 +297,11 @@ const PendingApprovalList = ({ onSelectPts }) => {
 
 // Componente para el contenido de la aplicación
 const AppContent = ({ user, currentView, setCurrentView }) => {
-    // Validar que user no sea null antes de hacer destructuring
-    if (!user) {
-        return null; // o un componente de loading
-    }
-    
     const { legajo, role } = user;
-    const location = useLocation();
     const [selectedPts, setSelectedPts] = useState(null);
     const [showFirmaComponent, setShowFirmaComponent] = useState(false);
     const [selectedPtsForRTO, setSelectedPtsForRTO] = useState(null);
     const [showRTOComponent, setShowRTOComponent] = useState(false);
-    
-    // Detectar parámetro view en la URL
-    const urlParams = new URLSearchParams(location.search);
-    const viewParam = urlParams.get('view');
-    
-    // Determinar qué vista mostrar basado en URL o currentView
-    const activeView = viewParam ? 
-        { title: viewParam === 'dashboard' ? 'Dashboard PTS' : 'Inicio', content: viewParam === 'dashboard' ? 'pts-dashboard-view' : 'inicio-view' } :
-        currentView;
 
     // Función para manejar la selección de PTS para firmar
     const handleSelectPts = (pts) => {
@@ -401,7 +363,7 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                                 </div>
                                 <FirmaBiometrica 
                                     ptsId={selectedPts.id} 
-                                    dniFirmante="12345678"
+                                    dniFirmante={legajo}
                                     onFirmaExitosa={handleFirmaExitosa}
                                 />
                                 <button 
@@ -479,9 +441,9 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
             </h2>
 
             <div className="bg-white p-8 rounded-xl shadow-2xl border-l-8 border-secondary-epu">
-                <h3 className="text-2xl font-semibold mb-6 text-gray-800">{activeView.title}</h3>
+                <h3 className="text-2xl font-semibold mb-6 text-gray-800">{currentView.title}</h3>
                 <div id="content-container">
-                    {loadContent(activeView.content)}
+                    {loadContent(currentView.content)}
                 </div>
             </div>
 
@@ -525,17 +487,6 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
     );
 };
 
-// Componente de ruta protegida
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('authToken');
-  
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return children;
-};
-
 // Componente Principal de la Aplicación
 const App = () => {
     // Definición de colores para Tailwind (Asume que está configurado)
@@ -556,7 +507,6 @@ const App = () => {
     const [authToken, setAuthToken] = useState(localStorage.getItem('authToken'));
     const [user, setUser] = useState(null);
     const [currentView, setCurrentView] = useState({ title: 'Inicio', content: 'inicio-view' });
-    const [selectedPtsId, setSelectedPtsId] = useState(null);
 
     // Función para manejar la navegación interna
     const handleNavigate = useCallback((title, content) => {
@@ -637,34 +587,19 @@ const App = () => {
         localStorage.removeItem('authToken');
         setAuthToken(null);
         setUser(null);
-        setSelectedPtsId(null);
         handleNavigate('Inicio', 'inicio-view');
     };
 
-    // Funciones de navegación para React Router
-    const handleSelectParaFirma = (id) => {
-        setSelectedPtsId(id);
-    };
-
-    const handleSelectParaCierre = (id) => {
-        setSelectedPtsId(id);
-    };
-
-    const handleSuccess = () => {
-        setSelectedPtsId(null);
-    };
-
     return (
-        <BrowserRouter>
-            {/* Contenedor principal de la aplicación, usa Flexbox para sticky footer */}
-            <div className="bg-gray-100 min-h-screen flex flex-col">
+        // Contenedor principal de la aplicación, usa Flexbox para sticky footer
+        <div className="bg-gray-100 min-h-screen flex flex-col">
             
             {/* Encabezado (Header) */}
             <header style={{backgroundColor: '#003366'}} className="text-white shadow-lg p-4 sticky top-0 z-10">
                 <div className="container mx-auto flex justify-between items-center">
                     <h1 className="text-2xl font-bold text-white">PTS Prototipo EPU</h1>
                     <div className="flex items-center space-x-6">
-                        {user && <Navigation role={user.role} />}
+                        {user && <Navigation role={user.role} handleNavigate={handleNavigate} />}
                         <div className="text-sm flex items-center">
                             {user ? (
                                 <>
@@ -684,111 +619,20 @@ const App = () => {
                 </div>
             </header>
 
-            {/* Contenido Principal con Rutas */}
+            {/* Contenido Principal */}
             <main className="container mx-auto p-4 flex-grow">
-                <Routes>
-                    {/* Ruta de login */}
-                    <Route 
-                        path="/login" 
-                        element={
-                            authToken ? <Navigate to="/" replace /> : <LoginView handleLogin={handleLogin} />
-                        } 
-                    />
-                    
-                    {/* Ruta principal - Dashboard */}
-                    <Route 
-                        path="/" 
-                        element={
-                            <ProtectedRoute>
-                                <AppContent 
-                                    user={user}
-                                    currentView={currentView}
-                                    setCurrentView={setCurrentView}
-                                />
-                            </ProtectedRoute>
-                        } 
-                    />
-                    
-                    {/* Ruta mis PTS */}
-                    <Route 
-                        path="/mis-pts" 
-                        element={
-                            <ProtectedRoute>
-                                <ListaPTS 
-                                    defaultFilter="MIS_PTS"
-                                    onSelectPtsParaFirma={handleSelectParaFirma}
-                                    onSelectPtsParaCierre={handleSelectParaCierre}
-                                />
-                            </ProtectedRoute>
-                        } 
-                    />
-                    
-                    {/* Ruta crear nuevo PTS */}
-                    <Route 
-                        path="/pts/nuevo" 
-                        element={
-                            <ProtectedRoute>
-                                <CrearPTS onPtsCreado={handleSuccess} />
-                            </ProtectedRoute>
-                        } 
-                    />
-                    
-                    {/* Rutas específicas del SUPERVISOR */}
-                    <Route 
-                        path="/aprobacion" 
-                        element={
-                            <ProtectedRoute>
-                                <AppContent 
-                                    user={user}
-                                    currentView={{ title: 'Aprobación', content: 'approval-list-view' }}
-                                    setCurrentView={setCurrentView}
-                                />
-                            </ProtectedRoute>
-                        } 
-                    />
-                    
-                    <Route 
-                        path="/firma-biometrica" 
-                        element={
-                            <ProtectedRoute>
-                                <AppContent 
-                                    user={user}
-                                    currentView={{ title: 'Firma Biométrica', content: 'firma-biometrica-view' }}
-                                    setCurrentView={setCurrentView}
-                                />
-                            </ProtectedRoute>
-                        } 
-                    />
-                    
-                    <Route 
-                        path="/cierre-rto" 
-                        element={
-                            <ProtectedRoute>
-                                <AppContent 
-                                    user={user}
-                                    currentView={{ title: 'Cierre RTO', content: 'cierre-rto-view' }}
-                                    setCurrentView={setCurrentView}
-                                />
-                            </ProtectedRoute>
-                        } 
-                    />
-                    
-                    {/* Catch-all - redirigir según autenticación */}
-                    <Route 
-                        path="*" 
-                        element={
-                            authToken ? <Navigate to="/" replace /> : <Navigate to="/login" replace />
-                        } 
-                    />
-                </Routes>
+                {user ? (
+                    <AppContent user={user} currentView={currentView} setCurrentView={setCurrentView} />
+                ) : (
+                    <LoginView handleLogin={handleLogin} />
+                )}
             </main>
 
             {/* Pie de Página (Footer) */}
-                <footer className="bg-gray-800 text-white text-center p-4 mt-auto">
-                    <p className="text-sm">&copy; 2025 EPU Prototipo Tecnológico - Sergio Omar Capella</p>
-                </footer>
-            </div>
-        </BrowserRouter>
+            <footer className="bg-gray-800 text-white text-center p-4 mt-auto">
+                <p className="text-sm">&copy; 2025 EPU Prototipo Tecnológico - Sergio Omar Capella</p>
+            </footer>
+        </div>
     );
 };
 
