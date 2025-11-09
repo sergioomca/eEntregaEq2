@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 /**
  * Componente que SIMULA la lectura de Huella Digital para firmar un PTS.
@@ -15,9 +15,74 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [biometricoValidado, setBiometricoValidado] = useState(false);
+    const [showPrintDialog, setShowPrintDialog] = useState(false);
+    const [isPrinting, setIsPrinting] = useState(false);
+    const printButtonRef = useRef(null);
+    
+    // Enfocar automáticamente el botón "Sí, Imprimir" cuando aparece el diálogo
+    useEffect(() => {
+        if (showPrintDialog && printButtonRef.current) {
+            printButtonRef.current.focus();
+        }
+    }, [showPrintDialog]);
     
     // DNI/Legajo del usuario logueado recibido como prop
-    const nombreFirmante = `Supervisor ${dniFirmante}`; 
+    const nombreFirmante = `Supervisor ${dniFirmante}`;
+
+    /**
+     * Función para imprimir el PTS después de la firma
+     */
+    const handlePrintPTS = async () => {
+        setIsPrinting(true);
+        
+        try {
+            const token = localStorage.getItem('authToken');
+            console.log(`Iniciando descarga de PDF para PTS firmado: ${ptsId}`);
+            
+            // Llamada al endpoint de reportes
+            const response = await fetch(`http://localhost:8080/api/reportes/pdf/${ptsId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/pdf'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error al generar PDF: ${response.status} ${response.statusText}`);
+            }
+
+            // Obtener el Blob del PDF
+            const blob = await response.blob();
+            console.log('PDF recibido, tamaño del blob:', blob.size, 'bytes');
+
+            // Crear URL de objeto para iniciar la descarga
+            const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `PTS-${ptsId}-FIRMADO.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            
+            // Limpiar URL del objeto
+            window.URL.revokeObjectURL(url);
+            
+            console.log(`PDF del PTS ${ptsId} descargado exitosamente`);
+            setShowPrintDialog(false);
+            
+            // Notificar éxito y cerrar
+            alert(`PDF del PTS ${ptsId} generado exitosamente`);
+            onFirmaExitosa(); // Notificar al componente padre
+            setBiometricoValidado(false);
+            
+        } catch (error) {
+            console.error('Error al imprimir PTS:', error);
+            alert(`Error al generar el PDF: ${error.message}`);
+        } finally {
+            setIsPrinting(false);
+        }
+    }; 
 
     /**
      * Simula la lectura de la huella digital.
@@ -97,8 +162,9 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
 
             // 4. Éxito
             alert('Firma biométrica registrada con éxito. PTS aprobado.');
-            onFirmaExitosa(); // Notificar al componente padre
-            setBiometricoValidado(false);
+            
+            // Mostrar diálogo de impresión automáticamente
+            setShowPrintDialog(true);
             
         } catch (err) {
             console.error("Error de firma:", err);
@@ -155,6 +221,28 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
         marginBottom: '10px'
     };
     
+    const dialogStyle = {
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        right: '0',
+        bottom: '0',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: '1000'
+    };
+    
+    const dialogContentStyle = {
+        backgroundColor: 'white',
+        padding: '30px',
+        borderRadius: '12px',
+        textAlign: 'center',
+        maxWidth: '400px',
+        boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
+    };
+    
     return (
         <div style={containerStyle}>
             <h3>Validación Biometrica de Supervisor (HU-005)</h3>
@@ -198,6 +286,52 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
             )}
 
             {error && <p style={errorStyle}>{error}</p>}
+
+            {/* Diálogo de impresión automático después de firmar */}
+            {showPrintDialog && (
+                <div style={dialogStyle}>
+                    <div style={dialogContentStyle}>
+                        <h3 style={{marginBottom: '20px', color: '#28a745'}}>
+                            ✅ PTS Firmado Exitosamente
+                        </h3>
+                        <p style={{marginBottom: '20px', fontSize: '16px'}}>
+                            ¿Desea imprimir el PTS <strong>{ptsId}</strong> ahora?
+                        </p>
+                        <div style={{display: 'flex', gap: '15px', justifyContent: 'center'}}>
+                            <button 
+                                ref={printButtonRef}
+                                onClick={handlePrintPTS}
+                                disabled={isPrinting}
+                                style={{
+                                    ...buttonStyle('#28a745'),
+                                    fontSize: '14px',
+                                    padding: '10px 20px'
+                                }}
+                            >
+                                {isPrinting ? 'Generando PDF...' : '🖨️ Sí, Imprimir'}
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    setShowPrintDialog(false);
+                                    onFirmaExitosa(); // Notificar al componente padre
+                                    setBiometricoValidado(false);
+                                }}
+                                disabled={isPrinting}
+                                style={{
+                                    ...buttonStyle('#6c757d'),
+                                    fontSize: '14px',
+                                    padding: '10px 20px'
+                                }}
+                            >
+                                No, Continuar
+                            </button>
+                        </div>
+                        <p style={{marginTop: '15px', fontSize: '12px', color: '#666'}}>
+                            💡 Recomendado: Imprimir para tener una copia física del PTS firmado
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

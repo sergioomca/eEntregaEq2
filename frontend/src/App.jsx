@@ -27,8 +27,7 @@ const getRoutes = (role) => {
             { id: 'dashboard', title: 'Dashboard PTS', roles: ['SUPERVISOR'], content: 'pts-dashboard-view' },
             { id: 'aprobacion', title: 'Aprobación', roles: ['SUPERVISOR'], content: 'approval-list-view' },
             { id: 'firma-biometrica', title: 'Firma Biométrica', roles: ['SUPERVISOR'], content: 'firma-biometrica-view' },
-            { id: 'cierre-rto', title: 'Cierre RTO', roles: ['SUPERVISOR'], content: 'cierre-rto-view' },
-            { id: 'auditoria', title: 'Auditoría', roles: ['SUPERVISOR'], content: 'auditoria-view' }
+            { id: 'cierre-rto', title: 'Cierre RTO', roles: ['SUPERVISOR'], content: 'cierre-rto-view' }
         ],
         'EJECUTANTE': [
             { id: 'dashboard', title: 'Dashboard PTS', roles: ['EJECUTANTE'], content: 'pts-dashboard-view' },
@@ -41,7 +40,7 @@ const getRoutes = (role) => {
 };
 
 // Componente para la Navegación (Menú superior)
-const Navigation = ({ role }) => {
+const Navigation = ({ role, onInicioClick }) => {
     const routes = getRoutes(role);
     
     // Función para mapear rutas internas a URLs de React Router
@@ -62,22 +61,56 @@ const Navigation = ({ role }) => {
             case 'dashboard':
                 return '/?view=dashboard'; // Dashboard PTS con parámetro
             case 'inicio':
+                return '/'; // Inicio va a la pantalla principal
             default:
-                return '/'; // Dashboard principal/inicio
+                return '/?view=dashboard'; // Dashboard PTS por defecto
         }
     };
     
     return (
-        <nav className="flex items-center space-x-4">
-            {routes.map(route => (
-                <Link
-                    key={route.id}
-                    to={getRouterPath(route)}
-                    className="text-white hover:text-primary-epu font-medium transition duration-150 px-3 py-2 rounded-md bg-secondary-epu bg-opacity-80 hover:bg-secondary-epu hover:bg-opacity-100 shadow-md"
-                >
-                    {route.title}
-                </Link>
-            ))}
+        <nav className="flex items-center space-x-6">
+            {routes.map(route => {
+                // Manejar el botón "Inicio" de manera especial
+                if (route.id === 'inicio') {
+                    return (
+                        <Link
+                            key={route.id}
+                            to={getRouterPath(route)}
+                            onClick={onInicioClick}
+                            className="text-primary-epu hover:text-primary-epu font-bold transition-all duration-300 rounded-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 hover:scale-110 border-b-6 border-yellow-700 hover:border-yellow-800 active:translate-y-1 active:shadow-lg relative overflow-hidden no-underline flex items-center justify-center"
+                            style={{
+                                background: 'linear-gradient(145deg, #f4c042, #e6b030, #d49e20)',
+                                boxShadow: '0 8px 20px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                                textDecoration: 'none',
+                                width: '150px',
+                                height: '60px'
+                            }}
+                        >
+                            {route.title}
+                        </Link>
+                    );
+                }
+                
+                // Para todos los demás botones, comportamiento normal
+                return (
+                    <Link
+                        key={route.id}
+                        to={getRouterPath(route)}
+                        className="text-primary-epu hover:text-primary-epu font-bold transition-all duration-300 rounded-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 hover:scale-110 border-b-6 border-yellow-700 hover:border-yellow-800 active:translate-y-1 active:shadow-lg relative overflow-hidden no-underline flex items-center justify-center"
+                        style={{
+                            background: 'linear-gradient(145deg, #f4c042, #e6b030, #d49e20)',
+                            boxShadow: '0 8px 20px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                            textDecoration: 'none',
+                            width: '150px',
+                            height: '60px'
+                        }}
+                    >
+                        {route.title}
+                    </Link>
+                );
+            })}
         </nav>
     );
 };
@@ -406,12 +439,13 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                                 </div>
                                 <FirmaBiometrica 
                                     ptsId={selectedPts.id} 
-                                    dniFirmante="12345678"
+                                    dniFirmante={legajo}
                                     onFirmaExitosa={handleFirmaExitosa}
                                 />
                                 <button 
                                     onClick={() => { setSelectedPts(null); setShowFirmaComponent(false); }}
                                     className="mt-4 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md"
+                                    style={{ backgroundColor: '#6b7280', color: 'white' }}
                                 >
                                     Cancelar
                                 </button>
@@ -468,13 +502,14 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
             case 'reportes-view':
                 return <ReportesView />;
             case 'inicio-view':
-            default:
                 return (
-                    <>
-                        <h3 className="text-2xl font-bold mb-4 text-primary-epu">Dashboard Principal</h3>
-                        <p className="text-gray-700">Vista general de la aplicación, adaptable según los permisos de **{role}**.</p>
-                    </>
+                    <div className="text-center">
+                        <h4 className="text-xl font-semibold text-gray-700 mb-4">Panel de Control</h4>
+                        <p className="text-gray-600">Selecciona una opción para comenzar</p>
+                    </div>
                 );
+            default:
+                return <ListaPTS />;
         }
     };
 
@@ -505,18 +540,21 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                     <>
                         <button
                             onClick={() => setCurrentView({ title: 'Aprobación', content: 'approval-list-view' })}
-                            className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]">
+                            className="bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]"
+                            style={{ backgroundColor: '#111827', color: 'white' }}>
                             Revisar Aprobaciones
                         </button>
                         <button
                             onClick={() => setCurrentView({ title: 'Firma Biométrica', content: 'firma-biometrica-view' })}
-                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]">
-                            🖐️ Firma Biométrica
+                            className="bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]"
+                            style={{ backgroundColor: '#111827', color: 'white' }}>
+                            Firma Biométrica
                         </button>
                         <button
                             onClick={() => setCurrentView({ title: 'Cierre RTO', content: 'cierre-rto-view' })}
-                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]">
-                            🔒 Cierre RTO
+                            className="bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]"
+                            style={{ backgroundColor: '#111827', color: 'white' }}>
+                            Cierre RTO
                         </button>
                     </>
                 )}
@@ -569,6 +607,11 @@ const App = () => {
     const handleNavigate = useCallback((title, content) => {
         setCurrentView({ title, content });
     }, []);
+
+    // Función especial para manejar el clic en "Inicio"
+    const handleInicioClick = () => {
+        setCurrentView({ title: 'Inicio', content: 'inicio-view' });
+    };
 
     // Función para procesar el token y establecer el usuario
     const processAuthToken = useCallback((token) => {
@@ -667,18 +710,27 @@ const App = () => {
             <div className="bg-gray-100 min-h-screen flex flex-col">
             
             {/* Encabezado (Header) */}
-            <header style={{backgroundColor: '#003366'}} className="text-white shadow-lg p-4 sticky top-0 z-10">
-                <div className="container mx-auto flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-white">PTS Prototipo EPU</h1>
-                    <div className="flex items-center space-x-6">
-                        {user && <Navigation role={user.role} />}
+            <header style={{backgroundColor: '#003366'}} className="text-white shadow-lg py-4 px-6 sticky top-0 z-10">
+                <div className="container mx-auto">
+                    {/* Línea Superior: Título y Usuario */}
+                    <div className="flex justify-between items-center mb-3">
+                        <div className="text-left">
+                            <h1 className="text-3xl font-bold text-white">eEntrega de Equipos - Prototipo</h1>
+                        </div>
                         <div className="text-sm flex items-center">
                             {user ? (
                                 <>
-                                    <span className="font-semibold mr-4 hidden sm:inline text-white">Usuario: {user.legajo} ({user.role})</span>
+                                    <span className="font-semibold mr-12 text-white">Usuario: {user.legajo} ({user.role})&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                                     <button
                                         onClick={handleLogout}
-                                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md shadow-md transition duration-150"
+                                        className="bg-green-600 hover:bg-red-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-semibold border-b-3 border-green-700 hover:border-red-700 transform hover:-translate-y-1 hover:scale-105 flex items-center justify-center relative overflow-hidden"
+                                        style={{
+                                            background: 'linear-gradient(145deg, #16a34a, #15803d)',
+                                            boxShadow: '0 6px 15px rgba(0,0,0,0.2), inset 0 1px 2px rgba(255,255,255,0.3)',
+                                            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                                            width: '100px',
+                                            height: '45px'
+                                        }}
                                     >
                                         Salir
                                     </button>
@@ -687,6 +739,11 @@ const App = () => {
                                 <span className="text-gray-300">Desconectado</span>
                             )}
                         </div>
+                    </div>
+                    
+                    {/* Línea Inferior: Solo Navegación Centrada */}
+                    <div className="flex justify-center">
+                        {user && <Navigation role={user.role} onInicioClick={handleInicioClick} />}
                     </div>
                 </div>
             </header>

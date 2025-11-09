@@ -34,6 +34,7 @@ public class TestPtsService implements IPtsService {
         pts1.setTipoTrabajo("ELECTRICO");
         pts1.setArea("Mantenimiento");
         pts1.setEquipoOInstalacion("Bomba Principal A1");
+        pts1.setSupervisorLegajo("SUP222"); // Supervisor asignado
         pts1.setRtoEstado("PENDIENTE");
 
         PermisoTrabajoSeguro pts2 = new PermisoTrabajoSeguro();
@@ -46,6 +47,7 @@ public class TestPtsService implements IPtsService {
         pts2.setTipoTrabajo("MECANICO");
         pts2.setArea("Producción");
         pts2.setEquipoOInstalacion("Reactor Principal B2");
+        pts2.setSupervisorLegajo("SUP222"); // Supervisor asignado
         pts2.setRtoEstado("CERRADO");
 
         // Agregar un tercer PTS para probar mejor los filtros
@@ -59,6 +61,7 @@ public class TestPtsService implements IPtsService {
         pts3.setTipoTrabajo("INSPECCION");
         pts3.setArea("Mantenimiento");
         pts3.setEquipoOInstalacion("Bomba Secundaria C3");
+        pts3.setSupervisorLegajo("SUP222"); // Supervisor asignado
         pts3.setRtoEstado("PENDIENTE");
 
         ptsInMemory.add(pts1);
@@ -103,9 +106,9 @@ public class TestPtsService implements IPtsService {
             return null; // PTS no encontrado
         }
 
-        // Validación básica en modo test
-        if (!"12345678".equals(request.getDniFirmante())) {
-            throw new SecurityException("DNI del firmante no autorizado en modo test.");
+        // Validación básica en modo test - Supervisores válidos
+        if (!"SUP222".equals(request.getDniFirmante()) && !"12345678".equals(request.getDniFirmante())) {
+            throw new SecurityException("DNI del firmante no autorizado en modo test. Supervisores válidos: SUP222");
         }
 
         // Simular que ya está firmado

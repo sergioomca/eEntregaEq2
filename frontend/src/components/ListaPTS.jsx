@@ -53,19 +53,19 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
     'Pendiente de Firma': { 
       color: '#f59e0b', 
       bgColor: '#fef3c7', 
-      icon: '✍️',
+      icon: '',
       textColor: '#92400e' 
     },
     'Firmado (Pend. Cierre)': { 
       color: '#3b82f6', 
       bgColor: '#dbeafe', 
-      icon: '⏳',
+      icon: '',
       textColor: '#1e40af' 
     },
     'Cerrado': { 
       color: '#10b981', 
       bgColor: '#d1fae5', 
-      icon: '✅',
+      icon: '',
       textColor: '#047857' 
     }
   };
@@ -449,54 +449,60 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
           </div>
 
           {/* Filtros y Búsqueda */}
-          <div className="p-6 border-b border-gray-200">
+          <div className="px-6 pt-6 pb-10 border-b border-gray-200">
             {/* Tabs de Filtros */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              {Object.entries(FILTROS).map(([key, value]) => {
-                const isActive = filter === value;
-                let label = '';
-                let count = 0;
+            <div className="flex justify-center">
+              <div className="flex gap-6 mb-4" style={{ minWidth: '1000px', width: 'max-content' }}>
+                {Object.entries(FILTROS).map(([key, value]) => {
+                  const isActive = filter === value;
+                  let label = '';
+                  let count = 0;
 
-                switch (key) {
-                  case 'TODOS': label = 'Todos'; count = counts.total; break;
-                  case 'PENDIENTE_FIRMA': label = 'Pend. Firma'; count = counts.pendienteFirma; break;
-                  case 'FIRMADO_PENDIENTE_CIERRE': label = 'Pend. Cierre'; count = counts.firmadoPendienteCierre; break;
-                  case 'CERRADO': label = 'Cerrados'; count = counts.cerrado; break;
-                  case 'MIS_PTS': label = 'Mis PTS'; count = counts.misPts; break;
-                }
+                  switch (key) {
+                    case 'TODOS': label = 'Todos'; count = counts.total; break;
+                    case 'PENDIENTE_FIRMA': label = 'Pend. Firma'; count = counts.pendienteFirma; break;
+                    case 'FIRMADO_PENDIENTE_CIERRE': label = 'Pend. Cierre'; count = counts.firmadoPendienteCierre; break;
+                    case 'CERRADO': label = 'Cerrados'; count = counts.cerrado; break;
+                    case 'MIS_PTS': label = 'Mis PTS'; count = counts.misPts; break;
+                  }
 
-                return (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      setFilter(value);
-                      setCurrentPage(1);
-                    }}
-                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                      isActive 
-                        ? 'bg-epu-primary text-white' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {label} 
-                    {count > 0 && (
-                      <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                        isActive ? 'bg-white text-epu-primary' : 'bg-epu-secondary text-white'
-                      }`}>
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        setFilter(value);
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                        isActive 
+                          ? 'bg-epu-primary text-white' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      style={{ minWidth: '120px' }}
+                    >
+                      {label}
+                      {count > 0 && (
+                        <>
+                          &nbsp;&nbsp;
+                          <span className={`text-xs ${
+                            isActive ? 'text-white' : 'text-gray-700'
+                          }`}>
+                            {count}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Barra de Búsqueda Avanzada (HU-014) */}
             <div className="space-y-4">
               {/* Búsqueda Simple */}
-              <div className="flex flex-col md:flex-row gap-4 items-center">
+              <div className="flex flex-col md:flex-row gap-4 items-center mb-4">
                 <div className="flex-1">
-                  <div className="flex gap-2">
+                  <div className="flex gap-6">
                     <div className="relative flex-1">
                       <input
                         type="text"
@@ -515,16 +521,17 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                       value={searchType}
                       onChange={(e) => setSearchType(e.target.value)}
                       className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
+                      style={{ minWidth: '120px' }}
                     >
                       <option value="equipo">Equipo</option>
                       <option value="usuario">Usuario</option>
                     </select>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-6">
                   <button
                     onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
-                    className="bg-gray-500 text-white px-3 py-2 rounded-md hover:bg-gray-600 transition-colors text-sm"
+                    className="bg-epu-primary text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
                   >
                     {showAdvancedSearch ? '🔼 Ocultar' : '🔽 Filtros'} Avanzados
                   </button>
@@ -533,7 +540,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                   </span>
                   <button
                     onClick={() => fetchPTS(searchTerm, searchType)}
-                    className="bg-epu-secondary text-white px-3 py-2 rounded-md hover:bg-yellow-600 transition-colors text-sm"
+                    className="bg-epu-primary text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
                   >
                     🔄 Actualizar
                   </button>
@@ -755,7 +762,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                               color: estadoStyle.textColor
                             }}
                           >
-                            {estadoStyle.icon} {estado}
+                            {estado}
                           </span>
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-900 max-w-xs truncate">
@@ -776,11 +783,11 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                         <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                           {isClickable && (
                             <button className="text-epu-primary hover:text-epu-primary-dark">
-                              {estado === 'Pendiente de Firma' ? '✍️ Firmar' : '🔒 Cerrar'}
+                              {estado === 'Pendiente de Firma' ? 'Firmar' : 'Cerrar'}
                             </button>
                           )}
                           {estado === 'Cerrado' && (
-                            <span className="text-green-600">✅ Completado</span>
+                            <span className="text-green-600">Completado</span>
                           )}
                         </td>
                       </tr>
