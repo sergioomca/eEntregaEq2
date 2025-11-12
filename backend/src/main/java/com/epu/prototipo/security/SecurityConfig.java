@@ -22,7 +22,7 @@ public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
 
-    // Inyección del filtro JWT
+    // Aca el filtro JWT
     public SecurityConfig(JwtRequestFilter jwtRequestFilter) {
         this.jwtRequestFilter = jwtRequestFilter;
     }
@@ -31,52 +31,49 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Configuración de CORS (CRUCIAL para el HTML/Frontend)
+            // Configuracion de CORS (usado importante para el HTML/Frontend)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            // 2. Deshabilita CSRF (necesario para APIs REST sin sesiones)
+            // Deshabilitado CSRF (usado para APIs REST sin sesiones)
             .csrf(csrf -> csrf.disable())
             
-            // 3. Configuración de autorización de rutas
+            // Configuracion de autorizacion de rutas
             .authorizeHttpRequests(auth -> auth
-                // Permite acceso libre a la ruta de autenticación y al listado de PTS
+                // Permite acceso libre a la ruta de autenticacion y al listado de PTS
                 .requestMatchers("/api/auth/**", "/api/pts", "/api/pts/**").permitAll()
-                // Endpoint de prueba de usuarios (público)
+                // Endpoint de prueba de usuarios
                 .requestMatchers("/api/usuarios/test").permitAll()
-                // Endpoint de usuarios requiere autenticación (para autocompletado)
+                // Endpoint de usuarios requiere autenticacion
                 .requestMatchers("/api/usuarios/**").authenticated()
                 // Cualquier otra solicitud debe estar autenticada
                 .anyRequest().authenticated()
             )
             
-            // 4. Configuración de sesión como Stateless (para JWT)
+            // Configuracion de sesion Stateless (para JWT)
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             
-            // 5. Agregar el filtro JWT personalizado antes del filtro de autenticación estándar
+            // Agregado de filtro JWT personalizado antes del filtro de autenticacion estandar
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // ATENCIÓN: Se eliminó el @Bean public PasswordEncoder... 
-    // Ahora es responsabilidad de com.epu.prototipo.config.SecurityBeans.java
-
-    // Bean de configuración de CORS
+    // Bean configuracion de CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // ** CONFIGURACIÓN CLAVE PARA EL FUNCIONAMIENTO DEL HTML **
-        // Permitir el origen de Vite (5173), Live Server (5500) y 'null' (para abrir el archivo directo)
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://127.0.0.1:5500", "http://localhost:3000", "null")); 
+        // !!! revisar Importante para que funcione el HTML 
+        // Permitir el origen de Vite (5173, 5174), Live Server (5500) y 'null' (para abrir el archivo directo)
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5500", "http://localhost:3000", "null")); 
         
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Access-Control-Allow-Origin"));
         configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // Aplicar la configuración CORS a todas las rutas
+        // Aplicar la configuracion CORS a todas las rutas
         source.registerCorsConfiguration("/**", configuration); 
         return source;
     }
