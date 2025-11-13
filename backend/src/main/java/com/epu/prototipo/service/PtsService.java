@@ -1,8 +1,10 @@
+// ...existing code...
 package com.epu.prototipo.service;
 
 import com.epu.prototipo.dto.CerrarPtsRequest;
 import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
+// ...existing code...
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import org.springframework.stereotype.Service;
@@ -14,57 +16,56 @@ import java.util.concurrent.ExecutionException;
 import java.time.LocalDateTime;
 import javax.annotation.Nullable;
 
-/**
- * Servicio principal para la gestión de Permisos de Trabajo Seguro (PTS) en Firestore.
- */
+// Servicio principal para la gestión de Permisos de Trabajo Seguro (PTS) en Firestore.
 @Service
 @Profile("default")
 public class PtsService implements IPtsService {
 
     private final Firestore firestore;
+    private final EquipoService equipoService;
     private static final String COLLECTION_NAME = "permisos-trabajo-seguro";
 
-    // Inyección de la instancia de Firestore configurada
-    public PtsService(Firestore firestore) {
+    // Para inyectar la instancia de Firestore y EquipoService configurada
+    public PtsService(Firestore firestore, EquipoService equipoService) {
         this.firestore = firestore;
+        this.equipoService = equipoService;
     }
 
     /**
-     * Busca PTS aplicando filtros opcionales por equipo, usuario, área, estado y fecha.
-     * Implementa búsqueda avanzada con filtros Firestore y procesamiento en memoria.
+     * Buscar PTS con filtros opcionales por equipo, usuario, area, estado y fecha.
+     * Busqueda avanzada con filtros Firestore y procesamiento en memoria.
      * 
-     * @param equipo Filtro por nombre de equipo (búsqueda parcial)
-     * @param usuario Filtro por nombre de solicitante o legajo (búsqueda parcial) 
-     * @param area Filtro por área (búsqueda parcial)
-     * @param estado Filtro por estado RTO (búsqueda exacta)
-     * @param fechaInicio Filtro por fecha de inicio (búsqueda exacta)
+     * @param equipo Filtro por nombre de equipo
+     * @param usuario Filtro por nombre o legajo 
+     * @param area Filtro por area 
+     * @param estado Filtro por estado RTO 
+     * @param fechaInicio Filtro por fecha de inicio
      * @return Lista filtrada de PTS
      */
     public List<PermisoTrabajoSeguro> buscarPts(@Nullable String equipo, @Nullable String usuario, @Nullable String area, @Nullable String estado, @Nullable String fechaInicio) {
         List<PermisoTrabajoSeguro> ptsList = new ArrayList<>();
         
         try {
-            // 1. Construir query base de Firestore
+            // Query base de Firestore
             Query baseQuery = firestore.collection(COLLECTION_NAME);
             
-            // 2. Aplicar filtro de equipo (si existe) - procesaremos en memoria para mayor flexibilidad
-            // Nota: Firestore requiere índices para range queries, por lo que aplicaremos este filtro en memoria
+            // Filtro de equipo (si existe) (en memoria)
             
-            // 3. Aplicar filtro de estado RTO (si existe) - búsqueda exacta
+            // Filtro de estado RTO (si existe)
             if (estado != null && !estado.trim().isEmpty()) {
                 baseQuery = baseQuery.whereEqualTo("rtoEstado", estado.trim().toUpperCase());
             }
             
-            // 4. Aplicar filtro de fecha de inicio (si existe) - búsqueda exacta
+            // Filtro de fecha de inicio (si existe)
             if (fechaInicio != null && !fechaInicio.trim().isEmpty()) {
                 baseQuery = baseQuery.whereEqualTo("fechaInicio", fechaInicio.trim());
             }
             
-            // 5. Ejecutar query
+            // Ejecuta query
             ApiFuture<QuerySnapshot> future = baseQuery.get();
             List<QueryDocumentSnapshot> documents = future.get().getDocuments();
             
-            // 6. Mapear documentos a objetos
+            // Mapear documentos a objetos
             for (QueryDocumentSnapshot document : documents) {
                 PermisoTrabajoSeguro pts = document.toObject(PermisoTrabajoSeguro.class);
                 pts.setId(document.getId());
@@ -77,12 +78,12 @@ public class PtsService implements IPtsService {
             ptsList = createSimulatedPts();
         }
         
-        // 7. Aplicar filtros en memoria (para campos que no soportan query Firestore eficiente)
+        // Filtros en memoria (para campos que no soportan query Firestore)
         return aplicarFiltrosEnMemoria(ptsList, equipo, usuario, area);
     }
     
     /**
-     * Método de compatibilidad: mantiene la funcionalidad del método original getAllPts()
+     * Por compatibilidad: para mantener la funcionalidad del metodo original getAllPts()
      * @return Lista completa de PTS sin filtros
      */
     public List<PermisoTrabajoSeguro> getAllPts() {
@@ -90,13 +91,12 @@ public class PtsService implements IPtsService {
     }
     
     /**
-     * Aplica filtros que requieren procesamiento en memoria después de la consulta Firestore.
-     * Esto es necesario para campos que no tienen índices o para búsquedas OR complejas.
+     * Aplica filtros que requieren procesamiento en memoria despues de la consulta Firestore.
      * 
      * @param ptsList Lista base de PTS a filtrar
-     * @param equipo Filtro por nombre de equipo (búsqueda parcial e insensible)
-     * @param usuario Filtro por nombre o legajo de solicitante (búsqueda parcial e insensible)
-     * @param area Filtro por área (búsqueda parcial e insensible) 
+     * @param equipo Filtro por nombre de equipo 
+     * @param usuario Filtro por nombre o legajo 
+     * @param area Filtro por area
      * @return Lista filtrada
      */
     private List<PermisoTrabajoSeguro> aplicarFiltrosEnMemoria(List<PermisoTrabajoSeguro> ptsList, String equipo, String usuario, String area) {
@@ -112,10 +112,10 @@ public class PtsService implements IPtsService {
     }
     
     /**
-     * Filtro en memoria para usuario: busca en legajo y nombre del solicitante
+     * Filtro en memoria para usuario: busca en legajo y nombre
      * @param pts PTS a evaluar
      * @param usuario Texto a buscar (puede ser null)
-     * @return true si el PTS coincide con el filtro o si no hay filtro
+     * @return true si el PTS = filtro o si no hay filtro
      */
     private boolean filtrarPorUsuario(PermisoTrabajoSeguro pts, String usuario) {
         if (usuario == null || usuario.trim().isEmpty()) {
@@ -124,13 +124,13 @@ public class PtsService implements IPtsService {
         
         String usuarioLower = usuario.trim().toLowerCase();
         
-        // Buscar en legajo del solicitante
+        // Buscar legajo
         if (pts.getSolicitanteLegajo() != null && 
             pts.getSolicitanteLegajo().toLowerCase().contains(usuarioLower)) {
             return true;
         }
         
-        // Buscar en nombre del solicitante
+        // Buscar nombre
         if (pts.getNombreSolicitante() != null && 
             pts.getNombreSolicitante().toLowerCase().contains(usuarioLower)) {
             return true;
@@ -140,10 +140,10 @@ public class PtsService implements IPtsService {
     }
     
     /**
-     * Filtro en memoria para equipo: búsqueda parcial e insensible a mayúsculas
+     * Filtro en memoria para equipo
      * @param pts PTS a evaluar
      * @param equipo Texto a buscar (puede ser null)
-     * @return true si el PTS coincide con el filtro o si no hay filtro
+     * @return true si el PTS = filtro o si no hay filtro
      */
     private boolean filtrarPorEquipo(PermisoTrabajoSeguro pts, String equipo) {
         if (equipo == null || equipo.trim().isEmpty()) {
@@ -158,10 +158,10 @@ public class PtsService implements IPtsService {
     }
     
     /**
-     * Filtro en memoria para área: búsqueda parcial e insensible a mayúsculas
+     * Filtro en memoria para areae
      * @param pts PTS a evaluar
      * @param area Texto a buscar (puede ser null)
-     * @return true si el PTS coincide con el filtro o si no hay filtro
+     * @return true si el PTS = filtro o si no hay filtro
      */
     private boolean filtrarPorArea(PermisoTrabajoSeguro pts, String area) {
         if (area == null || area.trim().isEmpty()) {
@@ -175,14 +175,12 @@ public class PtsService implements IPtsService {
         return pts.getArea().toLowerCase().contains(area.trim().toLowerCase());
     }
 
-    /**
-     * Crea datos simulados para pruebas cuando Firestore no está disponible
-     * Datos enriquecidos para probar filtros de búsqueda
-     */
+    // Para crear datos simulados para pruebas cuando Firestore no está disponible
+    
     private List<PermisoTrabajoSeguro> createSimulatedPts() {
         List<PermisoTrabajoSeguro> simulatedList = new ArrayList<>();
         
-        // PTS 1 - Mantenimiento eléctrico
+        // PTS 1 - Mantenimiento electrico
         PermisoTrabajoSeguro pts1 = new PermisoTrabajoSeguro();
         pts1.setId("PTS-SIM-001");
         pts1.setDescripcionTrabajo("Mantenimiento eléctrico en tablero principal");
@@ -197,7 +195,7 @@ public class PtsService implements IPtsService {
         pts1.setRtoEstado("PENDIENTE");
         simulatedList.add(pts1);
         
-        // PTS 2 - Reparación mecánica
+        // PTS 2 - Reparacion mecanica
         PermisoTrabajoSeguro pts2 = new PermisoTrabajoSeguro();
         pts2.setId("PTS-SIM-002");
         pts2.setDescripcionTrabajo("Reparación de tubería de vapor");
@@ -227,7 +225,7 @@ public class PtsService implements IPtsService {
         pts3.setRtoEstado("PENDIENTE");
         simulatedList.add(pts3);
         
-        // PTS 4 - Control de calidad
+        // PTS 4 - Control de intrumento
         PermisoTrabajoSeguro pts4 = new PermisoTrabajoSeguro();
         pts4.setId("PTS-SIM-004");
         pts4.setDescripcionTrabajo("Calibración de instrumentos de medición");
@@ -245,23 +243,27 @@ public class PtsService implements IPtsService {
         return simulatedList;
     }
 
-    /**
-     * Crea un nuevo PTS y lo guarda en Firestore.
-     */
+    // Para crear un nuevo PTS y guardar en Firestore.
+     
     public PermisoTrabajoSeguro createPts(PermisoTrabajoSeguro pts) {
         if (pts.getSolicitanteLegajo() == null || pts.getSupervisorLegajo() == null) {
-             throw new RuntimeException("Legajo de solicitante o supervisor no pueden ser nulos.");
+            throw new RuntimeException("Legajo de solicitante o supervisor no pueden ser nulos.");
         }
-        
+        // Validar que el equipo exista antes de crear el PTS
         try {
-            // El ID será generado por Firestore
+            equipoService.getEquipoByTag(pts.getEquipoOInstalacion());
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Error al crear PTS: " + e.getMessage());
+        }
+        try {
+            // El ID generado por Firestore
             ApiFuture<DocumentReference> future = firestore.collection(COLLECTION_NAME).add(pts);
             DocumentReference docRef = future.get();
             pts.setId(docRef.getId()); // Asignar el ID generado al objeto de retorno
             System.out.println("PTS creado con ID: " + docRef.getId());
             return pts;
         } catch (InterruptedException | ExecutionException e) {
-            // Si Firestore falla, simular creación
+            // Si Firestore falla, simula creado
             System.err.println("Firestore no disponible para creación, simulando: " + e.getMessage());
             pts.setId("PTS-SIM-" + System.currentTimeMillis());
             System.out.println("PTS simulado creado con ID: " + pts.getId());
@@ -270,10 +272,10 @@ public class PtsService implements IPtsService {
     }
 
     // *******************************************************************
-    // 3. IMPLEMENTACIÓN DE FIRMA BIOMÉTRICA (HU-005)
+    // !!! revisar IMPLEMENTACION DE FIRMA BIOMETRICA (HU-005)
     // *******************************************************************
     /**
-     * Actualiza un PTS para registrar la firma (biométrica simulada) del supervisor.
+     * Actualizar un PTS para registrar la firma simulada del supervisor.
      * @param request Datos de la firma: ptsId, dniFirmante y firmaBase64 (placeholder).
      * @return El PTS actualizado.
      */
@@ -287,14 +289,14 @@ public class PtsService implements IPtsService {
             throw new IllegalArgumentException("PTS ID no puede ser nulo");
         }
         DocumentReference docRef = firestore.collection(COLLECTION_NAME).document(ptsId);
-        
+
         try {
-            // 1. Obtener el PTS actual
+            // Para obtener el PTS actual
             ApiFuture<DocumentSnapshot> future = docRef.get();
             DocumentSnapshot document = future.get();
 
             if (!document.exists()) {
-                // Retornamos null para que el Controller devuelva NOT_FOUND
+                // Para retornar null y que el Controller de NOT_FOUND
                 return null; 
             }
 
@@ -303,33 +305,37 @@ public class PtsService implements IPtsService {
                 throw new RuntimeException("Error al deserializar el documento PTS");
             }
 
-            // 2. Validación de Seguridad: ¿El firmante es el supervisor asignado o un supervisor autorizado?
-            // (Asumimos que el DNI/Legajo del request viene del JWT/Usuario logueado)
-            // Permitir SUP222 como supervisor genérico para pruebas
+            // Validación de Seguridad si firmante es supervisor asignado o un supervisor autorizado
             boolean isAuthorizedSupervisor = "SUP222".equals(request.getDniFirmante()) || 
                                            request.getDniFirmante().equals(pts.getSupervisorLegajo());
-            
             if (!isAuthorizedSupervisor) {
                 throw new SecurityException("DNI del firmante no autorizado para este PTS. Supervisor asignado: " + pts.getSupervisorLegajo());
             }
-            
-            // 3. Validación de Estado: ¿Ya está firmado?
+            // Validación de Estado "firmado"
             if (pts.getFirmaSupervisorBase64() != null) {
                 throw new IllegalStateException("El PTS ID " + request.getPtsId() + " ya ha sido firmado.");
             }
 
-            // 4. Actualizar el documento con los datos de la firma
+            // Para actualizar el documento con los datos de la firma
             docRef.update(
                 "firmaSupervisorBase64", request.getFirmaBase64(),
                 "dniSupervisorFirmante", request.getDniFirmante(),
                 "fechaHoraFirmaSupervisor", LocalDateTime.now()
-            ).get(); // El .get() bloquea hasta que la actualización esté completa
+            ).get();
 
-            // 5. Devolver el objeto actualizado (opcional, pero útil para frontend)
+            // Para devolver el objeto actualizado 
             pts.setFirmaSupervisorBase64(request.getFirmaBase64());
             pts.setDniSupervisorFirmante(request.getDniFirmante());
             pts.setFechaHoraFirmaSupervisor(LocalDateTime.now());
             pts.setId(document.getId());
+
+            // Actualizar estado del equipo a DESHABILITADO
+            String tagEquipo = pts.getEquipoOInstalacion();
+            try {
+                equipoService.actualizarEstadoEquipo(tagEquipo, "DESHABILITADO");
+            } catch (RuntimeException e) {
+                System.out.println("ADVERTENCIA: PTS firmado, pero el equipo " + tagEquipo + " no se encontró para actualizar su estado.");
+            }
 
             return pts;
 
@@ -338,9 +344,7 @@ public class PtsService implements IPtsService {
         }
     }
 
-    /**
-     * Obtiene un PTS específico por su ID.
-     */
+    // Para obtener un PTS específico por su ID.
     @Override
     public PermisoTrabajoSeguro getPtsById(String id) {
         if (id == null) {
@@ -373,10 +377,10 @@ public class PtsService implements IPtsService {
     }
 
     /**
-     * Cierra un PTS y lo marca como "Retorno a Operaciones" (RTO).
+     * Cierra  PTS y lo marca como RTO
      * 
-     * @param request Datos del cierre incluyendo responsable y observaciones
-     * @return El PTS cerrado y actualizado
+     * @param request 
+     * @return PTS cerrado y actualizado
      */
     @Override
     public PermisoTrabajoSeguro cerrarPts(CerrarPtsRequest request) {
@@ -393,7 +397,7 @@ public class PtsService implements IPtsService {
         }
 
         try {
-            // 1. Obtener referencia del documento
+            // Para tener referencia del documento
             String ptsId = request.getPtsId();
             if (ptsId == null) {
                 throw new IllegalArgumentException("PTS ID no puede ser nulo");
@@ -402,50 +406,80 @@ public class PtsService implements IPtsService {
             ApiFuture<DocumentSnapshot> future = docRef.get();
             DocumentSnapshot document = future.get();
 
-            // 2. Verificar si el documento existe
+            // Para verificar si el documento existe
             if (!document.exists()) {
-                return null; // El controlador manejará el 404
+                return null; // El controlador maneja el 404
             }
 
-            // 3. Convertir a objeto para validaciones
+            // Para convertir a objeto para validaciones
             PermisoTrabajoSeguro pts = document.toObject(PermisoTrabajoSeguro.class);
             if (pts == null) {
                 throw new RuntimeException("Error al procesar el PTS ID: " + request.getPtsId());
             }
 
-            // 4. Validaciones de estado del PTS
+            // Para validar estado del PTS
             if ("CERRADO".equals(pts.getRtoEstado())) {
                 throw new IllegalStateException("El PTS ID " + request.getPtsId() + " ya ha sido cerrado.");
             }
-            
             if ("CANCELADO".equals(pts.getRtoEstado())) {
                 throw new IllegalStateException("El PTS ID " + request.getPtsId() + " está cancelado y no puede ser cerrado.");
             }
 
-            // 5. Validación de seguridad: verificar que el PTS esté firmado antes del cierre
+            // Para validar seguridad, que el PTS este firmado antes del cierre
             if (pts.getFirmaSupervisorBase64() == null || pts.getFirmaSupervisorBase64().trim().isEmpty()) {
                 throw new IllegalStateException("El PTS debe estar firmado antes de ser cerrado. Use /api/pts/firmar primero.");
             }
 
-            // 6. Actualizar el documento con los datos de cierre
+            // Para actualizar el documento con los datos de cierre
             docRef.update(
                 "rtoEstado", "CERRADO",
                 "rtoResponsableCierreLegajo", request.getRtoResponsableCierreLegajo(),
                 "rtoObservaciones", request.getRtoObservaciones(),
                 "rtoFechaHoraCierre", LocalDateTime.now()
-            ).get(); // El .get() bloquea hasta que la actualización esté completa
+            ).get(); 
 
-            // 7. Devolver el objeto actualizado
+            // Para devolver el objeto actualizado
             pts.setRtoEstado("CERRADO");
             pts.setRtoResponsableCierreLegajo(request.getRtoResponsableCierreLegajo());
             pts.setRtoObservaciones(request.getRtoObservaciones());
             pts.setRtoFechaHoraCierre(LocalDateTime.now());
             pts.setId(document.getId());
 
+            // Actualizar estado del equipo a HABILITADO
+            String tagEquipo = pts.getEquipoOInstalacion();
+            try {
+                equipoService.actualizarEstadoEquipo(tagEquipo, "HABILITADO");
+            } catch (RuntimeException e) {
+                System.out.println("ADVERTENCIA: PTS cerrado, pero el equipo " + tagEquipo + " no se encontró para actualizar su estado.");
+            }
+
             return pts;
 
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException("Error al cerrar el PTS ID: " + request.getPtsId(), e);
         }
+    }
+
+    /**
+     * Obtiene el último número de PTS creado para una fecha dada (formato YYYY-MM-DD).
+     * Busca los PTS de esa fecha y extrae el mayor número correlativo.
+     * Si no hay ninguno, retorna 0.
+     */
+    @Override
+    public int obtenerUltimoNumeroPtsPorFecha(String fechaInicio) {
+        List<PermisoTrabajoSeguro> ptsList = buscarPts(null, null, null, null, fechaInicio);
+        int max = 0;
+        for (PermisoTrabajoSeguro pts : ptsList) {
+            // Se asume que el ID tiene formato "PTS-YYYYMMDD-XXX" o similar
+            String id = pts.getId();
+            if (id != null && id.matches("PTS-\\d{8}-\\d+")) {
+                String[] partes = id.split("-");
+                try {
+                    int num = Integer.parseInt(partes[2]);
+                    if (num > max) max = num;
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        return max;
     }
 }

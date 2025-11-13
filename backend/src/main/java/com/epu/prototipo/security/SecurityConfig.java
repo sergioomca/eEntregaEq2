@@ -13,7 +13,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
-import java.util.List;
+//import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -44,6 +44,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/usuarios/test").permitAll()
                 // Endpoint de usuarios requiere autenticacion
                 .requestMatchers("/api/usuarios/**").authenticated()
+                // Endpoints de equipos requieren autenticacion
+                .requestMatchers("/api/equipos/**").authenticated()
                 // Cualquier otra solicitud debe estar autenticada
                 .anyRequest().authenticated()
             )

@@ -18,31 +18,38 @@ public class PtsController {
 
     private final IPtsService ptsService;
 
-    // Inyección del servicio para manejar la lógica de Firestore
+    // Servicio para manejar la logica de Firestore
     public PtsController(IPtsService ptsService) {
         this.ptsService = ptsService;
     }
 
+
+    // *********************************************************
+    // ENDPOINT: Obtener el último número de PTS para una fecha
+    // *********************************************************
+    @GetMapping("/ultimo-numero")
+    public ResponseEntity<Integer> getUltimoNumeroPts(@RequestParam String fechaInicio) {
+        try {
+            int ultimoNumero = ptsService.obtenerUltimoNumeroPtsPorFecha(fechaInicio);
+            return ResponseEntity.ok(ultimoNumero);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(-1, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // *******************************************************************
-    // 1. ENDPOINT: BÚSQUEDA DE PTS CON FILTROS OPCIONALES
+    // ENDPOINT: Busqueda de PTS con filtros opcionales
     // *******************************************************************
     /**
-     * Busca PTS aplicando filtros opcionales.
-     * Todos los parámetros son opcionales - sin parámetros devuelve todos los PTS.
+     * Todos los parametros son opcionales - omitidos, devuelve todos los PTS.
      * 
-     * @param equipo Filtro por nombre de equipo (búsqueda parcial)
-     * @param usuario Filtro por nombre o legajo de solicitante (búsqueda parcial)
-     * @param area Filtro por área (búsqueda parcial)
-     * @param estado Filtro por estado RTO: PENDIENTE, CERRADO (búsqueda exacta)
-     * @param fechaInicio Filtro por fecha de inicio en formato YYYY-MM-DD (búsqueda exacta)
+     * @param equipo Filtro por nombre de equipo 
+     * @param usuario Filtro por nombre o legajo de solicitante 
+     * @param area Filtro por area 
+     * @param estado Filtro por estado RTO: PENDIENTE, CERRADO 
+     * @param fechaInicio Filtro por fecha de inicio en formato AAAA-MM-DD 
      * @return Lista filtrada de PTS
      * 
-     * Ejemplos de uso:
-     * GET /api/pts - Todos los PTS
-     * GET /api/pts?equipo=bomba - PTS que contengan "bomba" en equipoOInstalacion
-     * GET /api/pts?usuario=juan - PTS del solicitante que contenga "juan"
-     * GET /api/pts?estado=PENDIENTE - Solo PTS pendientes
-     * GET /api/pts?area=mantenimiento&estado=CERRADO - PTS cerrados del área mantenimiento
      */
     @GetMapping
     public ResponseEntity<List<PermisoTrabajoSeguro>> searchPts(
@@ -53,19 +60,19 @@ public class PtsController {
             @RequestParam(required = false) String fechaInicio) {
         
         try {
-            // Llama al nuevo método de búsqueda del servicio
+            // Llamada al metodo de busqueda del servicio
             List<PermisoTrabajoSeguro> resultados = ptsService.buscarPts(equipo, usuario, area, estado, fechaInicio);
             return ResponseEntity.ok(resultados);
         } catch (RuntimeException e) {
-            // En caso de error, devolver lista vacía y log del error
+            // En error, devolver lista vacia y log del error
             System.err.println("Error en búsqueda de PTS: " + e.getMessage());
             return ResponseEntity.ok(java.util.Collections.emptyList());
         }
     }
 
-    // *******************************************************************
-    // 2. ENDPOINT: OBTENER PTS POR ID (Para DetallePTS)
-    // *******************************************************************
+    // ****************************************************
+    // ENDPOINT: Obtener los PTS por ID (Para DetallePTS)
+    // ****************************************************
     @GetMapping("/{id}")
     public ResponseEntity<?> getPtsById(@PathVariable String id) {
         try {
@@ -86,26 +93,26 @@ public class PtsController {
         }
     }
 
-    // *******************************************************************
-    // 3. ENDPOINT: CREAR NUEVO PTS (Nuevo método para el formulario)
-    // *******************************************************************
+    // ****************************
+    // ENDPOINT: Crear nuevo PTS 
+    // ****************************
     @PostMapping
     public ResponseEntity<?> createPts(@RequestBody PermisoTrabajoSeguro pts) {
         try {
-            // El objeto PermisoTrabajoSeguro se recibe del cuerpo de la solicitud (JSON)
+            // El objeto PermisoTrabajoSeguro se recibede la solicitud (JSON)
             // Llama al servicio para persistir el objeto en Firestore
             PermisoTrabajoSeguro newPts = ptsService.createPts(pts);
             
             // Retorna el objeto creado (con el ID de Firestore) y el estado 201 Created
             return new ResponseEntity<>(newPts, HttpStatus.CREATED);
         } catch (RuntimeException e) {
-            // Manejo de errores de Firestore
+            // Para manejar errores de Firestore
             return new ResponseEntity<>("Error al crear el PTS: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     // *******************************************************************
-    // 3. ENDPOINT: FIRMAR PTS (HU-005 - Firma Biométrica)
+    // ENDPOINT: Firmar PTS (HU-005 - Firma Biometrica)
     // *******************************************************************
     @PutMapping("/firmar")
     public ResponseEntity<?> firmarPts(@RequestBody FirmaPtsRequest request) {
@@ -129,9 +136,9 @@ public class PtsController {
         }
     }
 
-    // *******************************************************************
-    // 4. ENDPOINT: CERRAR PTS (HU-019 - Retorno a Operaciones)
-    // *******************************************************************
+    // *********************************************************
+    // ENDPOINT: Cerrar PTS (HU-019 - Retorno a Operaciones)
+    // *********************************************************
     @PutMapping("/cerrar")
     public ResponseEntity<?> cerrarPts(@RequestBody CerrarPtsRequest request) {
         try {
@@ -144,7 +151,7 @@ public class PtsController {
                 return new ResponseEntity<>("El legajo del responsable de cierre es requerido", HttpStatus.BAD_REQUEST);
             }
             
-            // Llama al servicio para cerrar el PTS
+            // Llamada al servicio para cerrar el PTS
             PermisoTrabajoSeguro ptsCerrado = ptsService.cerrarPts(request);
             
             if (ptsCerrado == null) {

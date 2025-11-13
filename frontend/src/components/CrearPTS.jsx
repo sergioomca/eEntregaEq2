@@ -1,28 +1,122 @@
+
 import React, { useState, useEffect } from 'react';
+import { fetchSupervisores } from '../api/supervisores';
 
 const CrearPTS = () => {
-  // Estado para los datos del formulario
-  const [formData, setFormData] = useState({
-    numeroPermiso: '',
-    fecha: new Date().toISOString().split('T')[0], // Fecha actual por defecto (fechaInicio)
-    horaInicio: '',
-    horaFin: '',
-    ubicacion: '',
-    descripcionTrabajo: '',
-    solicitanteLegajo: '',
-    nombreSolicitante: '',
-    area: '',
-    solicitante: '',
-    supervisor: '',
-    responsableAreaTrabajo: '',
-    requiereAnalisisRiesgo: false,
-    requiereProcedimientoEspecifico: false,
-    observaciones: '',
-    riesgosControles: [{ riesgo: '', control: '' }],
-    equiposSeguridad: [{ equipo: '', cantidad: 1 }]
-  });
+  // Estado para el nombre real del solicitante
+  const [nombreSolicitante, setNombreSolicitante] = useState('');
+  // Lista de supervisores disponibles
+  const [supervisores, setSupervisores] = useState([]);
 
-  // Estado para validación
+  // Cargar supervisores al montar el componente
+  useEffect(() => {
+    fetchSupervisores().then(setSupervisores);
+  }, []);
+  // Lista de equipos disponibles
+  const [equiposDisponibles, setEquiposDisponibles] = useState([]);
+
+  // Cargar equipos al montar el componente
+  useEffect(() => {
+    fetch('/api/equipos')
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setEquiposDisponibles(Array.isArray(data) ? data : []))
+      .catch(() => setEquiposDisponibles([]));
+  }, []);
+    // Estado para los datos del formulario
+
+    // Generar número de permiso consultando al backend
+    async function fetchNumeroPermiso(fecha) {
+      // fecha en formato YYYY-MM-DD
+      const d = new Date(fecha);
+      const aa = String(d.getFullYear()).slice(-2);
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      try {
+        const res = await fetch(`/api/pts/ultimo-numero?fechaInicio=${fecha}`);
+        if (res.ok) {
+          const ultimo = await res.json();
+          const next = (parseInt(ultimo, 10) || 0) + 1;
+          return `PTS-${aa}${mm}${dd}-${String(next).padStart(3, '0')}`;
+        }
+      } catch {}
+      // fallback
+      return `PTS-${aa}${mm}${dd}-001`;
+    }
+
+    const [formData, setFormData] = useState(() => ({
+      numeroPermiso: '',
+      fecha: new Date().toISOString().split('T')[0],
+      horaInicio: '',
+      horaFin: '',
+      ubicacion: '',
+      descripcionTrabajo: '',
+      solicitanteLegajo: '',
+      nombreSolicitante: '',
+      // area eliminado
+      solicitante: '',
+      supervisor: '',
+      responsableAreaTrabajo: '',
+      requiereAnalisisRiesgo: false,
+      requiereProcedimientoEspecifico: false,
+      observaciones: '',
+      riesgosControles: [{ riesgo: '', control: '' }],
+      equiposSeguridad: [{ equipo: '', cantidad: 1 }]
+    }));
+
+    // Al cargar la fecha, obtener el número de permiso correcto
+    useEffect(() => {
+      async function updateNumeroPermiso() {
+        const numero = await fetchNumeroPermiso(formData.fecha);
+        setFormData(prev => ({ ...prev, numeroPermiso: numero }));
+      }
+      updateNumeroPermiso();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData.fecha]);
+  // Estados para validación de equipo
+  const [equipoError, setEquipoError] = useState(null);
+  const [equipoLoading, setEquipoLoading] = useState(false);
+  const [equipoDescripcion, setEquipoDescripcion] = useState("");
+
+  // Validar equipo por tag (solo 1 equipo por PTS)
+  const handleValidarEquipo = async () => {
+    const token = localStorage.getItem('authToken');
+    const tag = formData.equiposSeguridad[0]?.equipo?.trim();
+    if (!tag) {
+      setEquipoDescripcion("");
+      setEquipoError("El tag del equipo es obligatorio.");
+      return;
+    }
+    setEquipoLoading(true);
+    setEquipoError(null);
+    setEquipoDescripcion("");
+    try {
+      const response = await fetch(`/api/equipos/${tag}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEquipoDescripcion(data.descripcion);
+        setEquipoError(null);
+      } else if (response.status === 404) {
+        setEquipoDescripcion("");
+        setEquipoError("Tag de equipo no encontrado.");
+      } else {
+        setEquipoDescripcion("");
+        setEquipoError("Error al validar el equipo.");
+      }
+    } catch (error) {
+      setEquipoDescripcion("");
+      setEquipoError("Error de conexión al validar equipo.");
+    } finally {
+      setEquipoLoading(false);
+    }
+  };
+
+// ...existing code...
+
+  // Estado para validacion
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
@@ -31,18 +125,29 @@ const CrearPTS = () => {
   const [searchError, setSearchError] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  // Estado de autenticación
+  // Estado de autenticacion
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState('');
 
-  // Verificar autenticación al montar el componente
+  // Obtener nombre real del solicitante desde la base de datos al cargar el usuario
+  useEffect(() => {
+    if (user && user.dni) {
+      const token = localStorage.getItem('authToken');
+      fetch(`/api/usuarios/${user.dni}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => setNombreSolicitante(data?.nombreCompleto || ''));
+    }
+  }, [user]);
+
+  // Verificar autenticacion 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     if (!token) {
       setSubmitMessage('Error: No estás autenticado. Por favor, inicia sesión.');
       return;
     }
-
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const currentTime = Date.now() / 1000;
@@ -59,12 +164,12 @@ const CrearPTS = () => {
         roles: payload.roles || []
       });
 
-      // Extraer rol principal
+      // Extraer rol principal y setearlo en el estado
       if (payload.roles && payload.roles.length > 0) {
-        setUserRole(payload.roles[0].replace('ROLE_', ''));
+        setUserRole(payload.roles[0]);
       }
 
-      // Auto-llenar campos basados en el usuario
+      // Autollenar campos basados en el usuario
       setFormData(prev => ({
         ...prev,
         solicitante: payload.nombre || payload.sub
@@ -76,7 +181,7 @@ const CrearPTS = () => {
     }
   }, []);
 
-  // Función para manejar cambios en inputs simples
+  // Funcion para manejar cambios en entradas simples
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -94,7 +199,7 @@ const CrearPTS = () => {
     }
   };
 
-  // Función para manejar cambios en arrays dinámicos
+  // Funcion para manejar cambios en arrays
   const handleArrayChange = (arrayName, index, field, value) => {
     setFormData(prev => {
       const newArray = [...prev[arrayName]];
@@ -103,7 +208,7 @@ const CrearPTS = () => {
     });
   };
 
-  // Función para agregar elementos a arrays dinámicos
+  // Funcion para agregar elementos a arrays
   const addArrayItem = (arrayName, defaultItem) => {
     setFormData(prev => ({
       ...prev,
@@ -111,7 +216,7 @@ const CrearPTS = () => {
     }));
   };
 
-  // Función para eliminar elementos de arrays dinámicos
+  // Funcion para eliminar elementos de arrays
   const removeArrayItem = (arrayName, index) => {
     setFormData(prev => ({
       ...prev,
@@ -119,117 +224,21 @@ const CrearPTS = () => {
     }));
   };
 
-  // Función para buscar usuario por legajo (Autocompletado HU-010)
-  const handleBuscarLegajo = async (legajo) => {
-    // Validar y limpiar entrada
-    const legajoTrimmed = legajo?.trim();
-    if (!legajoTrimmed) {
-      setSearchError('Por favor, ingrese un número de legajo');
-      return;
-    }
+  // handleBuscarLegajo eliminado
 
-    setSearchLoading(true);
-    setSearchError(null);
-
-    try {
-      // Obtener token de localStorage
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setSearchError('No está autenticado. Por favor, inicie sesión nuevamente.');
-        return;
-      }
-
-      // Llamar al endpoint de usuarios con legajo limpio
-      const response = await fetch(`http://localhost:8080/api/usuarios/${legajoTrimmed}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        // Success: usuario encontrado
-        const data = await response.json();
-        
-        // Actualizar formulario con datos del usuario
-        setFormData(prev => ({
-          ...prev,
-          nombreSolicitante: data.nombreCompleto,
-          area: data.sector // Mapear sector a area
-        }));
-        
-        // Limpiar error
-        setSearchError(null);
-        
-      } else if (response.status === 404) {
-        // Failure: usuario no encontrado (Criterio AC 2 y 3)
-        setFormData(prev => ({
-          ...prev,
-          nombreSolicitante: '',
-          area: ''
-        }));
-        
-        setSearchError('Legajo no encontrado. Verifique el número.');
-        
-      } else if (response.status === 401) {
-        // Token inválido o expirado
-        setFormData(prev => ({
-          ...prev,
-          nombreSolicitante: '',
-          area: ''
-        }));
-        
-        setSearchError('Sesión expirada. Por favor, inicie sesión nuevamente.');
-        
-      } else {
-        // Otros errores de respuesta
-        setFormData(prev => ({
-          ...prev,
-          nombreSolicitante: '',
-          area: ''
-        }));
-        
-        setSearchError(`Error del servidor (${response.status}). Intente nuevamente.`);
-      }
-      
-    } catch (error) {
-      console.error('Error al buscar usuario:', error);
-      
-      // Limpiar campos en caso de error
-      setFormData(prev => ({
-        ...prev,
-        nombreSolicitante: '',
-        area: ''
-      }));
-      
-      // Mostrar error de conexión más específico
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        setSearchError('Error de conexión. Verifique que el servidor esté funcionando.');
-      } else {
-        setSearchError('Error inesperado. Por favor, intente nuevamente.');
-      }
-      
-    } finally {
-      setSearchLoading(false);
-    }
-  };
-
-  // Validación del formulario
+  // Validacion del formulario
   const validateForm = () => {
     const newErrors = {};
 
-    // Campos requeridos según especificación HU-011
-    if (!formData.descripcionTrabajo.trim()) newErrors.descripcionTrabajo = 'La descripción del trabajo es obligatoria';
+    // Campos requeridos HU-011
+    if (!formData.descripcionTrabajo.trim()) newErrors.descripcionTrabajo = 'La descripcion del trabajo es obligatoria';
     if (!formData.solicitante.trim()) newErrors.solicitante = 'El solicitante es obligatorio';
     if (!formData.supervisor.trim()) newErrors.supervisor = 'El supervisor es obligatorio';
     
-    // Validaciones para autocompletado HU-010
-    if (!formData.solicitanteLegajo.trim()) newErrors.solicitanteLegajo = 'El legajo del solicitante es obligatorio';
-    if (!formData.nombreSolicitante.trim()) newErrors.nombreSolicitante = 'Debe buscar un usuario válido por legajo';
-    if (!formData.area.trim()) newErrors.area = 'El área se completa automáticamente al buscar el legajo';
+    // Validaciones de autocompletado eliminadas
+    // validación de área eliminada
     
-    // Campos adicionales requeridos (manteniendo validaciones existentes)
+    // Campos adicionales 
     if (!formData.numeroPermiso.trim()) newErrors.numeroPermiso = 'El número de permiso es obligatorio';
     if (!formData.fecha) newErrors.fecha = 'La fecha es obligatoria';
     if (!formData.horaInicio) newErrors.horaInicio = 'La hora de inicio es obligatoria';
@@ -242,7 +251,7 @@ const CrearPTS = () => {
       newErrors.horaFin = 'La hora de fin debe ser posterior a la hora de inicio';
     }
 
-    // Validar que la lista de riesgos no esté vacía (según especificación HU-011)
+    // Validar que la lista de riesgos no esté vacía (HU-011)
     if (formData.riesgosControles.length === 0 || !formData.riesgosControles[0].riesgo.trim()) {
       newErrors.riesgosControles = 'Debe especificar al menos un riesgo y su control';
     }
@@ -252,11 +261,16 @@ const CrearPTS = () => {
       newErrors.equiposSeguridad = 'Debe especificar al menos un equipo de seguridad';
     }
 
+    // Validar equipo (tag)
+    if (equipoError !== null) {
+      newErrors.equiposSeguridad = equipoError;
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Función para enviar el formulario
+  // Funcion para enviar el formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -276,29 +290,29 @@ const CrearPTS = () => {
         // Campos básicos mapeados
         id: formData.numeroPermiso,
         fechaInicio: formData.fecha,
-        fechaFin: formData.fecha, // Por ahora usamos la misma fecha
+        fechaFin: formData.fecha, 
         horaInicio: formData.horaInicio,
         horaFin: formData.horaFin,
         ubicacion: formData.ubicacion,
         descripcionTrabajo: formData.descripcionTrabajo,
-        tareaDetallada: formData.descripcionTrabajo, // Mapear a tareaDetallada también
+        tareaDetallada: formData.descripcionTrabajo, 
         
         // Campos de personal
         nombreSolicitante: formData.solicitante,
-        solicitanteLegajo: user?.dni || '', // Usar DNI del usuario como legajo
-        supervisorLegajo: formData.supervisor, // Asumimos que el supervisor es un legajo/DNI
-        // Nota: responsableAreaTrabajo se almacena en observaciones por ahora
+        solicitanteLegajo: user?.dni || '', // !!! ver si queda asi Usar DNI del usuario como legajo
+        supervisorLegajo: formData.supervisor, // El supervisor es un legajo/DNI
+        // !!! Nota: responsableAreaTrabajo se almacena en observaciones por ahora
         observaciones: `${formData.observaciones}\n\nResponsable del Área: ${formData.responsableAreaTrabajo}`.trim(),
         
         // Campos adicionales del modelo
-        area: formData.ubicacion, // Por ahora mapear ubicación a área
+        area: formData.ubicacion, // este campo es para la ubicación, no para el área del solicitante
         equipoOInstalacion: formData.equiposSeguridad.map(e => e.equipo).join(', '), // String con equipos
-        tipoTrabajo: 'GENERAL', // Valor por defecto
+        tipoTrabajo: 'GENERAL', 
         
         // Mapear riesgos y controles al formato backend
         riesgosControles: formData.riesgosControles.map(rc => ({
           peligro: rc.riesgo,
-          consecuencia: 'A definir', // Valor por defecto
+          consecuencia: 'A definir', 
           controlRequerido: rc.control
         })),
         
@@ -329,7 +343,7 @@ const CrearPTS = () => {
         const result = await response.json();
         setSubmitMessage(`¡PTS creado exitosamente! Número: ${result.numeroPermiso || formData.numeroPermiso}`);
         
-        // Limpiar formulario después del éxito
+        // Limpiar formulario despues del exito
         setTimeout(() => {
           resetForm();
         }, 2000);
@@ -345,18 +359,20 @@ const CrearPTS = () => {
     }
   };
 
-  // Función para resetear el formulario
-  const resetForm = () => {
+  // Funcion para resetear el formulario
+  const resetForm = async () => {
+    const fechaHoy = new Date().toISOString().split('T')[0];
+    const numeroPermiso = await fetchNumeroPermiso(fechaHoy);
     setFormData({
-      numeroPermiso: '',
-      fecha: new Date().toISOString().split('T')[0],
+      numeroPermiso,
+      fecha: fechaHoy,
       horaInicio: '',
       horaFin: '',
       ubicacion: '',
       descripcionTrabajo: '',
       solicitanteLegajo: '',
       nombreSolicitante: '',
-      area: '',
+      // area eliminado
       solicitante: user?.nombre || '',
       supervisor: '',
       responsableAreaTrabajo: '',
@@ -400,7 +416,8 @@ const CrearPTS = () => {
           <div className="bg-epu-primary text-white p-6 rounded-t-lg">
             <h1 className="text-2xl font-bold">Crear Permiso de Trabajo Seguro</h1>
             <p className="mt-2 opacity-90">
-              Usuario: {user.nombre} | Rol: {userRole}
+              Usuario: {user.nombre}
+              {userRole && ` | Rol: ${userRole}`}
             </p>
           </div>
 
@@ -416,8 +433,8 @@ const CrearPTS = () => {
                   type="text"
                   name="numeroPermiso"
                   value={formData.numeroPermiso}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary ${
+                  readOnly
+                  className={`w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-epu-primary ${
                     errors.numeroPermiso ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Ej: PTS-2025-001"
@@ -477,6 +494,48 @@ const CrearPTS = () => {
               </div>
             </div>
 
+            {/* Equipo a Intervenir */}
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Equipo a Intervenir *</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 border border-gray-200 rounded-lg">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tag de Equipo
+                  </label>
+                  <div className="flex gap-2">
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
+                      value={formData.equiposSeguridad[0]?.equipo || ''}
+                      onChange={e => handleArrayChange('equiposSeguridad', 0, 'equipo', e.target.value)}
+                      onBlur={handleValidarEquipo}
+                    >
+                      <option value="">-- Seleccione un equipo --</option>
+                      {equiposDisponibles.map(eq => (
+                        <option key={eq.tag} value={eq.tag}>{eq.tag} - {eq.descripcion}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Estado del equipo */}
+                  {(() => {
+                    const tag = formData.equiposSeguridad[0]?.equipo;
+                    if (!tag) return null;
+                    const equipo = equiposDisponibles.find(eq => eq.tag === tag);
+                    if (!equipo) return null;
+                    return (
+                      <p className={`mt-2 text-sm font-semibold ${equipo.estado === 'HABILITADO' ? 'text-green-700' : 'text-red-600'}`}>
+                        Estado: {equipo.estado === 'HABILITADO' ? 'Habilitado' : 'Deshabilitado'}
+                      </p>
+                    );
+                  })()}
+                  {equipoLoading && <p className="text-gray-500 text-sm mt-1">Validando equipo...</p>}
+                  {equipoError && <p className="text-red-600 text-sm mt-1">{equipoError}</p>}
+                </div>
+              </div>
+              {errors.equiposSeguridad && <p className="mt-1 text-sm text-red-600">{errors.equiposSeguridad}</p>}
+            </div>
+
             {/* Ubicación y descripción */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -516,37 +575,25 @@ const CrearPTS = () => {
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Información del Solicitante</h3>
               
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Legajo Solicitante con botón de búsqueda */}
+
+                {/* Solicitante fijo, solo lectura */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Legajo Solicitante *
+                    Solicitante *
                   </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      name="solicitanteLegajo"
-                      value={formData.solicitanteLegajo}
-                      onChange={handleInputChange}
-                      className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary ${
-                        errors.solicitanteLegajo ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Ej: 12345"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleBuscarLegajo(formData.solicitanteLegajo)}
-                      disabled={searchLoading || !formData.solicitanteLegajo.trim()}
-                      className="px-4 py-2 bg-epu-secondary text-white rounded-md hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {searchLoading ? 'Buscando...' : 'Buscar'}
-                    </button>
-                  </div>
-                  {errors.solicitanteLegajo && <p className="error-validacion">{errors.solicitanteLegajo}</p>}
-                  {searchError && <p className="error-validacion">{searchError}</p>}
+                  <input
+                    type="text"
+                    name="solicitante"
+                    value={user ? user.dni : ''}
+                    readOnly
+                    className="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+                    placeholder="Legajo del solicitante"
+                  />
                 </div>
 
-                {/* Nombre Solicitante - Solo lectura */}
+                {/* Nombre Solicitante - Solo lectura, desde base de datos */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Nombre Solicitante *
@@ -554,69 +601,41 @@ const CrearPTS = () => {
                   <input
                     type="text"
                     name="nombreSolicitante"
-                    value={formData.nombreSolicitante}
+                    value={nombreSolicitante}
                     readOnly
-                    className={`w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed ${
-                      errors.nombreSolicitante ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Se completa automáticamente"
+                    className="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+                    placeholder="Nombre completo del solicitante"
                   />
-                  {errors.nombreSolicitante && <p className="error-validacion">{errors.nombreSolicitante}</p>}
                 </div>
 
-                {/* Área - Solo lectura */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Área *
-                  </label>
-                  <input
-                    type="text"
-                    name="area"
-                    value={formData.area}
-                    readOnly
-                    className={`w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed ${
-                      errors.area ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Se completa automáticamente"
-                  />
-                  {errors.area && <p className="error-validacion">{errors.area}</p>}
-                </div>
+
+                {/* Campo nombreSolicitante eliminado, ya no es editable ni visible */}
+
+                {/* Campo de área eliminado por solicitud */}
               </div>
             </div>
 
+
             {/* Otros Responsables */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Solicitante (Campo Legacy) *
-                </label>
-                <input
-                  type="text"
-                  name="solicitante"
-                  value={formData.solicitante}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary ${
-                    errors.solicitante ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Nombre del solicitante"
-                />
-                {errors.solicitante && <p className="error-validacion">{errors.solicitante}</p>}
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Supervisor *
                 </label>
-                <input
-                  type="text"
+                <select
                   name="supervisor"
                   value={formData.supervisor}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary ${
                     errors.supervisor ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="Nombre del supervisor"
-                />
+                >
+                  <option value="">-- Seleccione un supervisor --</option>
+                  {supervisores.map(sup => (
+                    <option key={sup.legajo} value={sup.legajo}>{sup.legajo} - {sup.nombre}</option>
+                  ))}
+                </select>
                 {errors.supervisor && <p className="error-validacion">{errors.supervisor}</p>}
               </div>
 
@@ -722,60 +741,7 @@ const CrearPTS = () => {
               {errors.riesgosControles && <p className="error-validacion">{errors.riesgosControles}</p>}
             </div>
 
-            {/* Equipos de Seguridad */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Equipos de Seguridad *</h3>
-                <button
-                  type="button"
-                  onClick={() => addArrayItem('equiposSeguridad', { equipo: '', cantidad: 1 })}
-                  className="bg-epu-secondary text-white px-3 py-1 rounded text-sm hover:bg-yellow-600 transition-colors"
-                >
-                  + Agregar Equipo
-                </button>
-              </div>
-              
-              {formData.equiposSeguridad.map((item, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 border border-gray-200 rounded-lg">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Equipo de Seguridad {index + 1}
-                    </label>
-                    <input
-                      type="text"
-                      value={item.equipo}
-                      onChange={(e) => handleArrayChange('equiposSeguridad', index, 'equipo', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
-                      placeholder="Ej: Casco de seguridad, Gafas protectoras"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Cantidad
-                      </label>
-                      {formData.equiposSeguridad.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeArrayItem('equiposSeguridad', index)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          Eliminar
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.cantidad}
-                      onChange={(e) => handleArrayChange('equiposSeguridad', index, 'cantidad', parseInt(e.target.value) || 1)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
-                    />
-                  </div>
-                </div>
-              ))}
-              {errors.equiposSeguridad && <p className="mt-1 text-sm text-red-600">{errors.equiposSeguridad}</p>}
-            </div>
+            {/* ...se eliminó la sección duplicada de 'Equipo a Intervenir'... */}
 
             {/* Observaciones */}
             <div>

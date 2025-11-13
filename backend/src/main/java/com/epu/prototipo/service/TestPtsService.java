@@ -1,3 +1,4 @@
+// ...existing code...
 package com.epu.prototipo.service;
 
 import com.epu.prototipo.dto.CerrarPtsRequest;
@@ -8,18 +9,18 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
+// import java.util.Arrays;
 import java.util.List;
 
 @Service
 @Profile("test")
 public class TestPtsService implements IPtsService {
 
-    // Lista en memoria para almacenar PTS creados durante la sesión de prueba
+    // Lista en memoria para almacenar PTS creados en la prueba
     private final List<PermisoTrabajoSeguro> ptsInMemory = new ArrayList<>();
 
     public TestPtsService() {
-        // Inicializar con datos de prueba
+        // Inicializa con datos de prueba
         initializeTestData();
     }
 
@@ -34,7 +35,7 @@ public class TestPtsService implements IPtsService {
         pts1.setTipoTrabajo("ELECTRICO");
         pts1.setArea("Mantenimiento");
         pts1.setEquipoOInstalacion("Bomba Principal A1");
-        pts1.setSupervisorLegajo("SUP222"); // Supervisor asignado
+        pts1.setSupervisorLegajo("SUP222"); 
         pts1.setRtoEstado("PENDIENTE");
 
         PermisoTrabajoSeguro pts2 = new PermisoTrabajoSeguro();
@@ -47,10 +48,10 @@ public class TestPtsService implements IPtsService {
         pts2.setTipoTrabajo("MECANICO");
         pts2.setArea("Producción");
         pts2.setEquipoOInstalacion("Reactor Principal B2");
-        pts2.setSupervisorLegajo("SUP222"); // Supervisor asignado
+        pts2.setSupervisorLegajo("SUP222"); 
         pts2.setRtoEstado("CERRADO");
 
-        // Agregar un tercer PTS para probar mejor los filtros
+        // Agregar pts 3 para probar mejor los filtros
         PermisoTrabajoSeguro pts3 = new PermisoTrabajoSeguro();
         pts3.setId("PTS-003");
         pts3.setDescripcionTrabajo("Inspección de bomba secundaria");
@@ -61,7 +62,7 @@ public class TestPtsService implements IPtsService {
         pts3.setTipoTrabajo("INSPECCION");
         pts3.setArea("Mantenimiento");
         pts3.setEquipoOInstalacion("Bomba Secundaria C3");
-        pts3.setSupervisorLegajo("SUP222"); // Supervisor asignado
+        pts3.setSupervisorLegajo("SUP222");
         pts3.setRtoEstado("PENDIENTE");
 
         ptsInMemory.add(pts1);
@@ -71,13 +72,13 @@ public class TestPtsService implements IPtsService {
 
     @Override
     public List<PermisoTrabajoSeguro> getAllPts() {
-        // Retornar copia de la lista para evitar modificaciones externas
+        // Para retornar copia de la lista para evitar modificaciones externas
         return new ArrayList<>(ptsInMemory);
     }
 
     @Override
     public PermisoTrabajoSeguro createPts(PermisoTrabajoSeguro pts) {
-        // Generar ID único y agregar a la lista en memoria
+        // Para generar ID unico y agregar a la lista en memoria
         pts.setId("PTS-" + System.currentTimeMillis());
         ptsInMemory.add(pts);
         System.out.println("PTS creado en modo test: " + pts.getId() + " - " + pts.getDescripcionTrabajo());
@@ -95,7 +96,7 @@ public class TestPtsService implements IPtsService {
 
     @Override
     public PermisoTrabajoSeguro firmarPts(FirmaPtsRequest request) {
-        // En modo de prueba, simulamos la firma sin validaciones complejas
+        // En modo de prueba, para simular la firma simple
         if (request.getPtsId() == null || request.getDniFirmante() == null) {
             throw new IllegalArgumentException("PTS ID y DNI del firmante son requeridos.");
         }
@@ -106,17 +107,17 @@ public class TestPtsService implements IPtsService {
             return null; // PTS no encontrado
         }
 
-        // Validación básica en modo test - Supervisores válidos
+        // Validacion en modo test - Supervisores 
         if (!"SUP222".equals(request.getDniFirmante()) && !"12345678".equals(request.getDniFirmante())) {
             throw new SecurityException("DNI del firmante no autorizado en modo test. Supervisores válidos: SUP222");
         }
 
-        // Simular que ya está firmado
+        // Simula que ya esta firmado
         if (pts.getFirmaSupervisorBase64() != null) {
             throw new IllegalStateException("El PTS ya ha sido firmado.");
         }
 
-        // Aplicar la firma simulada
+        // Aplica la firma simulada
         pts.setFirmaSupervisorBase64(request.getFirmaBase64());
         pts.setDniSupervisorFirmante(request.getDniFirmante());
         pts.setFechaHoraFirmaSupervisor(LocalDateTime.now());
@@ -127,7 +128,7 @@ public class TestPtsService implements IPtsService {
 
     @Override
     public PermisoTrabajoSeguro cerrarPts(CerrarPtsRequest request) {
-        // En modo de prueba, simulamos el cierre del PTS sin validaciones complejas
+        // En modo de prueba, para simular el cierre del PTS sin validaciones dificiles
         if (request == null) {
             throw new IllegalArgumentException("La solicitud de cierre no puede ser nula");
         }
@@ -140,13 +141,13 @@ public class TestPtsService implements IPtsService {
             throw new IllegalArgumentException("El legajo del responsable de cierre es requerido");
         }
 
-        // Simular que encontramos el PTS
+        // Simular que se encuentra el PTS
         PermisoTrabajoSeguro pts = getPtsById(request.getPtsId());
         if (pts == null) {
             return null; // PTS no encontrado
         }
 
-        // Validaciones básicas en modo test
+        // Validaciones para en modo test
         if ("CERRADO".equals(pts.getRtoEstado())) {
             throw new IllegalStateException("El PTS ID " + request.getPtsId() + " ya ha sido cerrado.");
         }
@@ -155,15 +156,15 @@ public class TestPtsService implements IPtsService {
             throw new IllegalStateException("El PTS ID " + request.getPtsId() + " está cancelado y no puede ser cerrado.");
         }
 
-        // Simular que el PTS debe estar firmado (en test mode, agregamos firma si no existe)
+        // Simula que el PTS debe estar firmado (para pruebas se agrega la firma si no existe)
         if (pts.getFirmaSupervisorBase64() == null || pts.getFirmaSupervisorBase64().trim().isEmpty()) {
-            // En modo test, simulamos que hay una firma para permitir el cierre
+            // En modo test, se simula que hay una firma para permitir el cierre
             pts.setFirmaSupervisorBase64("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==");
             pts.setDniSupervisorFirmante("12345678");
             pts.setFechaHoraFirmaSupervisor(LocalDateTime.now().minusMinutes(5)); // Firmado hace 5 minutos
         }
 
-        // Aplicar el cierre simulado
+        // Hacer cierre simulado
         pts.setRtoEstado("CERRADO");
         pts.setRtoResponsableCierreLegajo(request.getRtoResponsableCierreLegajo());
         pts.setRtoObservaciones(request.getRtoObservaciones());
@@ -183,7 +184,7 @@ public class TestPtsService implements IPtsService {
         List<PermisoTrabajoSeguro> todosLosPts = getAllPts();
         List<PermisoTrabajoSeguro> resultado = new ArrayList<>(todosLosPts);
         
-        // Aplicar filtros solo si los parámetros no están vacíos
+        // Aplicar filtros solo si parametros no estan vacios
         if (equipo != null && !equipo.trim().isEmpty()) {
             System.out.println("Filtrando por equipo: '" + equipo + "'");
             int antesDelFiltro = resultado.size();
@@ -228,5 +229,22 @@ public class TestPtsService implements IPtsService {
         
         System.out.println("Resultados encontrados en modo test: " + resultado.size());
         return resultado;
+    }
+    @Override
+    public int obtenerUltimoNumeroPtsPorFecha(String fechaInicio) {
+        int max = 0;
+        for (PermisoTrabajoSeguro pts : ptsInMemory) {
+            if (fechaInicio.equals(pts.getFechaInicio())) {
+                String id = pts.getId();
+                if (id != null && id.matches("PTS-\\d+")) {
+                    String[] partes = id.split("-");
+                    try {
+                        int num = Integer.parseInt(partes[1]);
+                        if (num > max) max = num;
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+        }
+        return max;
     }
 }

@@ -1,3 +1,4 @@
+// ...existing code...
 package com.epu.prototipo.service;
 
 import com.epu.prototipo.dto.CerrarPtsRequest;
@@ -5,15 +6,13 @@ import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
 import java.util.List;
 
-/**
- * Interfaz para el servicio de gestión de Permisos de Trabajo Seguro (PTS).
- */
+// Interface para servicio gestion PTS
+ 
 public interface IPtsService {
     
-    /**
-     * Recupera todos los PTS disponibles.
-     * @return Lista de todos los PTS
-     */
+    // Recupera todos los PTS disponibles.
+    // @return Lista de todos los PTS
+    
     List<PermisoTrabajoSeguro> getAllPts();
     
     /**
@@ -51,12 +50,18 @@ public interface IPtsService {
     PermisoTrabajoSeguro firmarPts(FirmaPtsRequest request);
     
     /**
-     * Cierra un PTS y lo marca como "Retorno a Operaciones" (RTO).
-     * @param request Datos del cierre incluyendo responsable y observaciones
-     * @return El PTS cerrado actualizado
-     * @throws SecurityException si el usuario no tiene permisos para cerrar el PTS
-     * @throws IllegalStateException si el PTS no está en estado válido para cierre
-     * @throws IllegalArgumentException si los datos de entrada son inválidos
+     * Cerrar un PTS y marcar como RTO
+     * @param request Datos del cierre ... responsable y observaciones
+     * @return PTS cerrado actualizado
+     * @throws SecurityException si usuario no tiene permisos para cerrar el PTS
+     * @throws IllegalStateException si PTS no esta en estado valido para cierre
+     * @throws IllegalArgumentException si los datos de entrada son invalidos
      */
     PermisoTrabajoSeguro cerrarPts(CerrarPtsRequest request);
+    /**
+     * Obtiene el último número de PTS creado para una fecha dada (formato YYYY-MM-DD).
+     * @param fechaInicio Fecha a consultar
+     * @return Último número de PTS creado ese día, o 0 si no hay ninguno
+     */
+    int obtenerUltimoNumeroPtsPorFecha(String fechaInicio);
 }
