@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-// Función para decodificar JWT
+// Funcion para decodificar JWT
 const decodeToken = (token) => {
     try {
         const payloadBase64 = token.split('.')[1];
@@ -81,7 +81,7 @@ const DetallePTS = () => {
 
     /**
      * Función canPrint() - Validar si el PTS puede ser impreso
-     * Lógica de autorización:
+     * 
      * - EMISOR: Puede imprimir sus propios PTS en cualquier estado
      * - SUPERVISOR: Puede imprimir cualquier PTS
      * - ADMIN: Puede imprimir cualquier PTS
@@ -107,10 +107,8 @@ const DetallePTS = () => {
         return false;
     };
 
-    /**
-     * Función handlePrint() - Manejar la descarga del PDF del PTS
-     * Llama al endpoint GET /api/reportes/pdf/{pts.id}
-     */
+    // Función handlePrint() - Manejar la descarga del PDF del PTS - Llama al endpoint GET /api/reportes/pdf/{pts.id}
+    
     const handlePrint = async () => {
         if (!pts || !canPrint()) {
             const userRole = user?.role || user?.authorities?.[0]?.authority;
@@ -163,7 +161,7 @@ const DetallePTS = () => {
             
             console.log(`Descarga de PDF completada para PTS: ${pts.id}`);
             
-            // TODO: Llamar al servicio/función para registrar el evento de impresión con el userId y la fecha actual
+            // !!! ver hacer: Llamar al servicio/función para registrar el evento de impresión con el userId y la fecha actual
             // Ejemplo: await registrarEventoImpresion(pts.id, user.legajo, new Date().toISOString());
             
         } catch (err) {

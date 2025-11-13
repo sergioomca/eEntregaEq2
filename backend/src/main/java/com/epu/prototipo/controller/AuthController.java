@@ -7,8 +7,7 @@ import com.epu.prototipo.util.JwtTokenUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-// Se eliminan AuthenticationManager y AuthenticationConfiguration
-import org.springframework.security.crypto.password.PasswordEncoder; // NUEVO IMPORT
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    // 💡 NOTA: Eliminamos AuthenticationManager.
     
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
@@ -24,44 +22,41 @@ public class AuthController {
     @Autowired
     private UserDetailsServiceCustom userDetailsService; 
 
-    // 1. INYECTAMOS EL PASSWORD ENCODER
+    // Pongo el PASSWORD ENCODER
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // 💡 NOTA: Eliminamos el constructor que usaba AuthenticationConfiguration.
-    
     // Endpoint para el login (MANUAL)
     @PostMapping("/login")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody LoginRequest authenticationRequest) throws Exception {
         
         try {
-            // 2. VALIDACIÓN MANUAL
+            // Validacion MANUAL
             
-            // Paso A: Cargar el usuario
+            // Carga usuario
             final UserDetails userDetails = userDetailsService
                     .loadUserByUsername(authenticationRequest.getLegajo());
 
-            // Paso B: Verificar la contraseña manualmente
-            // (Usamos el PasswordEncoder de SecurityBeans.java, que manejará el prefijo {noop})
+            // Verifica contraseña manualmente
+            // (!!! Prueba el PasswordEncoder de SecurityBeans.java, que maneja el prefijo {noop})
             if (!passwordEncoder.matches(authenticationRequest.getPassword(), userDetails.getPassword())) {
                 // Si la contraseña no coincide
                 throw new Exception("INVALID_CREDENTIALS");
             }
             
-            // 3. GENERACIÓN DE TOKEN (Si la validación manual fue exitosa)
+            // Genera el TOKEN (Si la validacion manual fue exitosa)
             final String token = jwtTokenUtil.generateToken(userDetails);
             
-            boolean requiresPasswordChange = false; // Lógica de prototipo
+            boolean requiresPasswordChange = false; // !!! para pruebas del prototipo
 
-            // 4. Devolver la respuesta con el token real
+            // Respuesta con el token real
             return ResponseEntity.ok(new LoginResponse(token, requiresPasswordChange));
 
         } catch (Exception e) {
-            // Si el usuario no existe o la contraseña falló
-            // Devolvemos un 401 (Unauthorized) manualmente
+            // Si el usuario no existe o la contraseña fallo
+            // se devuelve un 401 (Unauthorized) manualmente
             return ResponseEntity.status(401).body("Error: Legajo o contraseña inválidos.");
         }
     }
-    
-    // 💡 NOTA: Eliminamos el método authenticate() que usaba el AuthenticationManager.
+        
 }

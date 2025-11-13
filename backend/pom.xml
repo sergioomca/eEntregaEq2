@@ -21,7 +21,7 @@
     </properties>
 
     <dependencies>
-        <!-- CRÍTICA: Resuelve el error de importación de Spring HTTP/Web -->
+        <!-- !!! ver: para resolver el error de importacion de Spring  -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -52,7 +52,7 @@
             </exclusions>
         </dependency>
 
-        <!-- JWT (Versión antigua, compatible con parserBuilder) -->
+        <!-- JWT (Version compatible con parserBuilder) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -77,7 +77,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Mockito dependency -->
+        <!-- Mockito  -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>

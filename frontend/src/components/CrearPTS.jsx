@@ -63,15 +63,6 @@ const CrearPTS = () => {
       equiposSeguridad: [{ equipo: '', cantidad: 1 }]
     }));
 
-    // Al cargar la fecha, obtener el número de permiso correcto
-    useEffect(() => {
-      async function updateNumeroPermiso() {
-        const numero = await fetchNumeroPermiso(formData.fecha);
-        setFormData(prev => ({ ...prev, numeroPermiso: numero }));
-      }
-      updateNumeroPermiso();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formData.fecha]);
   // Estados para validación de equipo
   const [equipoError, setEquipoError] = useState(null);
   const [equipoLoading, setEquipoLoading] = useState(false);
@@ -122,7 +113,7 @@ const CrearPTS = () => {
   const [submitMessage, setSubmitMessage] = useState('');
 
   // Estados para autocompletado de usuarios
-  const [searchError, setSearchError] = useState(null);
+        // equipoOInstalacion: formData.equiposSeguridad[0]?.equipo || '', // Solo el primer equipo (eliminado por error de sintaxis)
   const [searchLoading, setSearchLoading] = useState(false);
 
   // Estado de autenticacion
@@ -234,12 +225,11 @@ const CrearPTS = () => {
     if (!formData.descripcionTrabajo.trim()) newErrors.descripcionTrabajo = 'La descripcion del trabajo es obligatoria';
     if (!formData.solicitante.trim()) newErrors.solicitante = 'El solicitante es obligatorio';
     if (!formData.supervisor.trim()) newErrors.supervisor = 'El supervisor es obligatorio';
-    
+
     // Validaciones de autocompletado eliminadas
     // validación de área eliminada
-    
+
     // Campos adicionales 
-    if (!formData.numeroPermiso.trim()) newErrors.numeroPermiso = 'El número de permiso es obligatorio';
     if (!formData.fecha) newErrors.fecha = 'La fecha es obligatoria';
     if (!formData.horaInicio) newErrors.horaInicio = 'La hora de inicio es obligatoria';
     if (!formData.horaFin) newErrors.horaFin = 'La hora de fin es obligatoria';
@@ -264,6 +254,15 @@ const CrearPTS = () => {
     // Validar equipo (tag)
     if (equipoError !== null) {
       newErrors.equiposSeguridad = equipoError;
+    }
+
+    // Validar estado DCS del equipo seleccionado
+    const tag = formData.equiposSeguridad[0]?.equipo;
+    if (tag) {
+      const equipo = equiposDisponibles.find(eq => eq.tag === tag);
+      if (equipo && equipo.estadoDcs !== 'DESHABILITADO') {
+        newErrors.equiposSeguridad = 'Solo se puede crear un PTS si el equipo está DESHABILITADO en DCS.';
+      }
     }
 
     setErrors(newErrors);
@@ -328,7 +327,7 @@ const CrearPTS = () => {
         rtoEstado: 'PENDIENTE'
       };
 
-      console.log('Enviando PTS:', ptsData);
+      // console.log eliminado (control)
 
       const response = await fetch('http://localhost:8080/api/pts', {
         method: 'POST',
@@ -384,7 +383,7 @@ const CrearPTS = () => {
     });
     setErrors({});
     setSubmitMessage('');
-    setSearchError(null);
+      // setSearchError(null); // Eliminado porque no existe o no es necesario
   };
 
   if (!user) {
@@ -425,22 +424,6 @@ const CrearPTS = () => {
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {/* Información básica */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Número de Permiso *
-                </label>
-                <input
-                  type="text"
-                  name="numeroPermiso"
-                  value={formData.numeroPermiso}
-                  readOnly
-                  className={`w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-epu-primary ${
-                    errors.numeroPermiso ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Ej: PTS-2025-001"
-                />
-                {errors.numeroPermiso && <p className="error-validacion">{errors.numeroPermiso}</p>}
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -523,9 +506,30 @@ const CrearPTS = () => {
                     if (!tag) return null;
                     const equipo = equiposDisponibles.find(eq => eq.tag === tag);
                     if (!equipo) return null;
+                    // Mostrar el estadoDcs real
+                    let color = 'text-red-600';
+                    let label = equipo.estadoDcs || 'Desconocido';
+                    switch (equipo.estadoDcs) {
+                      case 'DESHABILITADO':
+                        color = 'text-green-700';
+                        label = 'Deshabilitado';
+                        break;
+                      case 'HABILITADO':
+                        label = 'Habilitado';
+                        break;
+                      case 'PARADO':
+                        label = 'Parado';
+                        break;
+                      case 'EN_MARCHA':
+                        label = 'En marcha';
+                        break;
+                      default:
+                        color = 'text-gray-600';
+                        label = equipo.estadoDcs || 'Desconocido';
+                    }
                     return (
-                      <p className={`mt-2 text-sm font-semibold ${equipo.estado === 'HABILITADO' ? 'text-green-700' : 'text-red-600'}`}>
-                        Estado: {equipo.estado === 'HABILITADO' ? 'Habilitado' : 'Deshabilitado'}
+                      <p className={`mt-2 text-sm font-semibold ${color}`}>
+                        Estado DCS: {label}
                       </p>
                     );
                   })()}

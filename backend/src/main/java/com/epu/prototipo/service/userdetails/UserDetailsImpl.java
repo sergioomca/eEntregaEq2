@@ -4,11 +4,11 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
-/**
- * Clase que implementa la interfaz UserDetails de Spring Security.
- * Esto permite a Spring entender cómo manejar y almacenar la información del usuario
- * autenticado. Aquí usamos el 'legajo' como username.
- */
+
+// Clase parala interface UserDetails de Spring Security.
+// Permite a Spring saber como manejar y almacenar la informacion del usuario
+// autenticado. Se usas el 'legajo' como username.
+
 public class UserDetailsImpl implements UserDetails {
 private final String legajo;
     private final String password;
@@ -16,15 +16,14 @@ private final String legajo;
 public UserDetailsImpl(String legajo, String password, String role) {
         this.legajo = legajo;
         this.password = password;
-        // Asignamos el Rol (HU-002) como autoridad/permiso simple
+        // Para asignar el Rol como permiso simple
         this.authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
     }
-// --- Métodos de la Interfaz UserDetails ---
+// --- Metodos de interface UserDetails ---
 @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
     }
-// Usamos el legajo como el nombre de usuario (username)
     @Override
     public String getUsername() {
         return legajo;
@@ -34,7 +33,7 @@ public UserDetailsImpl(String legajo, String password, String role) {
         return password;
     }
     
-    // Dejamos todas las cuentas como habilitadas, no expiradas, no bloqueadas
+    // Todas las cuentas como habilitadas, no expiradas, no bloqueadas
     @Override
     public boolean isAccountNonExpired() {
         return true;

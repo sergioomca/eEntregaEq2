@@ -20,7 +20,7 @@ public class ReporteController {
     private ReporteService reporteService;
 
     /**
-     * Endpoint 1: Exportar PDF de un PTS individual (Impresión - HU-015)
+     * Endpoint : para exportar PDF de un PTS individual (HU-015)
      * GET /api/reportes/pdf/{ptsId}
      */
     @GetMapping("/pdf/{ptsId}")
@@ -31,7 +31,7 @@ public class ReporteController {
             // Generar PDF usando el servicio
             byte[] pdfBytes = reporteService.exportarPtsPdf(ptsId);
             
-            // Configurar headers para descarga de PDF
+            // Configura headers para descarga de PDF
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.setContentDispositionFormData("attachment", "PTS-" + ptsId + ".pdf");
@@ -48,7 +48,7 @@ public class ReporteController {
     }
 
     /**
-     * Endpoint 2: Exportar Excel de Múltiples PTS (Reporte - HU-008)
+     * Endpoint: Exportar Excel para multiples PTS (HU-008)
      * GET /api/reportes/excel
      */
     @GetMapping("/excel")
@@ -67,10 +67,10 @@ public class ReporteController {
             System.out.println("- fechaHasta: " + fechaHasta);
             System.out.println("- area: " + area);
             
-            // Generar Excel usando el servicio
+            // Generar Excel con el servicio
             byte[] excelBytes = reporteService.exportarPtsExcel(fechaDesde, fechaHasta, area);
             
-            // Configurar headers para descarga de Excel
+            // Configura headers para descarga de Excel
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
             headers.setContentDispositionFormData("attachment", "Reporte_PTS.xlsx");
@@ -87,7 +87,7 @@ public class ReporteController {
     }
 
     /**
-     * Endpoint adicional: Información sobre tipos de reportes disponibles
+     * Endpoint: Información sobre reportes disponibles
      * GET /api/reportes/info
      */
     @GetMapping("/info")

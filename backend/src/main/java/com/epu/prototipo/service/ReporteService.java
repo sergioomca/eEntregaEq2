@@ -14,13 +14,13 @@ public class ReporteService {
     private IPtsService ptsService;
 
     /**
-     * Exporta un PTS individual a formato PDF
+     * Exportar un PTS individual a formato PDF
      * @param ptsId ID del PTS a exportar
      * @return byte[] que representa el archivo PDF generado
      */
     public byte[] exportarPtsPdf(String ptsId) {
         try {
-            // Obtener el PTS por ID
+            // Para obtener el PTS por ID
             PermisoTrabajoSeguro pts = ptsService.getPtsById(ptsId);
             
             if (pts == null) {
@@ -31,7 +31,7 @@ public class ReporteService {
             System.out.println("Generación de PDF mock para el PTS ID: " + ptsId);
             System.out.println("Datos del PTS: " + pts.getDescripcionTrabajo() + " - " + pts.getRtoEstado());
             
-            // Simular procesamiento de datos para PDF
+            // Para simular procesamiento de datos para PDF
             StringBuilder contenidoMock = new StringBuilder();
             contenidoMock.append("=== PERMISO DE TRABAJO SEGURO ===\n");
             contenidoMock.append("ID: ").append(pts.getId()).append("\n");
@@ -45,12 +45,12 @@ public class ReporteService {
             
             System.out.println("Contenido PDF mock generado: " + contenidoMock.length() + " caracteres");
             
-            // Crear un mock de PDF más realista
+            // Crear un mock de PDF 
             byte[] pdfMock = new byte[1024];
-            // Simular cabecera PDF
+            // Simula cabecera PDF
             byte[] header = "%PDF-1.4\n".getBytes();
             System.arraycopy(header, 0, pdfMock, 0, Math.min(header.length, pdfMock.length));
-            // Añadir contenido de fin de PDF
+            // Contenido de fin de PDF
             byte[] footer = "\n%%EOF".getBytes();
             int footerPos = pdfMock.length - footer.length;
             System.arraycopy(footer, 0, pdfMock, footerPos, footer.length);
@@ -63,11 +63,11 @@ public class ReporteService {
     }
 
     /**
-     * Exporta múltiples PTS filtrados a formato Excel
-     * @param fechaDesde Fecha de inicio del filtro (opcional)
-     * @param fechaHasta Fecha de fin del filtro (opcional)
-     * @param area Área para filtrar (opcional)
-     * @return byte[] que representa el archivo Excel generado
+     * Para exportar multiples PTS filtrados a formato Excel
+     * @param fechaDesde Fecha de inicio del filtro
+     * @param fechaHasta Fecha de fin del filtro
+     * @param area FIltro area
+     * @return byte[] representa el archivo Excel generado
      */
     public byte[] exportarPtsExcel(Date fechaDesde, Date fechaHasta, String area) {
         try {
@@ -76,14 +76,14 @@ public class ReporteService {
             String fechaDesdeStr = fechaDesde != null ? fechaDesde.toString() : null;
             List<PermisoTrabajoSeguro> ptsList = ptsService.buscarPts(null, null, area, null, fechaDesdeStr);
             
-            // Mock: Simulación de generación de Excel
+            // Mock: Simula generacion de Excel
             System.out.println("Generación de Excel mock con filtros:");
             System.out.println("- Fecha desde: " + fechaDesde);
             System.out.println("- Fecha hasta: " + fechaHasta);
             System.out.println("- Área: " + area);
             System.out.println("- Registros encontrados: " + ptsList.size());
             
-            // Simular procesamiento de datos para Excel
+            // Simula procesamiento de datos para Excel
             StringBuilder contenidoMock = new StringBuilder();
             contenidoMock.append("=== REPORTE DE PTS - EXCEL ===\n");
             contenidoMock.append("Filtros aplicados:\n");
@@ -103,10 +103,10 @@ public class ReporteService {
             System.out.println("Contenido Excel mock generado: " + contenidoMock.length() + " caracteres");
             System.out.println("Simulando creación de celdas, estilos y fórmulas...");
             
-            // Crear un mock de Excel más realista
+            // mock de Excel
             // Mínimo Excel válido (cabecera)
             byte[] excelMock = new byte[2048];
-            // Simular cabecera Excel
+            // Simula cabecera Excel
             byte[] header = "PK\u0003\u0004".getBytes();
             System.arraycopy(header, 0, excelMock, 0, Math.min(header.length, excelMock.length));
             return excelMock;

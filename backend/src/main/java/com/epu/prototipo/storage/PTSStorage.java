@@ -8,25 +8,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Clase que simula la capa de persistencia (Base de Datos) usando una lista estática en memoria.
- * Esta clase se inyecta como un servicio en el controlador.
- * UBICACION: backend/src/main/java/com/epu/prototipo/storage/PTSStorage.java
- */
+// Clase para simular base de datos usando lista estatica en memoria.
+// Esta clase se inyecta como un servicio en el controlador.
+
 @Service
 public class PTSStorage {
 
-    // Lista estática que simula la base de datos para almacenar los PTS
+    // Lista ue simula la base de datos para almacenar los PTS
     private static final List<PermisoTrabajoSeguro> ALMACEN = new ArrayList<>();
 
-    // Inicialización de datos de prueba
+    // Inicializacion de datos de prueba
     static {
         // PTS-001 (Aprobado/Activo)
         PermisoTrabajoSeguro pts001 = new PermisoTrabajoSeguro();
         pts001.setId("PTS-001");
         pts001.setDescripcionTrabajo("Mantenimiento de bomba P-101");
-        pts001.setSolicitanteLegajo("VINF011422"); // ID Solicitante
-        pts001.setNombreSolicitante("Sergio Capella"); // Nombre Solicitante
+        pts001.setSolicitanteLegajo("VINF011422"); 
+        pts001.setNombreSolicitante("Sergio Capella");
         pts001.setFechaInicio("2025-11-06");
         pts001.setHoraInicio("10:00");
         pts001.setHoraFin("14:00");
@@ -54,8 +52,8 @@ public class PTSStorage {
         PermisoTrabajoSeguro pts002 = new PermisoTrabajoSeguro();
         pts002.setId("PTS-002");
         pts002.setDescripcionTrabajo("Inspección tanque T-305");
-        pts002.setSolicitanteLegajo("SUP222"); // ID Solicitante
-        pts002.setNombreSolicitante("Supervisor Dos"); // Nombre Solicitante
+        pts002.setSolicitanteLegajo("SUP222"); 
+        pts002.setNombreSolicitante("Supervisor Dos"); 
         pts002.setFechaInicio("2025-11-07");
         pts002.setHoraInicio("08:00");
         pts002.setHoraFin("11:00");
@@ -80,7 +78,7 @@ public class PTSStorage {
     }
 
     /**
-     * Guarda un nuevo PTS en el almacén simulado.
+     * Para guardar un nuevo PTS en base simulada.
      * @param pts El objeto PermisoTrabajoSeguro a guardar.
      */
     public void save(PermisoTrabajoSeguro pts) {
@@ -88,8 +86,8 @@ public class PTSStorage {
     }
 
     /**
-     * Devuelve todos los Permisos de Trabajo Seguro almacenados.
-     * @return Una lista inmutable de PermisoTrabajoSeguro.
+     * Devuelve todos los PTS almacenados.
+     * @return lista de PTS
      */
     public List<PermisoTrabajoSeguro> findAll() {
         return Collections.unmodifiableList(ALMACEN);

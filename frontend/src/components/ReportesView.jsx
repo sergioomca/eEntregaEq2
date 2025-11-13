@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
 const ReportesView = () => {
-    // Estados según especificaciones
     const [fechaDesde, setFechaDesde] = useState('');
     const [fechaHasta, setFechaHasta] = useState('');
     const [area, setArea] = useState('');
-    const [exportType, setExportType] = useState('excel'); // Para futuras expansiones
+    const [exportType, setExportType] = useState('excel'); 
     const [isExporting, setIsExporting] = useState(false);
     
-    // Estados para estadísticas
+    // Estados para estadisticas
     const [estadisticas, setEstadisticas] = useState({
         total: 0,
         autorizados: 0,
@@ -16,9 +15,7 @@ const ReportesView = () => {
     });
     const [loadingStats, setLoadingStats] = useState(false);
 
-    /**
-     * Función loadEstadisticas() - Carga las estadísticas de PTS desde el backend
-     */
+    // Carga las estadísticas de PTS desde el backend
     const loadEstadisticas = async () => {
         setLoadingStats(true);
         try {
@@ -37,7 +34,7 @@ const ReportesView = () => {
 
             const allPts = await response.json();
             
-            // Calcular estadísticas
+            // Calcular estadisticas
             const total = allPts.length;
             const autorizados = allPts.filter(pts => pts.rtoEstado === 'CERRADO').length;
             const pendientes = allPts.filter(pts => pts.rtoEstado === 'PENDIENTE').length;
@@ -48,9 +45,9 @@ const ReportesView = () => {
                 pendientes
             });
             
-            console.log('Estadísticas cargadas:', { total, autorizados, pendientes });
+            console.log('Estadisticas cargadas:', { total, autorizados, pendientes });
         } catch (error) {
-            console.error('Error al cargar estadísticas:', error);
+            console.error('Error al cargar estadisticas:', error);
             // Mantener valores en 0 en caso de error
             setEstadisticas({ total: 0, autorizados: 0, pendientes: 0 });
         } finally {
@@ -58,24 +55,22 @@ const ReportesView = () => {
         }
     };
 
-    // Cargar estadísticas al montar el componente
+    
     useEffect(() => {
         loadEstadisticas();
     }, []);
 
-    /**
-     * Función handleExportExcel() - Maneja la exportación a Excel
-     * Construye la URL con parámetros de consulta y descarga el archivo
-     */
+    // Para manejar la exportacion a Excel - URL con parametros de consulta y descarga el archivo
+    
     const handleExportExcel = async () => {
         setIsExporting(true);
         
         try {
-            // Construir la URL de la API con parámetros de consulta
+            // Construir la URL de la API con parametros de consulta
             const baseUrl = 'http://localhost:8080/api/reportes/excel';
             const params = new URLSearchParams();
             
-            // Añadir parámetros solo si no están vacíos
+            // Añadir parametros solo si no estan vacios
             if (fechaDesde) {
                 params.append('fechaDesde', fechaDesde);
             }
@@ -91,7 +86,7 @@ const ReportesView = () => {
             console.log('Exportando Excel con URL:', urlWithParams);
             console.log('Filtros aplicados:', { fechaDesde, fechaHasta, area });
             
-            // Realizar la llamada fetch
+            // Llamada fetch
             const token = localStorage.getItem('authToken');
             const response = await fetch(urlWithParams, {
                 method: 'GET',
@@ -109,7 +104,7 @@ const ReportesView = () => {
             const blob = await response.blob();
             console.log('Excel recibido, tamaño del blob:', blob.size, 'bytes');
             
-            // Patrón de descarga con URL.createObjectURL
+            // Patron de descarga con URL.createObjectURL
             const url = window.URL.createObjectURL(new Blob([blob], { 
                 type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
             }));
@@ -133,7 +128,7 @@ const ReportesView = () => {
         }
     };
 
-    // Función para limpiar filtros
+    // Para limpiar filtros
     const handleLimpiarFiltros = () => {
         setFechaDesde('');
         setFechaHasta('');
@@ -199,14 +194,14 @@ const ReportesView = () => {
                                 onChange={(e) => setFechaHasta(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                 placeholder="Seleccione fecha final"
-                                min={fechaDesde} // Validación en el frontend
+                                min={fechaDesde} // Validacion en el frontend
                             />
                         </div>
                     </div>
 
-                    {/* Segunda fila: Área/Sector y Limpiar Filtros */}
+                    {/* Segunda fila: area/Sector y Limpiar Filtros */}
                     <div className="flex items-end justify-between mb-6 px-8">
-                        {/* Selector Área/Sector a la izquierda */}
+                        {/* Selector area/Sector */}
                         <div className="flex-shrink-0">
                             <label htmlFor="area" className="block text-sm font-medium text-gray-700 mb-2">
                                 🏢 Área/Sector
@@ -228,10 +223,10 @@ const ReportesView = () => {
                             </select>
                         </div>
                         
-                        {/* Espacio vacío para crear separación */}
+                        {/* para crear separacion */}
                         <div className="flex-1"></div>
                         
-                        {/* Botón Limpiar Filtros posicionado más a la derecha */}
+                        {/* Boton Limpiar Filtros */}
                         <div className="mr-16">
                             <button
                             onClick={handleLimpiarFiltros}
@@ -246,7 +241,7 @@ const ReportesView = () => {
                         </div>
                     </div>
 
-                    {/* Validación de fechas */}
+                    {/* Validacion de fechas */}
                     {!validarFechas() && (
                         <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
                             <div className="flex items-center">
@@ -273,15 +268,15 @@ const ReportesView = () => {
                     )}
                 </div>
 
-                {/* Sección de Acciones */}
+                {/* Seccion de Acciones */}
                 <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
                     <div className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">
-                        {/* Botones de exportación con iconos más pequeños */}
+                        {/* Botones de exportacion */}
                         <div className="flex items-center">
                             <span className="text-sm font-medium text-gray-700 mr-12">Exportar:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                             <div className="flex items-center space-x-6">
                             
-                            {/* Botón Excel compacto */}
+                            {/* Boton Excel */}
                             <button
                                 onClick={handleExportExcel}
                                 disabled={isExporting || !validarFechas()}
@@ -307,7 +302,7 @@ const ReportesView = () => {
                                 )}
                             </button>
 
-                            {/* Botón PDF compacto */}
+                            {/* Boton PDF */}
                             <button
                                 disabled
                                 className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-500 bg-gray-100 cursor-not-allowed hover:bg-gray-200 transition-colors"
@@ -326,7 +321,7 @@ const ReportesView = () => {
                 </div>
             </div>
 
-            {/* Información adicional */}
+            {/* Informacion adicional */}
             <div className="mt-6 bg-gray-50 rounded-lg p-4 border border-gray-200" style={{ width: '100%', minWidth: '1000px' }}>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">📋 Información del Reporte</h3>
                 <div className="text-sm text-gray-600 space-y-1">
@@ -337,7 +332,7 @@ const ReportesView = () => {
                 </div>
             </div>
 
-            {/* Estadísticas en tiempo real */}
+            {/* Estadisticas en tiempo real */}
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4" style={{ width: '100%', minWidth: '1000px' }}>
                 <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
                     <div className="text-2xl font-bold text-blue-600">

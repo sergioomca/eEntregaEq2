@@ -1,18 +1,17 @@
 package com.epu.prototipo.dto;
 
-/**
- * DTO para representar la información básica de un usuario
- * obtenida desde una fuente externa simulada
- */
+// DTO para representar la informacion basica de usuario
+// (fuente externa simulada)
+
 public class UsuarioDTO {
     private String legajo;
     private String nombreCompleto;
     private String sector;
 
-    // Constructor vacío para JSON serialization
+    // Constructor vacio para JSON
     public UsuarioDTO() {}
 
-    // Constructor con parámetros
+    // Constructor con parametros
     public UsuarioDTO(String legajo, String nombreCompleto, String sector) {
         this.legajo = legajo;
         this.nombreCompleto = nombreCompleto;

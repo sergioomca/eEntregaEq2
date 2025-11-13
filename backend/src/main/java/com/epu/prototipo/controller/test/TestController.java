@@ -10,28 +10,28 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/test")
 public class TestController {
 
-    // P1: /api/test/emisor (Acceso para EMISOR)
+    // /api/test/emisor (Acceso EMISOR)
     @GetMapping("/emisor")
     @PreAuthorize("hasRole('EMISOR')")
     public ResponseEntity<String> emisorEndpoint() {
         return ResponseEntity.ok("Acceso Exitoso: Solo para EMISORES.");
     }
 
-    // P2 & P5: /api/test/admin (Solo para ADMINISTRADOR - Deniega a EMISOR y EJECUTANTE)
+    // /api/test/admin (Solo ADMINISTRADOR - Deniega a EMISOR y EJECUTANTE)
     @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> adminEndpoint() {
         return ResponseEntity.ok("Acceso Exitoso: Solo para ADMINISTRADORES.");
     }
 
-    // P3: /api/test/auditoria (Acceso para SUPERVISOR)
+    // /api/test/auditoria (Acceso SUPERVISOR)     !!! ver
     @GetMapping("/auditoria")
     @PreAuthorize("hasRole('SUPERVISOR')")
     public ResponseEntity<String> supervisorEndpoint() {
         return ResponseEntity.ok("Acceso Exitoso: Solo para SUPERVISORES (Rol de Auditoría).");
     }
 
-    // P4: /api/test/ejecucion (Acceso para EJECUTANTE)
+    // /api/test/ejecucion (Acceso EJECUTANTE)
     @GetMapping("/ejecucion")
     @PreAuthorize("hasRole('EJECUTANTE')")
     public ResponseEntity<String> ejecutanteEndpoint() {

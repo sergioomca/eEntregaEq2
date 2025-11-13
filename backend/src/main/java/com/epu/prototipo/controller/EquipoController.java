@@ -29,6 +29,20 @@ public class EquipoController {
         return ResponseEntity.ok(equipoService.getEquipoByTag(tag));
     }
 
+    // Endpoint: Actualizar estadoDcs de un equipo
+    @PostMapping("/{tag}/estado")
+    public ResponseEntity<Equipo> actualizarEstadoDcs(@PathVariable String tag, @RequestBody String nuevoEstadoDcs) {
+        Equipo equipo = equipoService.actualizarEstadoEquipo(tag, nuevoEstadoDcs.replaceAll("\"", ""));
+        return ResponseEntity.ok(equipo);
+    }
+
+    // Endpoint: Actualizar condicion de un equipo
+    @PostMapping("/{tag}/condicion")
+    public ResponseEntity<Equipo> actualizarCondicion(@PathVariable String tag, @RequestBody String nuevaCondicion) {
+        Equipo equipo = equipoService.actualizarCondicionEquipo(tag, nuevaCondicion.replaceAll("\"", ""));
+        return ResponseEntity.ok(equipo);
+    }
+
     // Manejo de errores: Equipo no encontrado
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> handleEquipoNoEncontrado(RuntimeException ex) {

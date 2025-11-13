@@ -4,13 +4,15 @@ import FirmaBiometrica from './components/FirmaDigital';
 import CierreRTO from './components/CierreRTO';
 import CrearPTS from './components/CrearPTS';
 import ListaPTS from './components/ListaPTS';
+import DashboardEquipos from './components/DashboardEquipos';
 import DetallePTS from './components/DetallePTS';
 import ReportesView from './components/ReportesView';
+import DcsSimForm from './components/DcsSimForm';
 
-// Constantes de Configuración
+// Constantes de Configuracion
 const API_URL = 'http://localhost:8080/api/auth/login';
 
-// Estructura de navegación basada en roles
+// Estructura de navegacion basada en roles
 const getRoutes = (role) => {
     const base = [
         { id: 'inicio', title: 'Inicio', roles: ['EMISOR', 'SUPERVISOR', 'EJECUTANTE', 'ADMIN'], defaultView: true },
@@ -19,18 +21,18 @@ const getRoutes = (role) => {
 
     const roleSpecific = {
         'EMISOR': [
-            { id: 'dashboard', title: 'Dashboard PTS', roles: ['EMISOR'], content: 'pts-dashboard-view' },
+            { id: 'dashboard', title: 'Dashboards', roles: ['EMISOR'], content: 'pts-dashboard-view' },
             { id: 'crear-pts', title: 'Crear PTS', roles: ['EMISOR'], content: 'pts-form-view' },
             { id: 'mis-pts', title: 'Mis PTS', roles: ['EMISOR'], content: 'my-pts-list-view' }
         ],
         'SUPERVISOR': [
-            { id: 'dashboard', title: 'Dashboard PTS', roles: ['SUPERVISOR'], content: 'pts-dashboard-view' },
+            { id: 'dashboard', title: 'Dashboards', roles: ['SUPERVISOR'], content: 'pts-dashboard-view' },
             { id: 'aprobacion', title: 'Aprobación', roles: ['SUPERVISOR'], content: 'approval-list-view' },
             { id: 'firma-biometrica', title: 'Firma Biométrica', roles: ['SUPERVISOR'], content: 'firma-biometrica-view' },
             { id: 'cierre-rto', title: 'Cierre RTO', roles: ['SUPERVISOR'], content: 'cierre-rto-view' }
         ],
         'EJECUTANTE': [
-            { id: 'dashboard', title: 'Dashboard PTS', roles: ['EJECUTANTE'], content: 'pts-dashboard-view' },
+            { id: 'dashboard', title: 'Dashboards', roles: ['EJECUTANTE'], content: 'pts-dashboard-view' },
             { id: 'ejecucion', title: 'Tareas', roles: ['EJECUTANTE'], content: 'execution-view' }
         ]
     };
@@ -39,11 +41,11 @@ const getRoutes = (role) => {
     return routes;
 };
 
-// Componente para la Navegación (Menú superior)
+// Navegacion (Menu superior)
 const Navigation = ({ role, onInicioClick }) => {
     const routes = getRoutes(role);
     
-    // Función para mapear rutas internas a URLs de React Router
+    // Funcion para mapear las rutas internas a URLs de React Router
     const getRouterPath = (route) => {
         switch (route.id) {
             case 'crear-pts':
@@ -59,18 +61,18 @@ const Navigation = ({ role, onInicioClick }) => {
             case 'reportes':
                 return '/reportes';
             case 'dashboard':
-                return '/?view=dashboard'; // Dashboard PTS con parámetro
+                return '/?view=dashboard';
             case 'inicio':
                 return '/'; // Inicio va a la pantalla principal
             default:
-                return '/?view=dashboard'; // Dashboard PTS por defecto
+                return '/?view=dashboard'; // Dashboards por defecto
         }
     };
     
     return (
         <nav className="flex items-center space-x-6">
             {routes.map(route => {
-                // Manejar el botón "Inicio" de manera especial
+                // Manejar el boton "Inicio" de manera especial
                 if (route.id === 'inicio') {
                     return (
                         <Link
@@ -92,7 +94,7 @@ const Navigation = ({ role, onInicioClick }) => {
                     );
                 }
                 
-                // Para todos los demás botones, comportamiento normal
+                // Para todos los demas botones comportamiento normal
                 return (
                     <Link
                         key={route.id}
@@ -115,7 +117,7 @@ const Navigation = ({ role, onInicioClick }) => {
     );
 };
 
-// Función para decodificar JWT
+// Funcion para decodificar JWT
 const decodeToken = (token) => {
     try {
         const payloadBase64 = token.split('.')[1];
@@ -216,8 +218,8 @@ const RTOClosureList = ({ onSelectPts }) => {
             const data = await response.json();
             console.log('DEBUG RTO - Todos los PTS:', data);
             
-            // SIMULACIÓN TEMPORAL: Crear un PTS firmado para testing
-            // Solo simular firma si no está ya cerrado
+            // !!!SIMULACION SOLO TEMPORAL: para crear un PTS firmado para testing
+            // Solo simular firma si no esta ya cerrado
             if (data.length > 0 && !data[0].firmaSupervisorBase64 && (!data[0].rtoEstado || data[0].rtoEstado !== 'CERRADO')) {
                 data[0].firmaSupervisorBase64 = 'FIRMA_SIMULADA_BASE64';
                 data[0].dniSupervisorFirmante = 'SUP222';
@@ -225,7 +227,7 @@ const RTOClosureList = ({ onSelectPts }) => {
                 console.log('DEBUG RTO - PTS simulado como firmado para testing:', data[0].id);
             }
             
-            // Verificar si hay PTS marcados como cerrados en sessionStorage (simulación de persistencia)
+            // Verificar si hay PTS marcados como cerrados en sessionStorage (!!!simulacion de persistencia)
             const closedPtsIds = JSON.parse(sessionStorage.getItem('closedPtsIds') || '[]');
             data.forEach(pts => {
                 if (closedPtsIds.includes(pts.id)) {
@@ -285,7 +287,7 @@ const RTOClosureList = ({ onSelectPts }) => {
     );
 };
 
-// Componente para mostrar PTS pendientes de firma
+// Para mostrar PTS pendientes de firma
 const PendingApprovalList = ({ onSelectPts }) => {
     const [ptsList, setPtsList] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -356,9 +358,9 @@ const PendingApprovalList = ({ onSelectPts }) => {
     );
 };
 
-// Componente para el contenido de la aplicación
+// Aca para el contenido de la aplicacion
 const AppContent = ({ user, currentView, setCurrentView }) => {
-    // Validar que user no sea null antes de hacer destructuring
+    // Validar que user no sea null
     if (!user) {
         return null; // o un componente de loading
     }
@@ -370,40 +372,42 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
     const [selectedPtsForRTO, setSelectedPtsForRTO] = useState(null);
     const [showRTOComponent, setShowRTOComponent] = useState(false);
     
-    // Detectar parámetro view en la URL
+    // Detectar parametro view en la URL
     const urlParams = new URLSearchParams(location.search);
     const viewParam = urlParams.get('view');
-    
-    // Determinar qué vista mostrar basado en URL o currentView
-    const activeView = viewParam ? 
-        { title: viewParam === 'dashboard' ? 'Dashboard PTS' : 'Inicio', content: viewParam === 'dashboard' ? 'pts-dashboard-view' : 'inicio-view' } :
-        currentView;
 
-    // Función para manejar la selección de PTS para firmar
+    // Permitir que activeView.content sea 'pts-dashboard-view' o 'equipos-dashboard-view'
+    let activeView = currentView;
+    if (viewParam === 'dashboard') {
+        // Si el usuario navega a /?view=dashboard, por defecto mostrar permisos
+        activeView = { title: 'Dashboards', content: currentView && currentView.content === 'equipos-dashboard-view' ? 'equipos-dashboard-view' : 'pts-dashboard-view' };
+    }
+
+    // Funcion para manejar la seleccion de PTS para firmar
     const handleSelectPts = (pts) => {
         console.log('DEBUG - handleSelectPts llamado con:', pts);
         setSelectedPts(pts);
         setShowFirmaComponent(true);
-        // Cambiar a la vista de firma biométrica
+        // Cambiar a la vista de firma biometrica
         setCurrentView({ title: 'Firma Biométrica', content: 'firma-biometrica-view' });
         console.log('DEBUG - Estados actualizados: selectedPts, showFirmaComponent = true y vista cambiada a firma-biometrica-view');
     };
 
-    // Función para manejar la selección de PTS para cerrar RTO
+    // Funcion para manejar la seleccion de PTS para cerrar RTO
     const handleSelectPtsForRTO = (pts) => {
         setSelectedPtsForRTO(pts);
         setShowRTOComponent(true);
     };
 
-    // Función para manejar el éxito de la firma
+    // Funcion para manejar el exito de la firma
     const handleFirmaExitosa = () => {
         setSelectedPts(null);
         setShowFirmaComponent(false);
-        // Refrescar la vista de aprobación y forzar recarga
+        // Refrescar la vista de aprobacion y forzar recarga
         setCurrentView({ title: 'Aprobación', content: 'approval-list-view', refresh: Date.now() });
     };
 
-    // Función para manejar el éxito del cierre RTO
+    // Funcion para manejar el exito del cierre RTO
     const handleRTOExitoso = () => {
         setSelectedPtsForRTO(null);
         setShowRTOComponent(false);
@@ -411,11 +415,16 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
         setCurrentView({ title: 'Cierre RTO', content: 'cierre-rto-view' });
     };
 
-    // Lógica para cargar el contenido simulado (HU-002)
+    // Logica para cargar el contenido simulado (HU-002)
     const loadContent = (viewId) => {
         switch (viewId) {
-            case 'pts-dashboard-view':
-                return <ListaPTS />;
+                        case 'pts-dashboard-view':
+                                return (
+                                    <>
+                                        <ListaPTS />
+                                        <DashboardEquipos />
+                                    </>
+                                );
             case 'pts-form-view':
                 return <CrearPTS />;
             case 'approval-list-view':
@@ -520,14 +529,46 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                 <span className="block text-xl font-medium text-secondary-epu mt-1">({role})</span>
             </h2>
 
-            <div className="bg-white p-8 rounded-xl shadow-2xl border-l-8 border-secondary-epu">
-                <h3 className="text-2xl font-semibold mb-6 text-gray-800">{activeView.title}</h3>
-                <div id="content-container">
-                    {loadContent(activeView.content)}
+            {/* Selector de Dashboards */}
+            {activeView.title === 'Dashboards' && (
+                <div className="flex items-center gap-4 mb-6">
+                    <h3 className="text-2xl font-semibold text-gray-800">Dashboards</h3>
+                    <button
+                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${activeView.content === 'pts-dashboard-view' ? 'bg-epu-primary text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
+                        onClick={() => setCurrentView({ title: 'Dashboards', content: 'pts-dashboard-view' })}
+                    >
+                        Permisos
+                    </button>
+                    <button
+                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${activeView.content === 'equipos-dashboard-view' ? 'bg-epu-primary text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
+                        onClick={() => setCurrentView({ title: 'Dashboards', content: 'equipos-dashboard-view' })}
+                    >
+                        Equipos
+                    </button>
                 </div>
+            )}
+
+            <div className="bg-white p-8 rounded-xl shadow-2xl border-l-8 border-secondary-epu">
+                {/* Si estamos en Dashboards, mostrar el dashboard correspondiente */}
+                {activeView.title === 'Dashboards' ? (
+                    <>
+                        <div id="content-container">
+                            {activeView.content === 'pts-dashboard-view' && <ListaPTS />}
+                            {activeView.content === 'equipos-dashboard-view' && <DashboardEquipos />}
+                        </div>
+                        <DcsSimForm />
+                    </>
+                ) : (
+                    <>
+                        <h3 className="text-2xl font-semibold mb-6 text-gray-800">{activeView.title}</h3>
+                        <div id="content-container">
+                            {loadContent(activeView.content)}
+                        </div>
+                    </>
+                )}
             </div>
 
-            {/* Botones de Acción Rápida (Control de Roles) */}
+            {/* Botones de Accion Rapida (Control de Roles) */}
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                 {role === 'EMISOR' && (
                     <button
@@ -570,7 +611,7 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
     );
 };
 
-// Componente de ruta protegida
+// Ruta protegida
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('authToken');
   
@@ -581,9 +622,9 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Componente Principal de la Aplicación
+// Componente Principal de la Aplicacion
 const App = () => {
-    // Definición de colores para Tailwind (Asume que está configurado)
+    // Definición de colores para Tailwind (!!!si esta configurado revisar)
     // Esto se incluye aquí solo como recordatorio, la configuración real debe estar en tailwind.config.js
     /*
     tailwind.config = {

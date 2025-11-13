@@ -11,10 +11,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Implementación de UserDetailsService para cargar los detalles del usuario.
- * Configuracion de prototipado: La contraseña es el Legajo (con prefijo {noop}).
- */
+// UserDetailsService para cargar los detalles del usuario.
+// !!! para simular la contraseña es el Legajo (con prefijo {noop}).
+
 @Service
 public class UserDetailsServiceCustom implements UserDetailsService {
 
@@ -24,9 +23,9 @@ public class UserDetailsServiceCustom implements UserDetailsService {
         List<GrantedAuthority> authorities = new ArrayList<>();
         String rol = "";
         
-        // 🚨 CRÍTICO para el prototipo: La contraseña esperada será "{noop}" + Legajo
-        // Esto garantiza que el passwordEncoder.matches() sea Legajo vs. {noop}Legajo, 
-        // lo que siempre debe ser true si se ingresó el legajo como contraseña.
+        // !!! OJO: La contraseña esperada es "{noop}" + Legajo
+        // Asi el passwordEncoder.matches() es Legajo vs. {noop}Legajo, 
+        // y siempre debe ser true si se ingreso el legajo como contraseña.
         String expectedPassword = "{noop}" + legajo; 
 
         switch (legajo) {
@@ -48,7 +47,7 @@ public class UserDetailsServiceCustom implements UserDetailsService {
 
         authorities.add(new SimpleGrantedAuthority(rol));
         
-        // El legajo se usa como username, y el legajo (con {noop}) como contraseña simulada
+        // El legajo es username, y el legajo (con {noop}) es la contraseña
         return new User(legajo, expectedPassword, authorities);
     }
 }

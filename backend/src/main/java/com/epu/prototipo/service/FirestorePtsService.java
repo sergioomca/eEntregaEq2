@@ -19,10 +19,12 @@ import java.time.LocalDateTime;
 public class FirestorePtsService implements IPtsService {
 
     private final Firestore firestore;
+    private final EquipoService equipoService;
     private static final String COLLECTION_NAME = "permisos-trabajo-seguro";
 
-    public FirestorePtsService(Firestore firestore) {
+    public FirestorePtsService(Firestore firestore, EquipoService equipoService) {
         this.firestore = firestore;
+        this.equipoService = equipoService;
     }
 
     @Override
@@ -47,6 +49,14 @@ public class FirestorePtsService implements IPtsService {
 
     @Override
     public PermisoTrabajoSeguro createPts(PermisoTrabajoSeguro pts) {
+        // Actualizar estado y condición del equipo antes de guardar el PTS
+        try {
+            String tag = pts.getEquipoOInstalacion();
+            equipoService.actualizarEstadoEquipo(tag, "DESHABILITADO");
+            equipoService.actualizarCondicionEquipo(tag, "BLOQUEADO");
+        } catch (Exception e) {
+            System.err.println("[ERROR] No se pudo actualizar el estado/condición del equipo: " + e.getMessage());
+        }
         try {
             var future = firestore.collection(COLLECTION_NAME).add(pts);
             var writeResult = future.get();

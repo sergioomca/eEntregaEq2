@@ -4,8 +4,10 @@ package com.epu.prototipo.service;
 import com.epu.prototipo.dto.CerrarPtsRequest;
 import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import com.epu.prototipo.service.EquipoService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,11 +17,14 @@ import java.util.List;
 @Service
 @Profile("test")
 public class TestPtsService implements IPtsService {
+    private final EquipoService equipoService;
+
 
     // Lista en memoria para almacenar PTS creados en la prueba
     private final List<PermisoTrabajoSeguro> ptsInMemory = new ArrayList<>();
 
-    public TestPtsService() {
+    public TestPtsService(EquipoService equipoService) {
+        this.equipoService = equipoService;
         // Inicializa con datos de prueba
         initializeTestData();
     }
@@ -78,6 +83,15 @@ public class TestPtsService implements IPtsService {
 
     @Override
     public PermisoTrabajoSeguro createPts(PermisoTrabajoSeguro pts) {
+        // Log explícito del valor de equipoOInstalacion al crear el PTS
+        // Actualizar estado y condición del equipo antes de guardar el PTS
+        try {
+            String tag = pts.getEquipoOInstalacion();
+            equipoService.actualizarEstadoEquipo(tag, "DESHABILITADO");
+            equipoService.actualizarCondicionEquipo(tag, "BLOQUEADO");
+        } catch (Exception e) {
+            System.err.println("[ERROR][TEST] No se pudo actualizar el estado/condición del equipo: " + e.getMessage());
+        }
         // Para generar ID unico y agregar a la lista en memoria
         pts.setId("PTS-" + System.currentTimeMillis());
         ptsInMemory.add(pts);
@@ -164,6 +178,22 @@ public class TestPtsService implements IPtsService {
             pts.setFechaHoraFirmaSupervisor(LocalDateTime.now().minusMinutes(5)); // Firmado hace 5 minutos
         }
 
+        // Desbloquear el equipo asociado al cerrar el PTS
+        try {
+            String tag = pts.getEquipoOInstalacion();
+            System.out.println("[DEBUG][RTO] Tag recibido para desbloqueo: '" + tag + "'");
+            try {
+                equipoService.getEquipoByTag(tag);
+                System.out.println("[DEBUG][RTO] Equipo encontrado en base de datos: '" + tag + "'");
+            } catch (Exception ex) {
+                System.err.println("[DEBUG][RTO] Equipo NO encontrado en base de datos: '" + tag + "'. Excepción: " + ex.getMessage());
+            }
+            equipoService.actualizarCondicionEquipo(tag, "DESBLOQUEADO");
+            // Si también quieres habilitar el equipo, descomenta la siguiente línea:
+            // equipoService.actualizarEstadoEquipo(tag, "HABILITADO");
+        } catch (Exception e) {
+            System.err.println("[ERROR][TEST] No se pudo desbloquear el equipo al cerrar PTS: " + e.getMessage());
+        }
         // Hacer cierre simulado
         pts.setRtoEstado("CERRADO");
         pts.setRtoResponsableCierreLegajo(request.getRtoResponsableCierreLegajo());

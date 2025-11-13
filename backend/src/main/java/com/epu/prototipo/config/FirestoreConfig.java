@@ -10,6 +10,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import com.epu.prototipo.service.EquipoService;
+import com.epu.prototipo.service.gateway.DcsGateway;
+import com.epu.prototipo.service.gateway.MockDcsGateway;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,5 +46,15 @@ public class FirestoreConfig {
             }
             return FirestoreClient.getFirestore();
         }
+    }
+
+    @Bean
+    public DcsGateway dcsGateway() {
+        return new MockDcsGateway();
+    }
+
+    @Bean
+    public EquipoService equipoService(DcsGateway dcsGateway) {
+        return new EquipoService(dcsGateway);
     }
 }

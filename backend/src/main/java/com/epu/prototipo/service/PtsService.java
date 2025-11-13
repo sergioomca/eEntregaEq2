@@ -249,18 +249,32 @@ public class PtsService implements IPtsService {
         if (pts.getSolicitanteLegajo() == null || pts.getSupervisorLegajo() == null) {
             throw new RuntimeException("Legajo de solicitante o supervisor no pueden ser nulos.");
         }
-        // Validar que el equipo exista antes de crear el PTS
+
+        // Validar que el equipo exista antes de crear el PTS y deshabilitarlo
         try {
-            equipoService.getEquipoByTag(pts.getEquipoOInstalacion());
+            String tag = pts.getEquipoOInstalacion();
+            equipoService.actualizarEstadoEquipo(tag, "DESHABILITADO");
+            equipoService.actualizarCondicionEquipo(tag, "BLOQUEADO");
         } catch (RuntimeException e) {
             throw new RuntimeException("Error al crear PTS: " + e.getMessage());
         }
+
+        // Generar ID único en formato PTS-YYMMDD-###
+        String fechaInicio = pts.getFechaInicio();
+        if (fechaInicio == null || fechaInicio.length() < 10) {
+            throw new RuntimeException("La fecha de inicio debe estar en formato YYYY-MM-DD");
+        }
+        String yymmdd = fechaInicio.replaceAll("-", "").substring(2, 8); // YYMMDD
+        int ultimoNumero = obtenerUltimoNumeroPtsPorFecha(fechaInicio);
+        int nuevoNumero = ultimoNumero + 1;
+        String idGenerado = String.format("PTS-%s-%03d", yymmdd, nuevoNumero);
+        pts.setId(idGenerado);
+
         try {
-            // El ID generado por Firestore
-            ApiFuture<DocumentReference> future = firestore.collection(COLLECTION_NAME).add(pts);
-            DocumentReference docRef = future.get();
-            pts.setId(docRef.getId()); // Asignar el ID generado al objeto de retorno
-            System.out.println("PTS creado con ID: " + docRef.getId());
+            // Guardar el PTS con el ID generado como clave
+            ApiFuture<WriteResult> future = firestore.collection(COLLECTION_NAME).document(idGenerado).set(pts);
+            future.get();
+            System.out.println("PTS creado con ID: " + idGenerado);
             return pts;
         } catch (InterruptedException | ExecutionException e) {
             // Si Firestore falla, simula creado
@@ -470,7 +484,7 @@ public class PtsService implements IPtsService {
         List<PermisoTrabajoSeguro> ptsList = buscarPts(null, null, null, null, fechaInicio);
         int max = 0;
         for (PermisoTrabajoSeguro pts : ptsList) {
-            // Se asume que el ID tiene formato "PTS-YYYYMMDD-XXX" o similar
+            // Se asume que el ID tiene formato "PTS-YYYYMMDD-###" o similar
             String id = pts.getId();
             if (id != null && id.matches("PTS-\\d{8}-\\d+")) {
                 String[] partes = id.split("-");

@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 /**
- * Componente que SIMULA la lectura de Huella Digital para firmar un PTS.
+ * SIM para lectura de Huella Digital para firmar un PTS.
  *
- * NOTA: En un entorno real, la lectura biométrica (huella) se gestionaría 
+ * NOTA: En entorno real, la lectura huella se gestiona 
  * con librerías nativas o APIs de dispositivo, inaccesibles en web/React.
- * Aquí simulamos la acción de validación del usuario logueado.
+ * Aca se simula la accion de validacion del usuario logueado.
  * * @param {object} props
  * @param {string} props.ptsId - ID del Permiso de Trabajo Seguro a firmar.
- * @param {function} props.onFirmaExitosa - Callback al finalizar la firma.
+ * @param {function} props.onFirmaExitosa - LLsmada al finalizar la firma.
  */
 function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
     
@@ -19,7 +19,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
     const [isPrinting, setIsPrinting] = useState(false);
     const printButtonRef = useRef(null);
     
-    // Enfocar automáticamente el botón "Sí, Imprimir" cuando aparece el diálogo
+    // Enfocar automaticamente el botón "Sí, Imprimir" 
     useEffect(() => {
         if (showPrintDialog && printButtonRef.current) {
             printButtonRef.current.focus();
@@ -29,9 +29,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
     // DNI/Legajo del usuario logueado recibido como prop
     const nombreFirmante = `Supervisor ${dniFirmante}`;
 
-    /**
-     * Función para imprimir el PTS después de la firma
-     */
+    // Función para imprimir el PTS después de la firma
     const handlePrintPTS = async () => {
         setIsPrinting(true);
         
@@ -71,9 +69,9 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
             console.log(`PDF del PTS ${ptsId} descargado exitosamente`);
             setShowPrintDialog(false);
             
-            // Notificar éxito y cerrar
+            // Notificar exito y cerrar
             alert(`PDF del PTS ${ptsId} generado exitosamente`);
-            onFirmaExitosa(); // Notificar al componente padre
+            onFirmaExitosa(); 
             setBiometricoValidado(false);
             
         } catch (error) {
@@ -84,10 +82,9 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
         }
     }; 
 
-    /**
-     * Simula la lectura de la huella digital.
-     * En este prototipo, simplemente valida que el PTS ID esté presente.
-     */
+    // SIM de la lectura de la huella digital
+    // En el prototipo, solo se valida que el PTS ID este presente.
+     
     const simularValidacionBiometrica = () => {
         if (!ptsId) {
             setError('Debe seleccionar un PTS válido para simular la validación.');
@@ -97,20 +94,19 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
         setError(null);
         setLoading(true);
 
-        // Simulación de latencia de lectura de huella
+        // Simulacion de latencia de lectura de huella
         setTimeout(() => {
             setBiometricoValidado(true);
             setLoading(false);
-            // Mostrar una notificación de éxito simulada
+            // Mostrar notificacion de exito simulada
             setTimeout(() => {
                 alert(`Validación biométrica exitosa. DNI/Legajo: ${dniFirmante}`);
             }, 100);
         }, 1500); 
     };
 
-    /**
-     * Envía la confirmación de la firma biométrica al backend.
-     */
+    // Envía la confirmacion de la firma biometrica al backend.
+     
     const handleConfirmarFirma = async () => {
         if (!biometricoValidado) {
             setError('Debe completar la validación biométrica primero.');
@@ -121,7 +117,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
         setError(null);
 
         // Generamos un placeholder Base64 para guardar en Firestore
-        // En el backend se guardará este marcador en lugar de un trazo de firma
+        // En el backend se guarda este marcador en lugar de la firma
         const firmaPlaceholderBase64 = btoa(`FIRMADO_BIOMETRICAMENTE_POR_${dniFirmante}_${new Date().toISOString()}`);
 
         // 1. Preparar el payload
@@ -160,10 +156,10 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
                 throw new Error(`Error al guardar la firma: ${response.status} - ${errorBody}`);
             }
 
-            // 4. Éxito
+            // Exito en firma
             alert('Firma biométrica registrada con éxito. PTS aprobado.');
             
-            // Mostrar diálogo de impresión automáticamente
+            // Mostrar dialogo de impresion 
             setShowPrintDialog(true);
             
         } catch (err) {
@@ -180,7 +176,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
         flexDirection: 'column',
         alignItems: 'center',
         padding: '24px',
-        backgroundColor: '#e6eef7', // Fondo azul claro para módulo de seguridad
+        backgroundColor: '#e6eef7', 
         borderRadius: '12px',
         maxWidth: '450px',
         margin: '20px auto',
@@ -313,7 +309,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
                             <button 
                                 onClick={() => {
                                     setShowPrintDialog(false);
-                                    onFirmaExitosa(); // Notificar al componente padre
+                                    onFirmaExitosa(); 
                                     setBiometricoValidado(false);
                                 }}
                                 disabled={isPrinting}

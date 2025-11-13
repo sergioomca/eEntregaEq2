@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-/**
- * Componente funcional para el formulario de inicio de sesión con React Router.
- */
+// Para el formulario de inicio de sesion con React Router.
+
 function Login({ onLoginSuccess }) {
     // 1. Estados para capturar los datos del formulario y el manejo de errores.
     const [legajo, setLegajo] = useState('');
@@ -13,30 +12,29 @@ function Login({ onLoginSuccess }) {
     
     const navigate = useNavigate();
 /**
-     * 2. Manejador del envío del formulario (al hacer clic en "Ingresar").
+     * Para manejar el envío del formulario (al hacer clic en "Ingresar").
      * @param {Event} e Evento de formulario.
      */
     const handleSubmit = async (e) => {
-        e.preventDefault(); // Evita que la página se recargue por defecto
+        e.preventDefault(); 
         setError(null);
         setLoading(true);
 try {
-            // 3. Petición POST a tu API de Spring Boot (Puerto 8080)
+            // Peticion POST a la API de Spring Boot (Puerto 8080)
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 // Envía el DTO LoginRequest al backend (campo correcto: legajo)
                 body: JSON.stringify({ legajo, password }),
             });
-// 4. Manejo de Errores de la API
+// Manejo de Errores de la API
             if (!response.ok) {
-                // El backend devuelve 401 Unauthorized si las credenciales son incorrectas.
-                // Esto cumple el criterio de aceptación de la HU-002.
+                // El backend devuelve 401 Unauthorized si las credenciales son incorrectas (HU-002)
                 throw new Error('Credenciales inválidas. Verifique N° de Legajo y Contraseña.');
             }
-// 5. Autenticación Exitosa (HTTP 200 OK)
-            const data = await response.json(); // { token, requiresPasswordChange }
-// 6. Almacenamiento y Redirección (HU-001 y HU-002)
+// Autenticación Exitosa (HTTP 200 OK)
+            const data = await response.json(); 
+// Almacenamiento y Redireccion 
             localStorage.setItem('authToken', data.token); // Guardar el token en el navegador
             
             // Notificar al componente padre del login exitoso
@@ -50,7 +48,7 @@ try {
                 navigate('/'); // Redirigir al Dashboard
             }
 } catch (err) {
-            // Manejo de errores de red o la excepción lanzada en el paso 4.
+            // Manejo de errores de red o excepcion
             setError(err.message || "Error de conexión con el servidor.");
         } finally {
             setLoading(false);
@@ -88,7 +86,7 @@ return (
 {/* Mensaje de Error */}
                 {error && <p className="error-message">{error}</p>}
                 
-                {/* Botón de Ingreso */}
+                {/* Boton de Ingreso */}
                 <button type="submit" disabled={loading}>
                     {loading ? 'Ingresando...' : 'Ingresar'}
                 </button>

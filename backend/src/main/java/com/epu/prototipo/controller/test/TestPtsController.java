@@ -19,7 +19,7 @@ public class TestPtsController {
 
     @GetMapping
     public List<PermisoTrabajoSeguro> getAllPts() {
-        // Crear algunos PTS de prueba
+        // Para crear algunos PTS de prueba
         PermisoTrabajoSeguro pts1 = new PermisoTrabajoSeguro();
         pts1.setId("PTS-001");
         pts1.setDescripcionTrabajo("Mantenimiento de equipo eléctrico");
@@ -41,13 +41,13 @@ public class TestPtsController {
         return Arrays.asList(pts1, pts2);
     }
 
-    // *******************************************************************
-    // ENDPOINT: FIRMAR PTS (HU-005 - Firma Biométrica) - VERSIÓN TEST
-    // *******************************************************************
+    // **********************************************************************
+    // !!!ENDPOINT: FIRMA PTS (HU-005 - Firma Biometrica) - solo para  TESTEO
+    // ***********************************************************************
     @PutMapping("/firmar")
     public ResponseEntity<?> firmarPts(@RequestBody FirmaPtsRequest request) {
         try {
-            // Simulación para pruebas: crear un PTS firmado
+            // Simulacion para pruebas: crear un PTS firmado
             PermisoTrabajoSeguro ptsFirmado = new PermisoTrabajoSeguro();
             ptsFirmado.setId(request.getPtsId());
             ptsFirmado.setDescripcionTrabajo("PTS de prueba - FIRMADO");
@@ -64,13 +64,13 @@ public class TestPtsController {
         }
     }
 
-    // *******************************************************************
-    // ENDPOINT: CERRAR PTS (HU-019 - Retorno a Operaciones) - VERSIÓN TEST
-    // *******************************************************************
+    // ****************************************************************************
+    // !!!ENDPOINT: CERRAR PTS (HU-019 - Retorno a Operaciones) - solo para TESTEO
+    // ***************************************************************************
     @PutMapping("/cerrar")
     public ResponseEntity<?> cerrarPts(@RequestBody CerrarPtsRequest request) {
         try {
-            // Validaciones básicas para pruebas
+            // Validaciones para pruebas
             if (request.getPtsId() == null || request.getPtsId().trim().isEmpty()) {
                 return new ResponseEntity<>("El ID del PTS es requerido", HttpStatus.BAD_REQUEST);
             }
@@ -79,7 +79,7 @@ public class TestPtsController {
                 return new ResponseEntity<>("El legajo del responsable de cierre es requerido", HttpStatus.BAD_REQUEST);
             }
             
-            // Simulación para pruebas: crear un PTS cerrado
+            // Simula para pruebas: crear un PTS cerrado
             PermisoTrabajoSeguro ptsCerrado = new PermisoTrabajoSeguro();
             ptsCerrado.setId(request.getPtsId());
             ptsCerrado.setDescripcionTrabajo("PTS de prueba - CERRADO");

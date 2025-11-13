@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * Controlador REST para gestionar operaciones relacionadas con usuarios
- * Proporciona endpoints públicos para consultar información de usuarios externos
+ * Proporciona endpoints publicos para consultar informacion de usuarios externos
  */
 @RestController
 @RequestMapping("/api/usuarios")
@@ -16,14 +16,14 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
-    // Inyección de dependencias vía constructor
+    // Para inyectar dependencias vía constructor
     public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
     }
 
     /**
-     * Obtiene la información de un usuario por su número de legajo
-     * @param legajo Número de legajo del usuario a buscar
+     * Obtiene la informacion de un usuario por su numero de legajo
+     * @param legajo 
      * @return ResponseEntity con UsuarioDTO si se encuentra, o error 404 si no existe
      */
     @GetMapping("/{legajo}")
@@ -34,7 +34,7 @@ public class UsuarioController {
 
     /**
      * Endpoint de prueba para verificar que el controlador funciona
-     * @return mensaje de confirmación
+     * @return 
      */
     @GetMapping("/test")
     public ResponseEntity<String> test() {
@@ -43,8 +43,8 @@ public class UsuarioController {
 
     /**
      * Maneja las excepciones cuando un usuario no es encontrado
-     * Cumple con el Criterio de Aceptación 2: retorna 404 NOT_FOUND
-     * @param ex RuntimeException lanzada por el servicio
+     * retorna 404 NOT_FOUND
+     * @param ex RuntimeException enviada por el servicio
      * @return ResponseEntity con mensaje de error y status 404
      */
     @ExceptionHandler(RuntimeException.class)

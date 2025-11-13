@@ -10,26 +10,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Define el PasswordEncoder para la aplicación.
+ * Se define el PasswordEncoder para la aplicacion.
  * Temporalmente configurado para usar NoOpPasswordEncoder ({noop}) para fines de prototipado,
- * permitiendo avanzar sin problemas de hash. DEBE ser reemplazado por BCrypt o PBKDF2 en producción.
+ * para que permita continuar sin problemas de hash. 
+ * !!! Luego reemplazar por BCrypt o PBKDF2.
  */
 @Configuration
 public class SecurityBeans {
 
     /**
-     * Configura un DelegatingPasswordEncoder que usa {noop} como codificador por defecto.
+     * Se configura un DelegatingPasswordEncoder que usa {noop} como codificador por defecto.
      * El {noop} es el NoOpPasswordEncoder, que no hace hashing (texto plano),
-     * y se usa solo para desarrollo.
+     * !!! se usa solo para desarrollo.
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
         // Mapeo de codificadores
         Map<String, PasswordEncoder> encoders = new HashMap<>();
-        // 🚨 Configuración temporal de prototipado: {noop} = NoOpPasswordEncoder
+        // Configuración temporal de prototipado: {noop} = NoOpPasswordEncoder
         encoders.put("noop", NoOpPasswordEncoder.getInstance());
         
-        // Creamos el DelegatingPasswordEncoder y definimos {noop} como el ID por defecto
+        // Se creas el DelegatingPasswordEncoder y se define {noop} como ID por defecto
         DelegatingPasswordEncoder delegatingPasswordEncoder = new DelegatingPasswordEncoder("noop", encoders);
         
         return delegatingPasswordEncoder;

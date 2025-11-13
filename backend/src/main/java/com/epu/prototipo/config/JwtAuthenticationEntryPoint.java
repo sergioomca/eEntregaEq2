@@ -11,8 +11,8 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 /**
- * Maneja la respuesta de 'No Autorizado' (401) cuando se intenta acceder a un recurso 
- * protegido sin credenciales (JWT) válidas o sin token.
+ * Maneja el 'No Autorizado' (401) cuando se intenta acceder a un recurso 
+ * protegido sin credenciales (JWT) validas o sin token.
  */
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint, Serializable {
@@ -24,7 +24,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint, Se
             AuthenticationException authException) throws IOException {
 
         // Devuelve un error 401 (Unauthorized) con un mensaje de error claro
-        // Esto se activa cuando el usuario intenta acceder a un recurso protegido sin un token válido
+        // Esto se activa cuando el usuario intenta acceder a un recurso protegido sin un token valido
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: " + authException.getMessage());
     }
 }

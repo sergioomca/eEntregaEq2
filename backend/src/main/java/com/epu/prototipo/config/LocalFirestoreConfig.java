@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 /**
- * Configuración para desarrollo/local: provee un mock de Firestore cuando se activa
+ * Configuracion solo para desarrollo/local: da un mock de Firestore cuando se activa
  * el perfil 'local'. Esto permite arrancar la app sin el archivo de credenciales de Firebase.
  */
 @Configuration

@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 
 /**
- * Componente CierreRTO - Formulario para registrar el Retorno a Operaciones (RTO) de un PTS
- * Corresponde a la Historia de Usuario HU-019
+ * Componente CierreRTO - Formulario para registrar el RTO de un PTS (HU-019)
  * 
  * @param {Object} props - Propiedades del componente
  * @param {string} props.ptsId - ID del PTS a cerrar (requerido)
- * @param {string} [props.responsableLegajo] - Legajo del responsable (opcional, usa valor por defecto)
- * @param {function} [props.onSuccess] - Callback ejecutado al cerrar exitosamente
- * @param {function} [props.onCancel] - Callback para cancelar la operación
+ * @param {string} [props.responsableLegajo] - Legajo del responsable (opcional - valor por defecto)
+ * @param {function} [props.onSuccess] - ejecutado al cerrar exitosamente
+ * @param {function} [props.onCancel] - para cancelar la operación
  */
 const CierreRTO = ({ 
   ptsId, 
@@ -21,12 +20,10 @@ const CierreRTO = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [errors, setErrors] = useState({}); // Estado para validaciones
+  const [errors, setErrors] = useState({});
 
-  /**
-   * Función de validación del formulario RTO
-   * Verifica campos obligatorios y reglas de negocio
-   */
+  // Función de validacion del formulario RTO - 
+  
   const validateForm = () => {
     const newErrors = {};
 
@@ -48,14 +45,12 @@ const CierreRTO = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  /**
-   * Maneja cambios en el campo de observaciones con limpieza de errores
-   */
+  // Para manejar cambios en el campo de observaciones
   const handleObservacionesChange = (e) => {
     const value = e.target.value;
     setObservaciones(value);
 
-    // Limpiar error de observaciones si existe
+    // Para limpiar error de observaciones si existe
     if (errors.observaciones) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -65,9 +60,7 @@ const CierreRTO = ({
     }
   };
 
-  /**
-   * Maneja el cierre del PTS (RTO)
-   * Envía una petición PUT al endpoint /api/pts/cerrar
+  /** Para manejar el cierre del PTS (RTO) - Hace una petición PUT al endpoint /api/pts/cerrar
    */
   const handleCierreRTO = async () => {
     // Validación del formulario
@@ -76,7 +69,7 @@ const CierreRTO = ({
       return;
     }
 
-    // Obtener token de autenticación
+    // Obtener token de autenticacion
     const jwtToken = localStorage.getItem('authToken');
     if (!jwtToken) {
       setError('No se encontró token de autenticación');
@@ -84,7 +77,7 @@ const CierreRTO = ({
       return;
     }
 
-    // Confirmación del usuario
+    // Confirmacion del usuario
     const confirmacion = window.confirm(
       `¿Está seguro que desea cerrar el PTS ${ptsId}?\n\n` +
       'Esta acción no se puede deshacer y marcará el PTS como "Retorno a Operaciones".'
@@ -94,7 +87,7 @@ const CierreRTO = ({
       return;
     }
 
-    // Preparar datos para el request
+    // Preparar datos para request
     const cerrarPtsRequest = {
       ptsId: ptsId,
       rtoResponsableCierreLegajo: responsableLegajo,
@@ -104,8 +97,7 @@ const CierreRTO = ({
     setLoading(true);
     setError(null);
     setSuccess(false);
-    setErrors({}); // Limpiar errores de validación
-
+    setErrors({}); 
     try {
       console.log('DEBUG CIERRE - Enviando petición de cierre RTO:', cerrarPtsRequest);
       console.log('DEBUG CIERRE - Token:', jwtToken ? 'Presente' : 'Ausente');
@@ -124,7 +116,7 @@ const CierreRTO = ({
       console.log('DEBUG CIERRE - Response data:', responseData);
 
       if (response.ok) {
-        // SIMULACIÓN: Marcar PTS como cerrado en sessionStorage
+        // Para SIM: Marcar PTS como cerrado en sessionStorage
         const closedPtsIds = JSON.parse(sessionStorage.getItem('closedPtsIds') || '[]');
         if (!closedPtsIds.includes(ptsId)) {
           closedPtsIds.push(ptsId);
@@ -132,7 +124,7 @@ const CierreRTO = ({
           console.log('DEBUG CIERRE - PTS marcado como cerrado:', ptsId);
         }
         
-        // Éxito
+        // Exito
         setSuccess(true);
         setError(null);
         
@@ -146,7 +138,7 @@ const CierreRTO = ({
         // Limpiar formulario
         setObservaciones('');
         
-        // Ejecutar callback de éxito si existe
+        // Ejecutar llamada de exito
         if (onSuccess) {
           onSuccess(responseData);
         }
@@ -155,7 +147,7 @@ const CierreRTO = ({
         // Error del servidor
         let errorMessage = 'Error desconocido al cerrar el PTS';
         
-        // Manejo específico según código de estado HTTP
+        // Manejo de error segun codigo de estado HTTP
         switch (response.status) {
           case 400:
             errorMessage = responseData.error || 'Datos de entrada inválidos';
@@ -177,14 +169,14 @@ const CierreRTO = ({
         }
         
         setError(errorMessage);
-        alert(`❌ Error: ${errorMessage}`);
+        alert(`Error: ${errorMessage}`);
       }
 
     } catch (networkError) {
       // Error de red o conexión
       const errorMessage = 'Error de conexión con el servidor';
       setError(errorMessage);
-      alert(`❌ ${errorMessage}: ${networkError.message}`);
+      alert(` ${errorMessage}: ${networkError.message}`);
       console.error('Error de red:', networkError);
     } finally {
       setLoading(false);
@@ -203,14 +195,14 @@ const CierreRTO = ({
   return (
     <div className="cierre-rto-container">
       <div className="cierre-rto-card">
-        <h3>🔒 Cerrar PTS - Retorno a Operaciones (RTO)</h3>
+        <h3> Cerrar PTS - Retorno a Operaciones (RTO)</h3>
         
         <div className="pts-info">
           <p><strong>PTS ID:</strong> {ptsId}</p>
           <p><strong>Responsable de Cierre:</strong> {responsableLegajo}</p>
         </div>
 
-        {/* Área de texto para observaciones */}
+        {/* Area de texto para observaciones */}
         <div className="form-group">
           <label htmlFor="rtoObservaciones">
             <strong>Observaciones del Cierre (Opcional):</strong>
@@ -234,28 +226,28 @@ const CierreRTO = ({
           )}
         </div>
 
-        {/* Errores de validación generales */}
+        {/* Errores de validacion generales */}
         {errors.ptsId && (
           <div className="error-validacion">
-            ❌ {errors.ptsId}
+             {errors.ptsId}
           </div>
         )}
         {errors.responsableLegajo && (
           <div className="error-validacion">
-            ❌ {errors.responsableLegajo}
+             {errors.responsableLegajo}
           </div>
         )}
 
         {/* Mensajes de estado */}
         {error && (
           <div className="error-message">
-            ❌ {error}
+             {error}
           </div>
         )}
 
         {success && (
           <div className="success-message">
-            ✅ PTS cerrado exitosamente
+             PTS cerrado exitosamente
           </div>
         )}
 
@@ -283,7 +275,7 @@ const CierreRTO = ({
         {/* Información adicional */}
         <div className="info-note">
           <small>
-            ⚠️ <strong>Importante:</strong> Una vez cerrado, el PTS no podrá ser modificado.
+             <strong>Importante:</strong> Una vez cerrado, el PTS no podrá ser modificado.
             Asegúrese de que todas las tareas estén completadas antes del cierre.
           </small>
         </div>

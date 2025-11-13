@@ -17,7 +17,7 @@
     text-align: center;
 }
 h2 {
-    color: #004d99; /* Azul corporativo */
+    color: #004d99; 
     margin-bottom: 25px;
 }
 .login-form .form-group {
@@ -36,12 +36,12 @@ h2 {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    box-sizing: border-box; /* Asegura que el padding no desborde el ancho */
+    box-sizing: border-box; 
 }
 .login-form button {
     width: 100%;
     padding: 10px;
-    background-color: #007bff; /* Azul primario */
+    background-color: #007bff; 
     color: white;
     border: none;
     border-radius: 4px;
@@ -58,7 +58,7 @@ h2 {
     cursor: not-allowed;
 }
 .error-message {
-    color: #dc3545; /* Rojo de error */
+    color: #dc3545; 
     margin-top: 10px;
     padding: 8px;
     background-color: #f8d7da;

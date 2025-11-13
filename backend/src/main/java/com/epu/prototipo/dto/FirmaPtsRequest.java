@@ -1,15 +1,13 @@
 package com.epu.prototipo.dto;
 
-/**
- * DTO para manejar la solicitud de firma de un Permiso de Trabajo Seguro (PTS).
- */
+// DTO manejar molicitud de firma de un PTS.
 public class FirmaPtsRequest {
 
     private String ptsId; // ID del documento a firmar en Firestore
-    private String dniFirmante; // DNI del supervisor que está firmando
+    private String dniFirmante; // !!! revisar - DNI del supervisor que esta firmando
     private String firmaBase64; // La imagen de la firma como string Base64
 
-    // CONSTRUCTOR VACÍO Y GETTERS/SETTERS: Necesarios para el binding de JSON en Spring Boot.
+    // Constructor vacio y Getters/setters para el binding de JSON en Spring Boot.
 
     public FirmaPtsRequest() {}
 

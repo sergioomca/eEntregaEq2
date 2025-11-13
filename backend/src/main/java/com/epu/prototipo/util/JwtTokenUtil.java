@@ -14,9 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-/**
- * Clase de utilidad para la generación y validación de JSON Web Tokens (JWT).
- */
+// Clase para la generacion y validacion de JWTs
 @Component
 public class JwtTokenUtil {
 
@@ -28,14 +26,14 @@ public class JwtTokenUtil {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    // Local cached signing key built from the secret
+    // Signing key local secreta
     private java.security.Key signingKey;
 
-    // --- Métodos de Extracción de Claims ---
+    // --- Metodos de Extraccien ---
 
     /**
      * Extrae el nombre de usuario (subject) del token JWT.
-     * @param token El token JWT.
+     * @param token 
      * @return Nombre de usuario.
      */
     public String getUsernameFromToken(String token) {
@@ -43,20 +41,20 @@ public class JwtTokenUtil {
     }
 
     /**
-     * Extrae la fecha de expiración del token JWT.
-     * @param token El token JWT.
-     * @return Fecha de expiración.
+     * Extrae la fecha de expiracion del token JWT.
+     * @param token 
+     * @return Fecha de expiracion
      */
     public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token, Claims::getExpiration);
     }
 
     /**
-     * Extrae un claim específico del token JWT utilizando una función resolutora.
-     * @param token El token JWT.
-     * @param claimsResolver Función para resolver el claim.
+     * Extrae un claim especifico del token JWT 
+     * @param token 
+     * @param claimsResolver 
      * @param <T> Tipo del claim.
-     * @return El valor del claim.
+     * @return valor del claim.
      */
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = getAllClaimsFromToken(token);
@@ -64,15 +62,15 @@ public class JwtTokenUtil {
     }
 
     /**
-     * Método interno para obtener todos los claims (cuerpo) del token JWT.
-     * CORRECCIÓN: Se utiliza la sintaxis antigua, asumiendo que el compilador no encuentra la API moderna.
+     * Metodo para obtener todos los claims (cuerpo) del token JWT.
+     * !!! ver CORRECCION: uso sintaxis antigua compilador no encuentra la nueva
      * @param token El token JWT.
      * @return Todos los claims.
      */
     private Claims getAllClaimsFromToken(String token) {
         // Inicializar signingKey si aún no lo está
         if (signingKey == null) {
-            // Asumimos que el secreto está en Base64 (por seguridad, usar una clave suficientemente larga)
+            // Con el ecreto en Base64 
             byte[] keyBytes = Decoders.BASE64.decode(secret);
             signingKey = Keys.hmacShaKeyFor(keyBytes);
         }
@@ -86,7 +84,7 @@ public class JwtTokenUtil {
 
     /**
      * Verifica si el token ha expirado.
-     * @param token El token JWT.
+     * @param token 
      * @return true si el token ha expirado.
      */
     private Boolean isTokenExpired(String token) {
@@ -94,16 +92,16 @@ public class JwtTokenUtil {
         return expiration.before(new Date());
     }
 
-    // --- Métodos de Generación de Token ---
+    // --- Metodos para qenerar Token ---
 
     /**
      * Genera el token para un usuario dado.
-     * @param userDetails Detalles del usuario.
+     * @param userDetails 
      * @return Token JWT.
      */
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        // Puedes agregar claims personalizados aquí, como roles
+        // claims personalizados aca, como roles
         claims.put("roles", userDetails.getAuthorities().stream().map(Object::toString).toList());
         return doGenerateToken(claims, userDetails.getUsername());
     }
@@ -111,8 +109,8 @@ public class JwtTokenUtil {
     /**
      * Crea el token JWT.
      * @param claims Claims a incluir en el token.
-     * @param subject El sujeto (nombre de usuario o ID).
-     * @return El token JWT.
+     * @param subject nombre de usuario o ID
+     * @return token JWT.
      */
     private String doGenerateToken(Map<String, Object> claims, String subject) {
         final Date createdDate = new Date();
@@ -132,19 +130,17 @@ public class JwtTokenUtil {
         .compact();
     }
 
-    // --- Métodos de Validación ---
+    // --- Metodos de Validacion ---
 
     /**
-     * Valida si el token es válido para el usuario.
-     * @param token El token JWT.
-     * @param userDetails Detalles del usuario.
-     * @return true si el token es válido.
+     * Verifica si el token es valido para el usuario
+     * @param token token JWT
+     * @param userDetails 
+     * @return true si token valido.
      */
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = getUsernameFromToken(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
-
-    // El método getSigningKey() ya no es necesario con la sintaxis antigua.
-    // Si aún lo tienes, bórralo o coméntalo para evitar conflictos.
+   
 }

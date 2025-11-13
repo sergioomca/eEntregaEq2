@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
-// Versión simple sin componente separado - evita problemas de re-render
 
 const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter = 'TODOS' }) => {
   // Estados principales
   const [ptsList, setPtsList] = useState([]);
   const [filter, setFilter] = useState(defaultFilter);
   const [searchTerm, setSearchTerm] = useState('');
-  // Tipo de búsqueda rápida: 'equipo' o 'usuario'
+  
   const [searchType, setSearchType] = useState('equipo');
   const [sortConfig, setSortConfig] = useState({ key: 'fechaInicio', direction: 'desc' });
   const [loading, setLoading] = useState(true);
@@ -18,7 +17,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
   const [isSearching, setIsSearching] = useState(false);
   const itemsPerPage = 10;
 
-  // Estados de búsqueda avanzada - separados para evitar re-renders
+  // Estados de busqueda avanzada 
   const [searchFilters, setSearchFilters] = useState({
     equipo: '',
     usuario: '',
@@ -26,7 +25,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
     estado: '',
     fechaInicio: ''
   });
-  // Estados locales para los inputs (no causan búsquedas automáticas)
+  // Estados locales 
   const [localFilters, setLocalFilters] = useState({
     equipo: '',
     usuario: '',
@@ -95,11 +94,11 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
     }
   }, [defaultFilter]);
 
-  // Refs para timeouts separados para evitar interferencias
+  // Refs para timeouts 
   const searchTimeoutRef = useRef(null);
   const filterTimeoutRef = useRef(null);
 
-  // Cargar PTS al montar componente y cuando cambie el filtro principal
+  // Cargar PTS inicio y cuando cambie el filtro principal
   useEffect(() => {
     fetchPTS();
   }, [filter]);
@@ -116,15 +115,11 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
         return;
       }
 
-      // Prioridad de filtros:
-      // 1) si customFilters se provee, usarlo
-      // 2) si term + type provistos, construir query con equipo o usuario
-      // 3) si no, usar los searchFilters del estado
+    
       const filters = customFilters || searchFilters;
 
       const queryParams = [];
 
-      // Si se pasó un término rápido (term) y el type ('equipo'|'usuario'), lo incluimos
       if (term && term.toString().trim()) {
         const q = type === 'usuario' ? `usuario=${encodeURIComponent(term.trim())}` : `equipo=${encodeURIComponent(term.trim())}`;
         queryParams.push(q);
@@ -133,7 +128,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
       // Añadir filtros avanzados si existen (no sobreescriben term/type)
       Object.entries(filters).forEach(([key, value]) => {
         if (value && value.toString().trim()) {
-          // Evitar duplicar params equipo/usuario si ya vienen por term/type
+          
           if ((key === 'equipo' || key === 'usuario') && term && term.toString().trim()) return;
           queryParams.push(`${key}=${encodeURIComponent(value.toString().trim())}`);
         }
@@ -212,7 +207,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
       });
     }
 
-    // Aplicar búsqueda simple por texto (complementaria a los filtros del backend)
+    // Aplicar busqueda simple por texto 
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(pts => 
@@ -250,7 +245,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
     return filtered;
   }, [ptsList, filter, searchTerm, sortConfig, currentUser]);
 
-  // Paginación
+  // Paginacion
   const totalPages = Math.ceil(filteredAndSortedPTS.length / itemsPerPage);
   const paginatedPTS = filteredAndSortedPTS.slice(
     (currentPage - 1) * itemsPerPage,
@@ -265,15 +260,14 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
     }));
   };
 
-  // Manejar filtros locales (solo actualiza UI, no dispara búsqueda)
+  // Manejar filtros locales 
   const handleLocalFilterChange = (field, value) => {
-    // Actualizar localFilters inmediatamente para UI responsiva
     setLocalFilters(prev => ({
       ...prev,
       [field]: value
     }));
     
-    // Mostrar indicador de búsqueda pendiente
+    // Mostrar indicador de busqueda pendiente
     setIsSearching(true);
     
     // Limpiar timeout anterior de filtros
@@ -281,7 +275,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
       clearTimeout(filterTimeoutRef.current);
     }
     
-    // Programar nueva búsqueda con debounce
+    
     filterTimeoutRef.current = setTimeout(() => {
       setSearchFilters(currentFilters => {
         const newSearchFilters = {
@@ -302,10 +296,10 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
         
         return newSearchFilters;
       });
-    }, 1500); // Debounce de 1.5 segundos optimizado
+    }, 1500); // Debounce de 1.5 segundos 
   };
 
-  // Manejar búsqueda rápida con debounce
+  
   const handleSearchTermChange = (value) => {
     setSearchTerm(value);
     
@@ -317,18 +311,18 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
       clearTimeout(searchTimeoutRef.current);
     }
     
-    // Programar nueva búsqueda con debounce (mismo tiempo que filtros avanzados)
+    // Programar nueva busqueda
     searchTimeoutRef.current = setTimeout(() => {
       if (value.trim()) {
         fetchPTS(value, searchType);
       } else {
         fetchPTS(); // Sin término, cargar todos
       }
-      setIsSearching(false); // Ocultar indicador al completar búsqueda
-    }, 1500); // Debounce de 1.5 segundos consistente
+      setIsSearching(false); 
+    }, 1500); // Debounce de 1.5 segundos
   };
 
-  // Limpiar todos los filtros de búsqueda (memoizada)
+  // Limpiar todos los filtros 
   const clearAllSearchFilters = () => {
     const emptyFilters = {
       equipo: '',
@@ -367,7 +361,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
     setSelectedPts(pts);
   };
 
-  // Contar PTS por estado para badges
+  // Contar PTS por estado 
   const getCounts = () => {
     const counts = {
       total: ptsList.length,
@@ -448,7 +442,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
             )}
           </div>
 
-          {/* Filtros y Búsqueda */}
+          {/* Filtros y Busqueda */}
           <div className="px-6 pt-6 pb-10 border-b border-gray-200">
             {/* Tabs de Filtros */}
             <div className="flex justify-center">
@@ -497,7 +491,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
               </div>
             </div>
 
-            {/* Barra de Búsqueda Avanzada (HU-014) */}
+            {/* Barra de Busqueda Avanzada (HU-014) */}
             <div className="space-y-4">
               {/* Búsqueda Simple */}
               <div className="flex flex-col md:flex-row gap-4 items-center mb-4">
@@ -579,7 +573,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                       />
                     </div>
 
-                    {/* Área */}
+                    {/* Area */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Área
@@ -623,7 +617,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                     </div>
                   </div>
 
-                  {/* Botones de acción */}
+                  {/* Botones de accion */}
                   <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
                     <div className="flex items-center gap-3 text-sm text-gray-600">
                       {Object.values(searchFilters).some(val => val) && (
@@ -702,7 +696,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                   <tr>
                     <td colSpan="8" className="px-4 py-12 text-center">
                       <div className="text-gray-500">
-                        {/* Mensaje específico según tipo de búsqueda */}
+                        {/* Mensaje especifico segun tipo de busqueda */}
                         {(!loading && filteredAndSortedPTS.length === 0 && (searchTerm || Object.values(searchFilters).some(val => val))) ? (
                           <div>
                             <div className="text-lg mb-2">🔍</div>
@@ -798,7 +792,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
             </table>
           </div>
 
-          {/* Paginación */}
+          {/* Paginacion */}
           {totalPages > 1 && (
             <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200">
               <div className="flex-1 flex justify-between sm:hidden">

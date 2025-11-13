@@ -2,10 +2,8 @@ package com.epu.prototipo.payload.response;
 
 import java.io.Serializable;
 
-/**
- * DTO para la respuesta del endpoint de autenticación.
- * Contiene el token JWT y el estado de cambio de contraseña.
- */
+// DTO para espuesta del endpoint de autenticación. Tene el token JWT y el estado de cambio de contraseña.
+
 public class LoginResponse implements Serializable {
     private static final long serialVersionUID = 1L;
 

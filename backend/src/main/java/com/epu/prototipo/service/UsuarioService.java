@@ -21,8 +21,7 @@ public class UsuarioService {
         baseDeDatosExterna.put("54321", new UsuarioDTO("54321", "Ana Gómez", "Mantenimiento Eléctrico"));
         baseDeDatosExterna.put("98765", new UsuarioDTO("98765", "Carlos Sanchez", "Seguridad e Higiene"));
         baseDeDatosExterna.put("11111", new UsuarioDTO("11111", "María Rodriguez", "Control de Calidad"));
-        // Usuario real agregado para pruebas
-        baseDeDatosExterna.put("VINF011422", new UsuarioDTO("VINF011422", "Sergio (Usuario Real)", "Departamento de Informática"));
+        baseDeDatosExterna.put("VINF011422", new UsuarioDTO("VINF011422", "Sergio Capella", "Control de Proceso"));
     }
 
     /**
