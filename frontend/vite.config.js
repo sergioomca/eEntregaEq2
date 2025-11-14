@@ -20,6 +20,8 @@ export default defineConfig({
       },
     },
     // Opcional: Especifica el puerto (generalmente 5173)
-    port: 5173, 
+    port: 5173,
+    // Habilita fallback para SPA (Single Page Application)
+    historyApiFallback: true
   }
 })

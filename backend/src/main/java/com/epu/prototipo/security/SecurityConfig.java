@@ -38,8 +38,9 @@ public class SecurityConfig {
             
             // Configuracion de autorizacion de rutas
             .authorizeHttpRequests(auth -> auth
-                // Permite acceso libre a la ruta de autenticacion y al listado de PTS
-                .requestMatchers("/api/auth/**", "/api/pts", "/api/pts/**").permitAll()
+                    // Permite acceso libre a la ruta de autenticacion y al listado de PTS
+                    .requestMatchers("/api/auth/**", "/api/pts", "/api/pts/**").permitAll()
+                    .requestMatchers("/public/consulta/**").permitAll()
                 // Endpoint de prueba de usuarios
                 .requestMatchers("/api/usuarios/test").permitAll()
                 // Endpoint de usuarios requiere autenticacion

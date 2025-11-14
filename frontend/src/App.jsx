@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import FirmaBiometrica from './components/FirmaDigital';
+import EquipoStatusView from './components/EquipoStatusView';
 import CierreRTO from './components/CierreRTO';
 import CrearPTS from './components/CrearPTS';
 import ListaPTS from './components/ListaPTS';
 import DashboardEquipos from './components/DashboardEquipos';
 import DetallePTS from './components/DetallePTS';
+import AdminEquiposView from './components/AdminEquiposView';
 import ReportesView from './components/ReportesView';
 import DcsSimForm from './components/DcsSimForm';
 
@@ -72,7 +74,6 @@ const Navigation = ({ role, onInicioClick }) => {
     return (
         <nav className="flex items-center space-x-6">
             {routes.map(route => {
-                // Manejar el boton "Inicio" de manera especial
                 if (route.id === 'inicio') {
                     return (
                         <Link
@@ -93,8 +94,6 @@ const Navigation = ({ role, onInicioClick }) => {
                         </Link>
                     );
                 }
-                
-                // Para todos los demas botones comportamiento normal
                 return (
                     <Link
                         key={route.id}
@@ -113,6 +112,26 @@ const Navigation = ({ role, onInicioClick }) => {
                     </Link>
                 );
             })}
+            {/* Link a la administración de equipos y QR */}
+            <Link
+                to="/admin/equipos"
+                className="text-primary-epu hover:text-primary-epu font-bold transition-all duration-300 rounded-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 hover:scale-110 border-b-6 border-yellow-700 hover:border-yellow-800 active:translate-y-1 active:shadow-lg relative overflow-hidden no-underline flex items-center justify-center"
+                style={{
+                    background: 'linear-gradient(145deg, #f4c042, #e6b030, #d49e20)',
+                    boxShadow: '0 8px 20px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                    textDecoration: 'none',
+                    width: '150px',
+                    height: '60px',
+                    marginLeft: 16,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center'
+                }}
+            >
+                <span style={{ width: '100%', textAlign: 'center', display: 'block' }}>Generar QRs Equipos</span>
+            </Link>
         </nav>
     );
 };
@@ -792,6 +811,20 @@ const App = () => {
             {/* Contenido Principal con Rutas */}
             <main className="container mx-auto p-4 flex-grow">
                 <Routes>
+                                        {/* Ruta protegida para administración de equipos y QR */}
+                                        <Route 
+                                            path="/admin/equipos" 
+                                            element={
+                                                <ProtectedRoute>
+                                                    <AdminEquiposView />
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                    {/* Ruta pública para estado de equipo por QR */}
+                    <Route 
+                        path="/equipo/:tag" 
+                        element={<EquipoStatusView />} 
+                    />
                     {/* Ruta de login */}
                     <Route 
                         path="/login" 
@@ -906,12 +939,8 @@ const App = () => {
                         } 
                     />
                 </Routes>
-            </main>
-
-            {/* Pie de Página (Footer) */}
-                <footer className="bg-gray-800 text-white text-center p-4 mt-auto">
                     <p className="text-sm">&copy; 2025 EPU Prototipo Tecnológico - Sergio Omar Capella</p>
-                </footer>
+                </main>
             </div>
         </BrowserRouter>
     );

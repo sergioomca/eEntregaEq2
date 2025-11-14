@@ -14,7 +14,10 @@ import java.util.ArrayList;
 // import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.context.annotation.Primary;
+
 @Service
+@Primary
 @Profile("test")
 public class TestPtsService implements IPtsService {
     private final EquipoService equipoService;
