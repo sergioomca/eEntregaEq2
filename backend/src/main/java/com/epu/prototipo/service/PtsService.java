@@ -246,8 +246,12 @@ public class PtsService implements IPtsService {
     // Para crear un nuevo PTS y guardar en Firestore.
      
     public PermisoTrabajoSeguro createPts(PermisoTrabajoSeguro pts) {
-        if (pts.getSolicitanteLegajo() == null || pts.getSupervisorLegajo() == null) {
-            throw new RuntimeException("Legajo de solicitante o supervisor no pueden ser nulos.");
+        if (pts.getSolicitanteLegajo() == null) {
+            throw new RuntimeException("Legajo de solicitante no puede ser nulo.");
+        }
+        // Solo validar supervisor si requiere análisis de riesgo adicional
+        if (pts.isRequiereAnalisisRiesgoAdicional() && (pts.getSupervisorLegajo() == null || pts.getSupervisorLegajo().trim().isEmpty())) {
+            throw new RuntimeException("Debe definir un supervisor si requiere análisis de riesgo adicional.");
         }
 
         // Validar que el equipo exista antes de crear el PTS y deshabilitarlo
@@ -269,6 +273,22 @@ public class PtsService implements IPtsService {
         int nuevoNumero = ultimoNumero + 1;
         String idGenerado = String.format("PTS-%s-%03d", yymmdd, nuevoNumero);
         pts.setId(idGenerado);
+
+        // Lógica para estado inicial según requiereAnalisisRiesgoAdicional
+        if (!pts.isRequiereAnalisisRiesgoAdicional()) {
+            // No requiere firma de supervisor, va directo a "Firmado (Pend. Cierre)"
+            pts.setRtoEstado("FIRMADO_PEND_CIERRE");
+            // Asignar un valor válido (ejemplo: firma vacía en base64)
+            pts.setFirmaSupervisorBase64("data:image/png;base64,");
+            pts.setDniSupervisorFirmante("AUTOMATICO");
+            pts.setFechaHoraFirmaSupervisor(java.time.LocalDateTime.now());
+        } else {
+            // Requiere firma, estado inicial pendiente
+            pts.setRtoEstado("PENDIENTE");
+            pts.setFirmaSupervisorBase64(null);
+            pts.setDniSupervisorFirmante(null);
+            pts.setFechaHoraFirmaSupervisor(null);
+        }
 
         try {
             // Guardar el PTS con el ID generado como clave
@@ -439,9 +459,24 @@ public class PtsService implements IPtsService {
                 throw new IllegalStateException("El PTS ID " + request.getPtsId() + " está cancelado y no puede ser cerrado.");
             }
 
-            // Para validar seguridad, que el PTS este firmado antes del cierre
-            if (pts.getFirmaSupervisorBase64() == null || pts.getFirmaSupervisorBase64().trim().isEmpty()) {
-                throw new IllegalStateException("El PTS debe estar firmado antes de ser cerrado. Use /api/pts/firmar primero.");
+            // Solo exigir firma de supervisor si requiereAnalisisRiesgoAdicional es true
+            if (pts.isRequiereAnalisisRiesgoAdicional()) {
+                if (pts.getFirmaSupervisorBase64() == null || pts.getFirmaSupervisorBase64().trim().isEmpty()) {
+                    throw new IllegalStateException("El PTS debe estar firmado antes de ser cerrado. Use /api/pts/firmar primero.");
+                }
+                // Si requiere análisis, solo el supervisor puede cerrar
+                if (pts.getSupervisorLegajo() != null && !pts.getSupervisorLegajo().trim().isEmpty()) {
+                    if (!request.getRtoResponsableCierreLegajo().equals(pts.getSupervisorLegajo())) {
+                        throw new SecurityException("Solo el supervisor asignado puede cerrar este PTS.");
+                    }
+                }
+            } else {
+                // Si NO requiere análisis y NO hay supervisor, permitir que el solicitante cierre
+                if (pts.getSupervisorLegajo() == null || pts.getSupervisorLegajo().trim().isEmpty()) {
+                    if (!request.getRtoResponsableCierreLegajo().equals(pts.getSolicitanteLegajo())) {
+                        throw new SecurityException("Solo el emisor puede cerrar este PTS.");
+                    }
+                }
             }
 
             // Para actualizar el documento con los datos de cierre

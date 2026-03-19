@@ -1,3 +1,7 @@
+// Maneja la selección de PTS para cierre desde fuera de AppContent
+function handleSelectParaCierre(pts) {
+    window.location.href = '/cierre-rto';
+}
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import FirmaBiometrica from './components/FirmaDigital';
@@ -74,6 +78,8 @@ const Navigation = ({ role, onInicioClick }) => {
     return (
         <nav className="flex items-center space-x-6">
             {routes.map(route => {
+                // Eliminar el botón de Firma Biométrica del header
+                if (route.id === 'firma-biometrica') return null;
                 if (route.id === 'inicio') {
                     return (
                         <Link
@@ -172,7 +178,7 @@ const LoginView = ({ handleLogin }) => {
 
     return (
         <section className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-2xl mt-16">
-            <h2 className="text-3xl font-bold text-primary-epu mb-6 text-center">Inicio de Sesión EPU</h2>
+            <h2 className="text-3xl font-bold text-primary-epu mb-6 text-center">Inicio de Sesión eEEq</h2>
             <form onSubmit={handleSubmit}>
                 <div className="mb-4">
                     <label htmlFor="legajo" className="block text-sm font-medium text-gray-700 mb-1">Legajo (Usuario)</label>
@@ -214,64 +220,36 @@ const RTOClosureList = ({ onSelectPts }) => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetchSignedPTS();
+        const fetchAllPTS = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('http://localhost:8080/api/pts', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                // Filtrar PTS firmados pero no cerrados (listos para RTO)
+                const readyForRTO = data.filter(pts => {
+                    const hasFirma = pts.firmaSupervisorBase64;
+                    const notClosed = (!pts.rtoEstado || pts.rtoEstado !== 'CERRADO');
+                    return hasFirma && notClosed;
+                });
+                setPtsList(readyForRTO);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchAllPTS();
     }, []);
-
-    const fetchSignedPTS = async () => {
-        setLoading(true);
-        setError(null);
-        
-        try {
-            const token = localStorage.getItem('authToken');
-            const response = await fetch('http://localhost:8080/api/pts', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            console.log('DEBUG RTO - Todos los PTS:', data);
-            
-            // !!!SIMULACION SOLO TEMPORAL: para crear un PTS firmado para testing
-            // Solo simular firma si no esta ya cerrado
-            if (data.length > 0 && !data[0].firmaSupervisorBase64 && (!data[0].rtoEstado || data[0].rtoEstado !== 'CERRADO')) {
-                data[0].firmaSupervisorBase64 = 'FIRMA_SIMULADA_BASE64';
-                data[0].dniSupervisorFirmante = 'SUP222';
-                data[0].fechaHoraFirmaSupervisor = new Date().toISOString();
-                console.log('DEBUG RTO - PTS simulado como firmado para testing:', data[0].id);
-            }
-            
-            // Verificar si hay PTS marcados como cerrados en sessionStorage (!!!simulacion de persistencia)
-            const closedPtsIds = JSON.parse(sessionStorage.getItem('closedPtsIds') || '[]');
-            data.forEach(pts => {
-                if (closedPtsIds.includes(pts.id)) {
-                    pts.rtoEstado = 'CERRADO';
-                    pts.rtoFechaHoraCierre = new Date().toISOString();
-                    pts.rtoResponsableCierreLegajo = 'SUP222';
-                    console.log('DEBUG RTO - PTS marcado como cerrado desde sessionStorage:', pts.id);
-                }
-            });
-            
-            // Filtrar PTS firmados pero no cerrados (listos para RTO)
-            const readyForRTO = data.filter(pts => {
-                const hasFirma = pts.firmaSupervisorBase64;
-                const notClosed = (!pts.rtoEstado || pts.rtoEstado !== 'CERRADO');
-                console.log(`DEBUG RTO - PTS ${pts.id}: hasFirma=${hasFirma}, notClosed=${notClosed}, rtoEstado=${pts.rtoEstado}`);
-                return hasFirma && notClosed;
-            });
-            console.log('DEBUG RTO - PTS listos para RTO:', readyForRTO);
-            setPtsList(readyForRTO);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     if (loading) return <div className="text-center p-4">Cargando PTS listos para cierre...</div>;
     if (error) return <div className="text-red-600 p-4">Error: {error}</div>;
@@ -307,7 +285,7 @@ const RTOClosureList = ({ onSelectPts }) => {
 };
 
 // Para mostrar PTS pendientes de firma
-const PendingApprovalList = ({ onSelectPts }) => {
+const PendingApprovalList = ({ onFirmar }) => {
     const [ptsList, setPtsList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -363,8 +341,8 @@ const PendingApprovalList = ({ onSelectPts }) => {
                         </div>
                         <button
                             onClick={() => {
-                                console.log('DEBUG - Click en Firmar, PTS:', pts.id);
-                                onSelectPts(pts);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                onFirmar(pts);
                             }}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
                         >
@@ -386,6 +364,7 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
     
     const { legajo, role } = user;
     const location = useLocation();
+    const navigate = useNavigate();
     const [selectedPts, setSelectedPts] = useState(null);
     const [showFirmaComponent, setShowFirmaComponent] = useState(false);
     const [selectedPtsForRTO, setSelectedPtsForRTO] = useState(null);
@@ -403,19 +382,19 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
     }
 
     // Funcion para manejar la seleccion de PTS para firmar
-    const handleSelectPts = (pts) => {
-        console.log('DEBUG - handleSelectPts llamado con:', pts);
+    const handleFirmar = (pts) => {
         setSelectedPts(pts);
         setShowFirmaComponent(true);
-        // Cambiar a la vista de firma biometrica
         setCurrentView({ title: 'Firma Biométrica', content: 'firma-biometrica-view' });
-        console.log('DEBUG - Estados actualizados: selectedPts, showFirmaComponent = true y vista cambiada a firma-biometrica-view');
+        navigate('/firma-biometrica');
     };
 
     // Funcion para manejar la seleccion de PTS para cerrar RTO
     const handleSelectPtsForRTO = (pts) => {
         setSelectedPtsForRTO(pts);
         setShowRTOComponent(true);
+        setCurrentView({ title: 'Cierre RTO', content: 'cierre-rto-view' });
+        navigate('/cierre-rto');
     };
 
     // Funcion para manejar el exito de la firma
@@ -451,7 +430,7 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                     <>
                         <h3 className="text-2xl font-bold mb-4 text-primary-epu">Aprobación de PTS (SUPERVISOR)</h3>
                         <p className="text-gray-700 mb-6">Listado de Permisos pendientes de su revisión y firma.</p>
-                        <PendingApprovalList onSelectPts={handleSelectPts} />
+                        <PendingApprovalList onFirmar={handleFirmar} />
                     </>
                 );
             case 'firma-biometrica-view':
@@ -519,7 +498,7 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                     </>
                 );
             case 'my-pts-list-view':
-                return React.createElement(ListaPTS, { defaultFilter: 'MIS_PTS' });
+                return <ListaPTS defaultFilter="MIS_PTS" onSelectPtsParaFirma={handleFirmar} />;
             case 'execution-view':
                 return (
                     <>
@@ -572,7 +551,12 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                 {activeView.title === 'Dashboards' ? (
                     <>
                         <div id="content-container">
-                            {activeView.content === 'pts-dashboard-view' && <ListaPTS />}
+                            {activeView.content === 'pts-dashboard-view' && (
+                                <ListaPTS 
+                                    onSelectPtsParaFirma={handleFirmar}
+                                    onSelectPtsParaCierre={handleSelectPtsForRTO}
+                                />
+                            )}
                             {activeView.content === 'equipos-dashboard-view' && <DashboardEquipos />}
                         </div>
                         <DcsSimForm />
@@ -588,7 +572,7 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
             </div>
 
             {/* Botones de Accion Rapida (Control de Roles) */}
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className={`mt-8 ${role === 'SUPERVISOR' ? 'flex justify-center gap-6' : 'grid grid-cols-1 md:grid-cols-3 gap-6'}`}>
                 {role === 'EMISOR' && (
                     <button
                         onClick={() => setCurrentView({ title: 'Crear PTS', content: 'pts-form-view' })}
@@ -603,12 +587,6 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                             className="bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]"
                             style={{ backgroundColor: '#111827', color: 'white' }}>
                             Revisar Aprobaciones
-                        </button>
-                        <button
-                            onClick={() => setCurrentView({ title: 'Firma Biométrica', content: 'firma-biometrica-view' })}
-                            className="bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]"
-                            style={{ backgroundColor: '#111827', color: 'white' }}>
-                            Firma Biométrica
                         </button>
                         <button
                             onClick={() => setCurrentView({ title: 'Cierre RTO', content: 'cierre-rto-view' })}
@@ -756,9 +734,7 @@ const App = () => {
         setSelectedPtsId(id);
     };
 
-    const handleSelectParaCierre = (id) => {
-        setSelectedPtsId(id);
-    };
+
 
     const handleSuccess = () => {
         setSelectedPtsId(null);
@@ -852,10 +828,10 @@ const App = () => {
                         path="/mis-pts" 
                         element={
                             <ProtectedRoute>
-                                <ListaPTS 
-                                    defaultFilter="MIS_PTS"
-                                    onSelectPtsParaFirma={handleSelectParaFirma}
-                                    onSelectPtsParaCierre={handleSelectParaCierre}
+                                <AppContent 
+                                    user={user}
+                                    currentView={{ title: 'Mis PTS', content: 'my-pts-list-view' }}
+                                    setCurrentView={setCurrentView}
                                 />
                             </ProtectedRoute>
                         } 
@@ -939,7 +915,7 @@ const App = () => {
                         } 
                     />
                 </Routes>
-                    <p className="text-sm">&copy; 2025 EPU Prototipo Tecnológico - Sergio Omar Capella</p>
+                    <p className="text-sm">&copy; 2025 eEEq Prototipo Tecnológico - Sergio Omar Capella</p>
                 </main>
             </div>
         </BrowserRouter>

@@ -224,7 +224,8 @@ const CrearPTS = () => {
     // Campos requeridos HU-011
     if (!formData.descripcionTrabajo.trim()) newErrors.descripcionTrabajo = 'La descripcion del trabajo es obligatoria';
     if (!formData.solicitante.trim()) newErrors.solicitante = 'El solicitante es obligatorio';
-    if (!formData.supervisor.trim()) newErrors.supervisor = 'El supervisor es obligatorio';
+    // Solo pedir supervisor si requiere análisis de riesgo adicional
+    if (formData.requiereAnalisisRiesgo && !formData.supervisor.trim()) newErrors.supervisor = 'El supervisor es obligatorio';
 
     // Validaciones de autocompletado eliminadas
     // validación de área eliminada
@@ -324,7 +325,10 @@ const CrearPTS = () => {
         })),
         
         // Estado inicial del RTO
-        rtoEstado: 'PENDIENTE'
+        rtoEstado: 'PENDIENTE',
+
+        // Nuevo campo: requiereAnalisisRiesgoAdicional
+        requiereAnalisisRiesgoAdicional: formData.requiereAnalisisRiesgo === true
       };
 
       // console.log eliminado (control)
@@ -441,6 +445,7 @@ const CrearPTS = () => {
                 {errors.fecha && <p className="error-validacion">{errors.fecha}</p>}
               </div>
             </div>
+
 
             {/* Horarios */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -577,15 +582,16 @@ const CrearPTS = () => {
 
             {/* Información del Solicitante - Autocompletado */}
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Información del Solicitante</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Información del Emisor</h3>
               
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 {/* Solicitante fijo, solo lectura */}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Solicitante *
+                    Emisor *
                   </label>
                   <input
                     type="text"
@@ -593,14 +599,14 @@ const CrearPTS = () => {
                     value={user ? user.dni : ''}
                     readOnly
                     className="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
-                    placeholder="Legajo del solicitante"
+                    placeholder="Legajo del emisor"
                   />
                 </div>
 
-                {/* Nombre Solicitante - Solo lectura, desde base de datos */}
+                {/* Nombre Emisor - Solo lectura, desde base de datos */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre Solicitante *
+                    Nombre Emisor *
                   </label>
                   <input
                     type="text"
@@ -608,7 +614,7 @@ const CrearPTS = () => {
                     value={nombreSolicitante}
                     readOnly
                     className="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
-                    placeholder="Nombre completo del solicitante"
+                    placeholder="Nombre completo del emisor"
                   />
                 </div>
 
@@ -619,10 +625,71 @@ const CrearPTS = () => {
               </div>
             </div>
 
+            {/* Información del Receptor */}
+            <div className="bg-gray-50 p-4 rounded-lg mt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Información del Receptor</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Receptor *
+                  </label>
+                  <input
+                    type="text"
+                    name="receptor"
+                    value={formData.receptor || ''}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary border-gray-300"
+                    placeholder="Legajo del receptor"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre Receptor *
+                  </label>
+                  <input
+                    type="text"
+                    name="nombreReceptor"
+                    value={formData.nombreReceptor || ''}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary border-gray-300"
+                    placeholder="Nombre completo del receptor"
+                  />
+                </div>
+              </div>
+            </div>
 
-            {/* Otros Responsables */}
+
+
+            {/* Checkboxes de requerimientos */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="requiereAnalisisRiesgo"
+                  checked={formData.requiereAnalisisRiesgo}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-epu-primary focus:ring-epu-primary border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-700">
+                  Requiere Análisis de Riesgo Adicional
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="requiereProcedimientoEspecifico"
+                  checked={formData.requiereProcedimientoEspecifico}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-epu-primary focus:ring-epu-primary border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-700">
+                  Requiere Procedimiento Específico
+                </label>
+              </div>
+            </div>
 
+            {/* Otros Responsables - AHORA SI DEBAJO DE LOS CHECKBOXES */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Supervisor *
@@ -642,7 +709,6 @@ const CrearPTS = () => {
                 </select>
                 {errors.supervisor && <p className="error-validacion">{errors.supervisor}</p>}
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Responsable del Área *
@@ -661,34 +727,6 @@ const CrearPTS = () => {
               </div>
             </div>
 
-            {/* Checkboxes de requerimientos */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="requiereAnalisisRiesgo"
-                  checked={formData.requiereAnalisisRiesgo}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-epu-primary focus:ring-epu-primary border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Requiere Análisis de Riesgo Adicional
-                </label>
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="requiereProcedimientoEspecifico"
-                  checked={formData.requiereProcedimientoEspecifico}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-epu-primary focus:ring-epu-primary border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Requiere Procedimiento Específico
-                </label>
-              </div>
-            </div>
 
             {/* Riesgos y Controles */}
             <div>

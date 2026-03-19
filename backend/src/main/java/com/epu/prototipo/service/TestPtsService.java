@@ -115,7 +115,7 @@ public class TestPtsService implements IPtsService {
     public PermisoTrabajoSeguro firmarPts(FirmaPtsRequest request) {
         // En modo de prueba, para simular la firma simple
         if (request.getPtsId() == null || request.getDniFirmante() == null) {
-            throw new IllegalArgumentException("PTS ID y DNI del firmante son requeridos.");
+            throw new IllegalArgumentException("PTS ID y firmante son requeridos.");
         }
 
         // Simular que encontramos el PTS
@@ -126,7 +126,7 @@ public class TestPtsService implements IPtsService {
 
         // Validacion en modo test - Supervisores 
         if (!"SUP222".equals(request.getDniFirmante()) && !"12345678".equals(request.getDniFirmante())) {
-            throw new SecurityException("DNI del firmante no autorizado en modo test. Supervisores válidos: SUP222");
+            throw new SecurityException("Firmante no autorizado en modo test. Supervisores válidos: SUP222");
         }
 
         // Simula que ya esta firmado
@@ -173,12 +173,14 @@ public class TestPtsService implements IPtsService {
             throw new IllegalStateException("El PTS ID " + request.getPtsId() + " está cancelado y no puede ser cerrado.");
         }
 
-        // Simula que el PTS debe estar firmado (para pruebas se agrega la firma si no existe)
-        if (pts.getFirmaSupervisorBase64() == null || pts.getFirmaSupervisorBase64().trim().isEmpty()) {
-            // En modo test, se simula que hay una firma para permitir el cierre
-            pts.setFirmaSupervisorBase64("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==");
-            pts.setDniSupervisorFirmante("12345678");
-            pts.setFechaHoraFirmaSupervisor(LocalDateTime.now().minusMinutes(5)); // Firmado hace 5 minutos
+        // Solo exigir firma de supervisor si requiereAnalisisRiesgoAdicional es true
+        if (pts.isRequiereAnalisisRiesgoAdicional()) {
+            if (pts.getFirmaSupervisorBase64() == null || pts.getFirmaSupervisorBase64().trim().isEmpty()) {
+                // En modo test, se simula que hay una firma para permitir el cierre
+                pts.setFirmaSupervisorBase64("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==");
+                pts.setDniSupervisorFirmante("12345678");
+                pts.setFechaHoraFirmaSupervisor(LocalDateTime.now().minusMinutes(5)); // Firmado hace 5 minutos
+            }
         }
 
         // Desbloquear el equipo asociado al cerrar el PTS

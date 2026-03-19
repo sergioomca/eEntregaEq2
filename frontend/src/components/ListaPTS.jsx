@@ -177,7 +177,11 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
     if (pts.rtoEstado === 'CERRADO') {
       return 'Cerrado';
     }
-    if (pts.firmaSupervisorBase64 && pts.rtoEstado === 'PENDIENTE') {
+    if (pts.rtoEstado === 'FIRMADO_PEND_CIERRE') {
+      return 'Firmado (Pend. Cierre)';
+    }
+    // Si está pendiente y tiene firma, o no requiere supervisor
+    if (pts.rtoEstado === 'PENDIENTE' && (pts.firmaSupervisorBase64 || !pts.supervisorLegajo)) {
       return 'Firmado (Pend. Cierre)';
     }
     return 'Pendiente de Firma';
@@ -351,13 +355,11 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
   // Manejar clic en fila
   const handleRowClick = (pts) => {
     const estado = getPtsEstado(pts);
-    
     if (estado === 'Pendiente de Firma' && onSelectPtsParaFirma) {
-      onSelectPtsParaFirma(pts.id);
+      onSelectPtsParaFirma(pts);
     } else if (estado === 'Firmado (Pend. Cierre)' && onSelectPtsParaCierre) {
-      onSelectPtsParaCierre(pts.id);
+      onSelectPtsParaCierre(pts);
     }
-    
     setSelectedPts(pts);
   };
 
@@ -776,7 +778,17 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                           {isClickable && (
-                            <button className="text-epu-primary hover:text-epu-primary-dark">
+                            <button
+                              className="text-epu-primary hover:text-epu-primary-dark"
+                              onClick={e => {
+                                e.stopPropagation();
+                                if (estado === 'Pendiente de Firma' && onSelectPtsParaFirma) {
+                                  onSelectPtsParaFirma(pts);
+                                } else if (estado === 'Firmado (Pend. Cierre)' && onSelectPtsParaCierre) {
+                                  onSelectPtsParaCierre(pts);
+                                }
+                              }}
+                            >
                               {estado === 'Pendiente de Firma' ? 'Firmar' : 'Cerrar'}
                             </button>
                           )}

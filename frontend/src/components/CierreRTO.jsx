@@ -21,6 +21,18 @@ const CierreRTO = ({
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState({});
+  const [permiso, setPermiso] = useState(null);
+
+  // Buscar datos completos del permiso al montar
+  React.useEffect(() => {
+    if (!ptsId) return;
+    setLoading(true);
+    fetch(`/api/pts/${ptsId}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => setPermiso(data))
+      .catch(() => setPermiso(null))
+      .finally(() => setLoading(false));
+  }, [ptsId]);
 
   // Función de validacion del formulario RTO - 
   

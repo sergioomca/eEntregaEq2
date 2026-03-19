@@ -3,21 +3,18 @@ package com.epu.prototipo.model;
 import java.util.List;
 import java.time.LocalDateTime;
 
-/**
- * Clase DTO (Data Transfer Object) y Modelo que representa los datos de un
- * Permiso de Trabajo Seguro (PTS).
- *
- * * Se han añadido campos para la Firma Digital (HU-005) y para la gestión del RTO (HU-019).
- */
+// Clase DTO y Modelo que representa los datos de PTS
+// !!! Ver campos adic para Firma Digital (HU-005) y para la gestion del RTO (HU-019).
+
 public class PermisoTrabajoSeguro {
 
     private String id;
     private String area;
     private String equipoOInstalacion;
     private String descripcionTrabajo;
-    private String solicitanteLegajo; // Usamos Legajo para la autenticación
+    private String solicitanteLegajo; 
     private String nombreSolicitante;
-    private String supervisorLegajo;  // Usamos Legajo para la autenticación
+    private String supervisorLegajo;  
     private String fechaInicio;
     private String fechaFin;
     private String horaInicio;
@@ -28,23 +25,25 @@ public class PermisoTrabajoSeguro {
     private List<RiesgoControl> riesgosControles;
     private List<EquipoSeguridad> equiposSeguridad;
 
-    // --- NUEVOS CAMPOS PARA FIRMA DIGITAL (HU-005) ---
-    private String firmaSupervisorBase64; // Firma del supervisor como string Base64
+    // Nuevo campo: ¿Requiere análisis de riesgo adicional?
+    private boolean requiereAnalisisRiesgoAdicional;
+
+    // !!! CAMPOS PARA FIRMA DIGITAL (HU-005)
+    private String firmaSupervisorBase64; 
     private String dniSupervisorFirmante;
     private LocalDateTime fechaHoraFirmaSupervisor;
     
-    // --- NUEVOS CAMPOS PARA RTO (Retorno a Operaciones) (HU-019) ---
+    // !!! CAMPOS PARA RTO (HU-019) 
     private String rtoEstado; // PENDIENTE, CERRADO, CANCELADO
     private String rtoObservaciones;
     private String rtoResponsableCierreLegajo;
     private LocalDateTime rtoFechaHoraCierre;
 
 
-    // CONSTRUCTOR VACÍO: ESENCIAL para Spring Boot y Jackson (JSON).
+    // Constructor vacio JSON.
     public PermisoTrabajoSeguro() {}
 
-    // Constructor completo (simplificado para no hacer un constructor enorme)
-    // Se recomienda usar el constructor vacío y setters.
+    // Constructor completo (simplificado para pruebas)
     public PermisoTrabajoSeguro(String id, String area, String equipoOInstalacion, String descripcionTrabajo,
         String solicitanteLegajo, String nombreSolicitante, String supervisorLegajo, String fechaInicio, String fechaFin,
         String horaInicio, String horaFin, String ubicacion, String tareaDetallada, String tipoTrabajo,
@@ -70,13 +69,13 @@ public class PermisoTrabajoSeguro {
         this.rtoEstado = "PENDIENTE";
     }
 
-    // --- Clase interna para manejar la lista de Riesgos y Controles ---
+    // !!! Clase interna para manejar lista de Riesgos y Controles
     public static class RiesgoControl {
         private String peligro;
         private String consecuencia;
         private String controlRequerido;
 
-        // Constructor y Getters/Setters (omito por brevedad, asumo que son los mismos)
+        // Constructor y Getters/Setters
         public RiesgoControl() {}
         public RiesgoControl(String peligro, String consecuencia, String controlRequerido) {
             this.peligro = peligro;
@@ -92,14 +91,14 @@ public class PermisoTrabajoSeguro {
         public void setControlRequerido(String controlRequerido) { this.controlRequerido = controlRequerido; }
     }
 
-    // --- Clase interna para manejar la lista de Equipos de Seguridad ---
+    // !!! Clase interna para manejar lista de Equipos de Seguridad ---
     public static class EquipoSeguridad {
         private String equipo;
         private boolean esRequerido;
         private boolean esProporcionado;
         private String observacion;
 
-        // Constructor y Getters/Setters (omito por brevedad, asumo que son los mismos)
+        // Constructor y Getters/Setters
         public EquipoSeguridad() {}
         public EquipoSeguridad(String equipo, boolean esRequerido, boolean esProporcionado, String observacion) {
             this.equipo = equipo;
@@ -119,9 +118,8 @@ public class PermisoTrabajoSeguro {
     }
 
 
-    // --- Getters y Setters del Modelo Principal (PermisoTrabajoSeguro) ---
+    // Getters y Setters ppal (PermisoTrabajoSeguro)
 
-    // ** EXISTENTES **
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getArea() { return area; }
@@ -155,7 +153,11 @@ public class PermisoTrabajoSeguro {
     public List<EquipoSeguridad> getEquiposSeguridad() { return equiposSeguridad; }
     public void setEquiposSeguridad(List<EquipoSeguridad> equiposSeguridad) { this.equiposSeguridad = equiposSeguridad; }
 
-    // ** NUEVOS GETTERS/SETTERS PARA FIRMA Y RTO **
+    // !!! GETTERS/SETTERS PARA FIRMA Y RTO
+
+    // Getter y Setter para requiereAnalisisRiesgoAdicional
+    public boolean isRequiereAnalisisRiesgoAdicional() { return requiereAnalisisRiesgoAdicional; }
+    public void setRequiereAnalisisRiesgoAdicional(boolean requiereAnalisisRiesgoAdicional) { this.requiereAnalisisRiesgoAdicional = requiereAnalisisRiesgoAdicional; }
 
     public String getFirmaSupervisorBase64() { return firmaSupervisorBase64; }
     public void setFirmaSupervisorBase64(String firmaSupervisorBase64) { this.firmaSupervisorBase64 = firmaSupervisorBase64; }
