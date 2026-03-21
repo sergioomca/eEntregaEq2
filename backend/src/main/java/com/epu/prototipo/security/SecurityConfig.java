@@ -13,7 +13,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
-//import java.util.List;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -21,6 +21,9 @@ import java.util.Arrays;
 public class SecurityConfig { 
 
     private final JwtRequestFilter jwtRequestFilter;
+
+    @org.springframework.beans.factory.annotation.Value("${cors.allowed-origins}")
+    private String allowedOrigins;
 
     // Aca el filtro JWT
     public SecurityConfig(JwtRequestFilter jwtRequestFilter) {
@@ -41,7 +44,7 @@ public class SecurityConfig {
                     // Permite acceso libre a la ruta de autenticacion y al listado de PTS
                     .requestMatchers("/api/auth/**", "/api/pts", "/api/pts/**").permitAll()
                     .requestMatchers("/public/consulta/**").permitAll()
-                // Endpoint de prueba de usuarios
+                // PAra prueba de usuarios
                 .requestMatchers("/api/usuarios/test").permitAll()
                 // Endpoint de usuarios requiere autenticacion
                 .requestMatchers("/api/usuarios/**").authenticated()
@@ -67,9 +70,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // !!! revisar Importante para que funcione el HTML 
-        // Permitir el origen de Vite (5173, 5174), Live Server (5500) y 'null' (para abrir el archivo directo)
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5500", "http://localhost:3000", "null")); 
+        // Origenes permitidos desde application.properties
+        List<String> origins = new java.util.ArrayList<>(Arrays.asList(allowedOrigins.split(",")));
+        origins.add("null"); // Para abrir archivos locales directamente
+        configuration.setAllowedOrigins(origins);
         
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Access-Control-Allow-Origin"));

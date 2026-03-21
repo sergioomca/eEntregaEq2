@@ -25,7 +25,7 @@ public class PtsController {
 
 
     // *********************************************************
-    // ENDPOINT: Obtener el último número de PTS para una fecha
+    // Obtener el último número de PTS para una fecha
     // *********************************************************
     @GetMapping("/ultimo-numero")
     public ResponseEntity<Integer> getUltimoNumeroPts(@RequestParam String fechaInicio) {
@@ -38,7 +38,7 @@ public class PtsController {
     }
 
     // *******************************************************************
-    // ENDPOINT: Busqueda de PTS con filtros opcionales
+    // Busqueda de PTS con filtros opcionales
     // *******************************************************************
     /**
      * Todos los parametros son opcionales - omitidos, devuelve todos los PTS.
@@ -71,7 +71,7 @@ public class PtsController {
     }
 
     // ****************************************************
-    // ENDPOINT: Obtener los PTS por ID (Para DetallePTS)
+    // Obtener los PTS por ID (Para DetallePTS)
     // ****************************************************
     @GetMapping("/{id}")
     public ResponseEntity<?> getPtsById(@PathVariable String id) {
@@ -94,7 +94,7 @@ public class PtsController {
     }
 
     // ****************************
-    // ENDPOINT: Crear nuevo PTS 
+    //  Crear nuevo PTS 
     // ****************************
     @PostMapping
     public ResponseEntity<?> createPts(@RequestBody PermisoTrabajoSeguro pts) {
@@ -111,8 +111,31 @@ public class PtsController {
         }
     }
 
+    // ****************************
+    //  Actualizar PTS (Stand by -> Continuar)
+    // ****************************
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updatePts(@PathVariable String id, @RequestBody PermisoTrabajoSeguro pts) {
+        try {
+            pts.setId(id);
+            PermisoTrabajoSeguro updated = ptsService.updatePts(pts);
+            
+            if (updated == null) {
+                return new ResponseEntity<>("PTS no encontrado", HttpStatus.NOT_FOUND);
+            }
+            
+            return ResponseEntity.ok(updated);
+        } catch (IllegalStateException e) {
+            return new ResponseEntity<>("Estado inválido: " + e.getMessage(), HttpStatus.CONFLICT);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("Datos inválidos: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>("Error al actualizar el PTS: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // *******************************************************************
-    // ENDPOINT: Firmar PTS (HU-005 - Firma Biometrica)
+    // Firmar PTS (HU-005 - Firma Biometrica)
     // *******************************************************************
     @PutMapping("/firmar")
     public ResponseEntity<?> firmarPts(@RequestBody FirmaPtsRequest request) {
@@ -137,7 +160,7 @@ public class PtsController {
     }
 
     // *********************************************************
-    // ENDPOINT: Cerrar PTS (HU-019 - Retorno a Operaciones)
+    // Cerrar PTS (Retorno a Operaciones)
     // *********************************************************
     @PutMapping("/cerrar")
     public ResponseEntity<?> cerrarPts(@RequestBody CerrarPtsRequest request) {

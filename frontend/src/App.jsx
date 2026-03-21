@@ -12,34 +12,36 @@ import ListaPTS from './components/ListaPTS';
 import DashboardEquipos from './components/DashboardEquipos';
 import DetallePTS from './components/DetallePTS';
 import AdminEquiposView from './components/AdminEquiposView';
+import AgregarUsuario from './components/AgregarUsuario';
 import ReportesView from './components/ReportesView';
 import DcsSimForm from './components/DcsSimForm';
+import { ROLES, ALL_ROLES } from './constants/roles';
 
 // Constantes de Configuracion
-const API_URL = 'http://localhost:8080/api/auth/login';
+const API_URL = '/api/auth/login';
 
 // Estructura de navegacion basada en roles
 const getRoutes = (role) => {
     const base = [
-        { id: 'inicio', title: 'Inicio', roles: ['EMISOR', 'SUPERVISOR', 'EJECUTANTE', 'ADMIN'], defaultView: true },
-        { id: 'reportes', title: 'Reportes', roles: ['EMISOR', 'SUPERVISOR', 'EJECUTANTE', 'ADMIN'], content: 'reportes-view' }
+        { id: 'inicio', title: 'Inicio', roles: ALL_ROLES, defaultView: true },
+        { id: 'reportes', title: 'Reportes', roles: ALL_ROLES, content: 'reportes-view' }
     ];
 
     const roleSpecific = {
-        'EMISOR': [
-            { id: 'dashboard', title: 'Dashboards', roles: ['EMISOR'], content: 'pts-dashboard-view' },
-            { id: 'crear-pts', title: 'Crear PTS', roles: ['EMISOR'], content: 'pts-form-view' },
-            { id: 'mis-pts', title: 'Mis PTS', roles: ['EMISOR'], content: 'my-pts-list-view' }
+        [ROLES.EMISOR]: [
+            { id: 'dashboard', title: 'Dashboards', roles: [ROLES.EMISOR], content: 'pts-dashboard-view' },
+            { id: 'crear-pts', title: 'Crear PTS', roles: [ROLES.EMISOR], content: 'pts-form-view' },
+            { id: 'mis-pts', title: 'Mis PTS', roles: [ROLES.EMISOR], content: 'my-pts-list-view' }
         ],
-        'SUPERVISOR': [
-            { id: 'dashboard', title: 'Dashboards', roles: ['SUPERVISOR'], content: 'pts-dashboard-view' },
-            { id: 'aprobacion', title: 'Aprobación', roles: ['SUPERVISOR'], content: 'approval-list-view' },
-            { id: 'firma-biometrica', title: 'Firma Biométrica', roles: ['SUPERVISOR'], content: 'firma-biometrica-view' },
-            { id: 'cierre-rto', title: 'Cierre RTO', roles: ['SUPERVISOR'], content: 'cierre-rto-view' }
+        [ROLES.SUPERVISOR]: [
+            { id: 'dashboard', title: 'Dashboards', roles: [ROLES.SUPERVISOR], content: 'pts-dashboard-view' },
+            { id: 'aprobacion', title: 'Aprobación', roles: [ROLES.SUPERVISOR], content: 'approval-list-view' },
+            { id: 'firma-biometrica', title: 'Firma Biométrica', roles: [ROLES.SUPERVISOR], content: 'firma-biometrica-view' },
+            { id: 'cierre-rto', title: 'Cierre RTO', roles: [ROLES.SUPERVISOR], content: 'cierre-rto-view' }
         ],
-        'EJECUTANTE': [
-            { id: 'dashboard', title: 'Dashboards', roles: ['EJECUTANTE'], content: 'pts-dashboard-view' },
-            { id: 'ejecucion', title: 'Tareas', roles: ['EJECUTANTE'], content: 'execution-view' }
+        [ROLES.EJECUTANTE]: [
+            { id: 'dashboard', title: 'Dashboards', roles: [ROLES.EJECUTANTE], content: 'pts-dashboard-view' },
+            { id: 'ejecucion', title: 'Tareas', roles: [ROLES.EJECUTANTE], content: 'execution-view' }
         ]
     };
 
@@ -138,6 +140,26 @@ const Navigation = ({ role, onInicioClick }) => {
             >
                 <span style={{ width: '100%', textAlign: 'center', display: 'block' }}>Generar QRs Equipos</span>
             </Link>
+            {/* Link a agregar usuario (solo ADMIN) */}
+            {role === ROLES.ADMIN && <Link
+                to="/admin/usuarios/nuevo"
+                className="text-primary-epu hover:text-primary-epu font-bold transition-all duration-300 rounded-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 hover:scale-110 border-b-6 border-yellow-700 hover:border-yellow-800 active:translate-y-1 active:shadow-lg relative overflow-hidden no-underline flex items-center justify-center"
+                style={{
+                    background: 'linear-gradient(145deg, #f4c042, #e6b030, #d49e20)',
+                    boxShadow: '0 8px 20px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                    textDecoration: 'none',
+                    width: '150px',
+                    height: '60px',
+                    marginLeft: 16,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center'
+                }}
+            >
+                <span style={{ width: '100%', textAlign: 'center', display: 'block' }}>Agregar Usuario</span>
+            </Link>}
         </nav>
     );
 };
@@ -213,6 +235,52 @@ const LoginView = ({ handleLogin }) => {
     );
 };
 
+// Componente de selección de rol (cuando el usuario tiene múltiples roles)
+const RoleSelector = ({ roles, onSelect, onCancel }) => {
+    const roleLabels = {
+        'EMISOR': { label: 'Emisor', desc: 'Crear y gestionar Permisos de Trabajo Seguro', icon: '📝' },
+        'SUPERVISOR': { label: 'Supervisor', desc: 'Aprobar, firmar y cerrar PTS', icon: '✅' },
+        'EJECUTANTE': { label: 'Ejecutante', desc: 'Ver y ejecutar tareas asignadas', icon: '🔧' },
+        'ADMIN': { label: 'Administrador', desc: 'Gestión completa del sistema', icon: '⚙️' },
+        'RTO_MANT': { label: 'RTO Mantenimiento', desc: 'Gestión de cierre RTO', icon: '🔒' },
+    };
+
+    return (
+        <section className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-2xl mt-16">
+            <h2 className="text-2xl font-bold text-primary-epu mb-2 text-center">Seleccionar Rol</h2>
+            <p className="text-sm text-gray-500 text-center mb-6">
+                Tu usuario tiene múltiples roles. Seleccioná con cuál querés ingresar.
+            </p>
+            <div className="space-y-3">
+                {roles.map(role => {
+                    const info = roleLabels[role] || { label: role, desc: '', icon: '👤' };
+                    return (
+                        <button
+                            key={role}
+                            onClick={() => onSelect(role)}
+                            className="w-full text-left px-5 py-4 border-2 border-gray-200 rounded-xl hover:border-yellow-500 hover:bg-yellow-50 transition-all duration-200 group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <span className="text-2xl">{info.icon}</span>
+                                <div>
+                                    <span className="font-bold text-gray-800 group-hover:text-primary-epu text-lg">{info.label}</span>
+                                    {info.desc && <p className="text-xs text-gray-500 mt-0.5">{info.desc}</p>}
+                                </div>
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
+            <button
+                onClick={onCancel}
+                className="w-full mt-4 text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+                Cancelar y volver al login
+            </button>
+        </section>
+    );
+};
+
 // Componente para mostrar PTS listos para cierre RTO
 const RTOClosureList = ({ onSelectPts }) => {
     const [ptsList, setPtsList] = useState([]);
@@ -225,7 +293,11 @@ const RTOClosureList = ({ onSelectPts }) => {
             setError(null);
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await fetch('http://localhost:8080/api/pts', {
+                // Obtener legajo del usuario logueado
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const userLegajo = payload.sub;
+
+                const response = await fetch('/api/pts', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -235,11 +307,12 @@ const RTOClosureList = ({ onSelectPts }) => {
                     throw new Error(`Error ${response.status}: ${response.statusText}`);
                 }
                 const data = await response.json();
-                // Filtrar PTS firmados pero no cerrados (listos para RTO)
+                // Filtrar PTS firmados pero no cerrados, asignados al supervisor logueado
                 const readyForRTO = data.filter(pts => {
                     const hasFirma = pts.firmaSupervisorBase64;
                     const notClosed = (!pts.rtoEstado || pts.rtoEstado !== 'CERRADO');
-                    return hasFirma && notClosed;
+                    const isAssignedSupervisor = pts.supervisorLegajo === userLegajo;
+                    return hasFirma && notClosed && isAssignedSupervisor;
                 });
                 setPtsList(readyForRTO);
             } catch (err) {
@@ -300,7 +373,7 @@ const PendingApprovalList = ({ onFirmar }) => {
         
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch('http://localhost:8080/api/pts', {
+            const response = await fetch('/api/pts', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -312,8 +385,11 @@ const PendingApprovalList = ({ onFirmar }) => {
             }
 
             const data = await response.json();
-            // Filtrar solo PTS sin firmar (para supervisores)
-            const pendingPts = data.filter(pts => !pts.firmaSupervisorBase64);
+            // Obtener legajo del usuario logueado
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const userLegajo = payload.sub;
+            // Filtrar solo PTS sin firmar asignados al supervisor logueado
+            const pendingPts = data.filter(pts => !pts.firmaSupervisorBase64 && pts.supervisorLegajo === userLegajo);
             setPtsList(pendingPts);
         } catch (err) {
             setError(err.message);
@@ -356,7 +432,7 @@ const PendingApprovalList = ({ onFirmar }) => {
 };
 
 // Aca para el contenido de la aplicacion
-const AppContent = ({ user, currentView, setCurrentView }) => {
+const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, availableRoles }) => {
     // Validar que user no sea null
     if (!user) {
         return null; // o un componente de loading
@@ -572,15 +648,15 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
             </div>
 
             {/* Botones de Accion Rapida (Control de Roles) */}
-            <div className={`mt-8 ${role === 'SUPERVISOR' ? 'flex justify-center gap-6' : 'grid grid-cols-1 md:grid-cols-3 gap-6'}`}>
-                {role === 'EMISOR' && (
+            <div className={`mt-8 ${role === ROLES.SUPERVISOR ? 'flex justify-center gap-6' : 'grid grid-cols-1 md:grid-cols-3 gap-6'}`}>
+                {role === ROLES.EMISOR && (
                     <button
                         onClick={() => setCurrentView({ title: 'Crear PTS', content: 'pts-form-view' })}
                         className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]">
                         + Crear Nuevo PTS
                     </button>
                 )}
-                {role === 'SUPERVISOR' && (
+                {role === ROLES.SUPERVISOR && (
                     <>
                         <button
                             onClick={() => setCurrentView({ title: 'Aprobación', content: 'approval-list-view' })}
@@ -596,7 +672,7 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                         </button>
                     </>
                 )}
-                {role === 'EJECUTANTE' && (
+                {role === ROLES.EJECUTANTE && (
                     <button
                         onClick={() => setCurrentView({ title: 'Tareas', content: 'execution-view' })}
                         className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]">
@@ -604,6 +680,35 @@ const AppContent = ({ user, currentView, setCurrentView }) => {
                     </button>
                 )}
             </div>
+
+            {/* Botón Cambiar Rol (solo si el usuario tiene múltiples roles) */}
+            {availableRoles && availableRoles.length > 1 && onSwitchRole && (
+                <div className="mt-6 flex justify-center">
+                    <div className="relative group">
+                        <button
+                            className="bg-gray-900 hover:bg-black text-white font-bold py-4 px-8 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02] peer"
+                            style={{ backgroundColor: '#111827', color: 'white' }}
+                            onClick={(e) => {
+                                const menu = e.currentTarget.nextElementSibling;
+                                menu.classList.toggle('hidden');
+                            }}
+                        >
+                            🔄 Cambiar Rol (actual: {role})
+                        </button>
+                        <div className="hidden absolute left-1/2 -translate-x-1/2 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-20 min-w-[220px]">
+                            {availableRoles.filter(r => r !== role).map(r => (
+                                <button
+                                    key={r}
+                                    onClick={() => onSwitchRole(r)}
+                                    className="block w-full text-left px-5 py-3 hover:bg-yellow-50 text-gray-800 font-semibold first:rounded-t-xl last:rounded-b-xl transition-colors"
+                                >
+                                    Ingresar como {r}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
     );
 };
@@ -640,6 +745,7 @@ const App = () => {
     const [user, setUser] = useState(null);
     const [currentView, setCurrentView] = useState({ title: 'Inicio', content: 'inicio-view' });
     const [selectedPtsId, setSelectedPtsId] = useState(null);
+    const [pendingRoles, setPendingRoles] = useState(null); // Para selección de rol cuando hay múltiples
 
     // Función para manejar la navegación interna
     const handleNavigate = useCallback((title, content) => {
@@ -652,28 +758,24 @@ const App = () => {
     };
 
     // Función para procesar el token y establecer el usuario
-    const processAuthToken = useCallback((token) => {
+    const processAuthToken = useCallback((token, selectedRole) => {
         if (!token) {
             setUser(null);
             return;
         }
 
         const claims = decodeToken(token);
-        console.log('DEBUG - Claims del token JWT:', claims); // DEBUG
-        if (claims && claims.exp * 1000 > Date.now()) { // Verificar expiración
-            // Extraer rol del array y quitar el prefijo "ROLE_"
-            const roleWithPrefix = claims.roles && claims.roles[0]; // "ROLE_SUPERVISOR"
-            const role = roleWithPrefix ? roleWithPrefix.replace('ROLE_', '') : null; // "SUPERVISOR"
+        if (claims && claims.exp * 1000 > Date.now()) {
+            // Obtener todos los roles sin prefijo "ROLE_"
+            const allRoles = (claims.roles || []).map(r => r.replace('ROLE_', ''));
+            const role = selectedRole || allRoles[0];
             
-            console.log('DEBUG - rol extraído:', role); // DEBUG
-            console.log('DEBUG - Contenido completo del claims:', JSON.stringify(claims, null, 2)); // DEBUG
             setUser({
                 legajo: claims.sub,
-                role: role, // EMISOR, SUPERVISOR, EJECUTANTE
+                role: role,
             });
             return true;
         } else {
-            // Token expirado o inválido
             localStorage.removeItem('authToken');
             setAuthToken(null);
             setUser(null);
@@ -704,20 +806,53 @@ const App = () => {
             const newToken = data.token;
             localStorage.setItem('authToken', newToken);
             setAuthToken(newToken);
-            processAuthToken(newToken); // Procesa el nuevo token para establecer el usuario
 
-            // Establece la vista por defecto basada en el rol recién logueado
+            // Verificar si tiene múltiples roles
             const claims = decodeToken(newToken);
-            const roleWithPrefix = claims?.roles && claims.roles[0]; // "ROLE_SUPERVISOR"
-            const role = roleWithPrefix ? roleWithPrefix.replace('ROLE_', '') : null; // "SUPERVISOR"
-            const routes = getRoutes(role);
-            const defaultRoute = routes.find(r => r.defaultView) || routes[0];
-            handleNavigate(defaultRoute.title, defaultRoute.content || defaultRoute.id + '-view');
+            const allRoles = (claims?.roles || []).map(r => r.replace('ROLE_', ''));
+
+            if (allRoles.length > 1) {
+                // Múltiples roles: mostrar selector
+                setPendingRoles(allRoles);
+            } else {
+                // Un solo rol: continuar directamente
+                completeLogin(newToken, allRoles[0]);
+            }
 
         } catch (error) {
             console.error("Login fallido:", error);
             setError(error.message.includes('401') ? "Legajo o contraseña inválidos." : "Error de conexión. Asegúrese de que el backend esté corriendo y se haya REINICIADO con la configuración CORS.");
         }
+    };
+
+    // Completar login con el rol seleccionado
+    const completeLogin = (token, selectedRole) => {
+        processAuthToken(token, selectedRole);
+        setPendingRoles(null);
+        const routes = getRoutes(selectedRole);
+        const defaultRoute = routes.find(r => r.defaultView) || routes[0];
+        handleNavigate(defaultRoute.title, defaultRoute.content || defaultRoute.id + '-view');
+    };
+
+    // Callback cuando el usuario selecciona un rol
+    const handleRoleSelect = (selectedRole) => {
+        completeLogin(authToken, selectedRole);
+    };
+
+    // Obtener todos los roles del token actual
+    const getUserRoles = useCallback(() => {
+        if (!authToken) return [];
+        const claims = decodeToken(authToken);
+        if (!claims) return [];
+        return (claims.roles || []).map(r => r.replace('ROLE_', ''));
+    }, [authToken]);
+
+    // Cambiar de rol sin cerrar sesión
+    const handleSwitchRole = (newRole) => {
+        processAuthToken(authToken, newRole);
+        const routes = getRoutes(newRole);
+        const defaultRoute = routes.find(r => r.defaultView) || routes[0];
+        handleNavigate(defaultRoute.title, defaultRoute.content || defaultRoute.id + '-view');
     };
 
     // Lógica de Logout
@@ -726,6 +861,7 @@ const App = () => {
         setAuthToken(null);
         setUser(null);
         setSelectedPtsId(null);
+        setPendingRoles(null);
         handleNavigate('Inicio', 'inicio-view');
     };
 
@@ -796,6 +932,15 @@ const App = () => {
                                                 </ProtectedRoute>
                                             }
                                         />
+                                        {/* Ruta protegida para agregar usuarios */}
+                                        <Route 
+                                            path="/admin/usuarios/nuevo" 
+                                            element={
+                                                <ProtectedRoute>
+                                                    <AgregarUsuario />
+                                                </ProtectedRoute>
+                                            }
+                                        />
                     {/* Ruta pública para estado de equipo por QR */}
                     <Route 
                         path="/equipo/:tag" 
@@ -805,7 +950,17 @@ const App = () => {
                     <Route 
                         path="/login" 
                         element={
-                            authToken ? <Navigate to="/" replace /> : <LoginView handleLogin={handleLogin} />
+                            pendingRoles ? (
+                                <RoleSelector 
+                                    roles={pendingRoles} 
+                                    onSelect={handleRoleSelect} 
+                                    onCancel={() => { setPendingRoles(null); handleLogout(); }}
+                                />
+                            ) : authToken && user ? (
+                                <Navigate to="/" replace />
+                            ) : (
+                                <LoginView handleLogin={handleLogin} />
+                            )
                         } 
                     />
                     
@@ -818,6 +973,8 @@ const App = () => {
                                     user={user}
                                     currentView={currentView}
                                     setCurrentView={setCurrentView}
+                                    onSwitchRole={handleSwitchRole}
+                                    availableRoles={getUserRoles()}
                                 />
                             </ProtectedRoute>
                         } 
@@ -832,6 +989,8 @@ const App = () => {
                                     user={user}
                                     currentView={{ title: 'Mis PTS', content: 'my-pts-list-view' }}
                                     setCurrentView={setCurrentView}
+                                    onSwitchRole={handleSwitchRole}
+                                    availableRoles={getUserRoles()}
                                 />
                             </ProtectedRoute>
                         } 
@@ -876,6 +1035,8 @@ const App = () => {
                                     user={user}
                                     currentView={{ title: 'Aprobación', content: 'approval-list-view' }}
                                     setCurrentView={setCurrentView}
+                                    onSwitchRole={handleSwitchRole}
+                                    availableRoles={getUserRoles()}
                                 />
                             </ProtectedRoute>
                         } 
@@ -889,6 +1050,8 @@ const App = () => {
                                     user={user}
                                     currentView={{ title: 'Firma Biométrica', content: 'firma-biometrica-view' }}
                                     setCurrentView={setCurrentView}
+                                    onSwitchRole={handleSwitchRole}
+                                    availableRoles={getUserRoles()}
                                 />
                             </ProtectedRoute>
                         } 
@@ -902,6 +1065,8 @@ const App = () => {
                                     user={user}
                                     currentView={{ title: 'Cierre RTO', content: 'cierre-rto-view' }}
                                     setCurrentView={setCurrentView}
+                                    onSwitchRole={handleSwitchRole}
+                                    availableRoles={getUserRoles()}
                                 />
                             </ProtectedRoute>
                         } 

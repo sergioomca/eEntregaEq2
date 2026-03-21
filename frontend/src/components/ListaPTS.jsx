@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 
 const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter = 'TODOS' }) => {
+  const navigate = useNavigate();
   // Estados principales
   const [ptsList, setPtsList] = useState([]);
   const [filter, setFilter] = useState(defaultFilter);
@@ -41,6 +42,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
   // Filtros disponibles
   const FILTROS = {
     TODOS: 'TODOS',
+    STANDBY: 'STANDBY',
     PENDIENTE_FIRMA: 'PENDIENTE_FIRMA',
     FIRMADO_PENDIENTE_CIERRE: 'FIRMADO_PENDIENTE_CIERRE', 
     CERRADO: 'CERRADO',
@@ -49,6 +51,12 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
 
   // Estilos para estados
   const estadoStyles = {
+    'Stand by': {
+      color: '#6b7280',
+      bgColor: '#f3f4f6',
+      icon: '',
+      textColor: '#374151'
+    },
     'Pendiente de Firma': { 
       color: '#f59e0b', 
       bgColor: '#fef3c7', 
@@ -135,7 +143,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
       });
 
       const queryString = queryParams.length > 0 ? '?' + queryParams.join('&') : '';
-      const url = `http://localhost:8080/api/pts${queryString}`;
+      const url = `/api/pts${queryString}`;
       
       console.log('Obteniendo lista de PTS con filtros:', url);
       
@@ -174,6 +182,9 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
 
   // Determinar estado de PTS
   const getPtsEstado = (pts) => {
+    if (pts.rtoEstado === 'STANDBY') {
+      return 'Stand by';
+    }
     if (pts.rtoEstado === 'CERRADO') {
       return 'Cerrado';
     }
@@ -197,6 +208,8 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
         const estado = getPtsEstado(pts);
         
         switch (filter) {
+          case 'STANDBY':
+            return estado === 'Stand by';
           case 'PENDIENTE_FIRMA':
             return estado === 'Pendiente de Firma';
           case 'FIRMADO_PENDIENTE_CIERRE':
@@ -355,9 +368,13 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
   // Manejar clic en fila
   const handleRowClick = (pts) => {
     const estado = getPtsEstado(pts);
-    if (estado === 'Pendiente de Firma' && onSelectPtsParaFirma) {
+    if (estado === 'Stand by') {
+      navigate('/pts/nuevo', { state: { editingPts: pts } });
+      return;
+    }
+    if (estado === 'Pendiente de Firma' && onSelectPtsParaFirma && currentUser && pts.supervisorLegajo === currentUser.dni) {
       onSelectPtsParaFirma(pts);
-    } else if (estado === 'Firmado (Pend. Cierre)' && onSelectPtsParaCierre) {
+    } else if (estado === 'Firmado (Pend. Cierre)' && onSelectPtsParaCierre && currentUser && pts.supervisorLegajo === currentUser.dni) {
       onSelectPtsParaCierre(pts);
     }
     setSelectedPts(pts);
@@ -367,6 +384,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
   const getCounts = () => {
     const counts = {
       total: ptsList.length,
+      standby: 0,
       pendienteFirma: 0,
       firmadoPendienteCierre: 0,
       cerrado: 0,
@@ -376,7 +394,8 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
     ptsList.forEach(pts => {
       const estado = getPtsEstado(pts);
       
-      if (estado === 'Pendiente de Firma') counts.pendienteFirma++;
+      if (estado === 'Stand by') counts.standby++;
+      else if (estado === 'Pendiente de Firma') counts.pendienteFirma++;
       else if (estado === 'Firmado (Pend. Cierre)') counts.firmadoPendienteCierre++;
       else if (estado === 'Cerrado') counts.cerrado++;
       
@@ -456,6 +475,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
 
                   switch (key) {
                     case 'TODOS': label = 'Todos'; count = counts.total; break;
+                    case 'STANDBY': label = 'Stand by'; count = counts.standby; break;
                     case 'PENDIENTE_FIRMA': label = 'Pend. Firma'; count = counts.pendienteFirma; break;
                     case 'FIRMADO_PENDIENTE_CIERRE': label = 'Pend. Cierre'; count = counts.firmadoPendienteCierre; break;
                     case 'CERRADO': label = 'Cerrados'; count = counts.cerrado; break;
@@ -600,6 +620,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary text-sm"
                       >
                         <option value="">Todos los estados</option>
+                        <option value="STANDBY">STAND BY</option>
                         <option value="PENDIENTE">PENDIENTE</option>
                         <option value="CERRADO">CERRADO</option>
                       </select>
@@ -731,8 +752,8 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                 ) : (
                   paginatedPTS.map((pts) => {
                     const estado = getPtsEstado(pts);
-                    const estadoStyle = estadoStyles[estado];
-                    const isClickable = estado === 'Pendiente de Firma' || estado === 'Firmado (Pend. Cierre)';
+                    const estadoStyle = estadoStyles[estado] || estadoStyles['Stand by'];
+                    const isClickable = estado === 'Pendiente de Firma' || estado === 'Firmado (Pend. Cierre)' || estado === 'Stand by';
 
                     return (
                       <tr 
@@ -777,7 +798,19 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                           {pts.fechaInicio ? new Date(pts.fechaInicio).toLocaleDateString('es-ES') : 'N/A'}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                          {isClickable && (
+                          {estado === 'Stand by' && (
+                            <button
+                              className="text-yellow-600 hover:text-yellow-800 font-medium"
+                              onClick={e => {
+                                e.stopPropagation();
+                                navigate('/pts/nuevo', { state: { editingPts: pts } });
+                              }}
+                            >
+                              Continuar PTS
+                            </button>
+                          )}
+                          {(estado === 'Pendiente de Firma' || estado === 'Firmado (Pend. Cierre)') && 
+                           currentUser && pts.supervisorLegajo === currentUser.dni && (
                             <button
                               className="text-epu-primary hover:text-epu-primary-dark"
                               onClick={e => {

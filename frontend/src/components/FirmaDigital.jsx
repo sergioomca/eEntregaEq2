@@ -38,7 +38,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
             console.log(`Iniciando descarga de PDF para PTS firmado: ${ptsId}`);
             
             // Llamada al endpoint de reportes
-            const response = await fetch(`http://localhost:8080/api/reportes/pdf/${ptsId}`, {
+            const response = await fetch(`/api/reportes/pdf/${ptsId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -140,7 +140,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
             console.log('DEBUG FIRMA - Token:', token ? 'Presente' : 'Ausente');
             
             // 3. Petición PUT al endpoint del PtsController
-            const response = await fetch('http://localhost:8080/api/pts/firmar', {
+            const response = await fetch('/api/pts/firmar', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

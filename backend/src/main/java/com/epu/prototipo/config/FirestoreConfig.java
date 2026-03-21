@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import com.epu.prototipo.service.EquipoService;
 import com.epu.prototipo.service.gateway.DcsGateway;
 import com.epu.prototipo.service.gateway.MockDcsGateway;
 
@@ -51,10 +50,5 @@ public class FirestoreConfig {
     @Bean
     public DcsGateway dcsGateway() {
         return new MockDcsGateway();
-    }
-
-    @Bean
-    public EquipoService equipoService(DcsGateway dcsGateway) {
-        return new EquipoService(dcsGateway);
     }
 }

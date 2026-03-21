@@ -20,7 +20,7 @@ const ReportesView = () => {
         setLoadingStats(true);
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch('http://localhost:8080/api/pts', {
+            const response = await fetch('/api/pts', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -67,7 +67,7 @@ const ReportesView = () => {
         
         try {
             // Construir la URL de la API con parametros de consulta
-            const baseUrl = 'http://localhost:8080/api/reportes/excel';
+            const baseUrl = '/api/reportes/excel';
             const params = new URLSearchParams();
             
             // Añadir parametros solo si no estan vacios

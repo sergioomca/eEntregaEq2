@@ -27,7 +27,7 @@ export default function GeneradorQR({ tag, url }) {
       <canvas ref={canvasRef} />
       <p style={{ fontSize: 12, wordBreak: "break-all", margin: "8px 0 0 0" }}>{url}</p>
       <a
-        href={`http://localhost:5173${url}`}
+        href={`${window.location.origin}${url}`}
         target="_blank"
         rel="noopener noreferrer"
         style={{ display: 'block', marginTop: 8, fontSize: 13, color: '#003366', textDecoration: 'underline' }}

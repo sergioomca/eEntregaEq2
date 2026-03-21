@@ -34,7 +34,7 @@ public class PermisoTrabajoSeguro {
     private LocalDateTime fechaHoraFirmaSupervisor;
     
     // !!! CAMPOS PARA RTO (HU-019) 
-    private String rtoEstado; // PENDIENTE, CERRADO, CANCELADO
+    private String rtoEstado; // STANDBY, PENDIENTE, FIRMADO_PEND_CIERRE, CERRADO, CANCELADO
     private String rtoObservaciones;
     private String rtoResponsableCierreLegajo;
     private LocalDateTime rtoFechaHoraCierre;
@@ -66,10 +66,10 @@ public class PermisoTrabajoSeguro {
         this.equiposSeguridad = equiposSeguridad;
         
         // Inicializar campos de firma/RTO
-        this.rtoEstado = "PENDIENTE";
+        this.rtoEstado = EstadoPts.PENDIENTE;
     }
 
-    // !!! Clase interna para manejar lista de Riesgos y Controles
+    // Clase interna para manejar lista de Riesgos y Controles
     public static class RiesgoControl {
         private String peligro;
         private String consecuencia;
@@ -91,7 +91,7 @@ public class PermisoTrabajoSeguro {
         public void setControlRequerido(String controlRequerido) { this.controlRequerido = controlRequerido; }
     }
 
-    // !!! Clase interna para manejar lista de Equipos de Seguridad ---
+    // Clase interna para manejar lista de Equipos de Seguridad ---
     public static class EquipoSeguridad {
         private String equipo;
         private boolean esRequerido;
@@ -153,7 +153,7 @@ public class PermisoTrabajoSeguro {
     public List<EquipoSeguridad> getEquiposSeguridad() { return equiposSeguridad; }
     public void setEquiposSeguridad(List<EquipoSeguridad> equiposSeguridad) { this.equiposSeguridad = equiposSeguridad; }
 
-    // !!! GETTERS/SETTERS PARA FIRMA Y RTO
+    // GETTERS/SETTERS PARA FIRMA Y RTO
 
     // Getter y Setter para requiereAnalisisRiesgoAdicional
     public boolean isRequiereAnalisisRiesgoAdicional() { return requiereAnalisisRiesgoAdicional; }

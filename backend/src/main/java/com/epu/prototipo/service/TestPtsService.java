@@ -4,14 +4,15 @@ package com.epu.prototipo.service;
 import com.epu.prototipo.dto.CerrarPtsRequest;
 import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
+import com.epu.prototipo.model.EstadoPts;
+import com.epu.prototipo.model.EstadoDcs;
+import com.epu.prototipo.model.CondicionEquipo;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import com.epu.prototipo.service.EquipoService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-// import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.context.annotation.Primary;
@@ -20,13 +21,13 @@ import org.springframework.context.annotation.Primary;
 @Primary
 @Profile("test")
 public class TestPtsService implements IPtsService {
-    private final EquipoService equipoService;
+    private final IEquipoService equipoService;
 
 
     // Lista en memoria para almacenar PTS creados en la prueba
     private final List<PermisoTrabajoSeguro> ptsInMemory = new ArrayList<>();
 
-    public TestPtsService(EquipoService equipoService) {
+    public TestPtsService(IEquipoService equipoService) {
         this.equipoService = equipoService;
         // Inicializa con datos de prueba
         initializeTestData();
@@ -44,7 +45,7 @@ public class TestPtsService implements IPtsService {
         pts1.setArea("Mantenimiento");
         pts1.setEquipoOInstalacion("Bomba Principal A1");
         pts1.setSupervisorLegajo("SUP222"); 
-        pts1.setRtoEstado("PENDIENTE");
+        pts1.setRtoEstado(EstadoPts.PENDIENTE);
 
         PermisoTrabajoSeguro pts2 = new PermisoTrabajoSeguro();
         pts2.setId("PTS-002");
@@ -57,9 +58,8 @@ public class TestPtsService implements IPtsService {
         pts2.setArea("Producción");
         pts2.setEquipoOInstalacion("Reactor Principal B2");
         pts2.setSupervisorLegajo("SUP222"); 
-        pts2.setRtoEstado("CERRADO");
+        pts2.setRtoEstado(EstadoPts.CERRADO);
 
-        // Agregar pts 3 para probar mejor los filtros
         PermisoTrabajoSeguro pts3 = new PermisoTrabajoSeguro();
         pts3.setId("PTS-003");
         pts3.setDescripcionTrabajo("Inspección de bomba secundaria");
@@ -71,7 +71,7 @@ public class TestPtsService implements IPtsService {
         pts3.setArea("Mantenimiento");
         pts3.setEquipoOInstalacion("Bomba Secundaria C3");
         pts3.setSupervisorLegajo("SUP222");
-        pts3.setRtoEstado("PENDIENTE");
+        pts3.setRtoEstado(EstadoPts.PENDIENTE);
 
         ptsInMemory.add(pts1);
         ptsInMemory.add(pts2);
@@ -86,19 +86,63 @@ public class TestPtsService implements IPtsService {
 
     @Override
     public PermisoTrabajoSeguro createPts(PermisoTrabajoSeguro pts) {
-        // Log explícito del valor de equipoOInstalacion al crear el PTS
-        // Actualizar estado y condición del equipo antes de guardar el PTS
-        try {
-            String tag = pts.getEquipoOInstalacion();
-            equipoService.actualizarEstadoEquipo(tag, "DESHABILITADO");
-            equipoService.actualizarCondicionEquipo(tag, "BLOQUEADO");
-        } catch (Exception e) {
-            System.err.println("[ERROR][TEST] No se pudo actualizar el estado/condición del equipo: " + e.getMessage());
+        boolean isStandby = EstadoPts.STANDBY.equals(pts.getRtoEstado());
+
+        // Actualizar estado y condicion del equipo antes de guardar el PTS (solo si no es standby)
+        if (!isStandby) {
+            try {
+                String tag = pts.getEquipoOInstalacion();
+                equipoService.actualizarEstadoEquipo(tag, EstadoDcs.DESHABILITADO);
+                equipoService.actualizarCondicionEquipo(tag, CondicionEquipo.BLOQUEADO);
+            } catch (Exception e) {
+                System.err.println("[ERROR][TEST] No se pudo actualizar el estado/condición del equipo: " + e.getMessage());
+            }
         }
-        // Para generar ID unico y agregar a la lista en memoria
-        pts.setId("PTS-" + System.currentTimeMillis());
+        // Generar ID unico en formato PTS-YYMMDD-XXX
+        String fechaInicio = pts.getFechaInicio();
+        if (fechaInicio != null && fechaInicio.length() >= 10) {
+            String yymmdd = fechaInicio.replaceAll("-", "").substring(2, 8);
+            int ultimoNumero = obtenerUltimoNumeroPtsPorFecha(fechaInicio);
+            int nuevoNumero = ultimoNumero + 1;
+            pts.setId(String.format("PTS-%s-%03d", yymmdd, nuevoNumero));
+        } else {
+            pts.setId("PTS-" + System.currentTimeMillis());
+        }
         ptsInMemory.add(pts);
-        System.out.println("PTS creado en modo test: " + pts.getId() + " - " + pts.getDescripcionTrabajo());
+        System.out.println("PTS creado en modo test: " + pts.getId() + " - " + pts.getDescripcionTrabajo() + " - Estado: " + pts.getRtoEstado());
+        return pts;
+    }
+
+    @Override
+    public PermisoTrabajoSeguro updatePts(PermisoTrabajoSeguro pts) {
+        if (pts.getId() == null || pts.getId().trim().isEmpty()) {
+            throw new IllegalArgumentException("El ID del PTS es requerido para actualizar.");
+        }
+
+        PermisoTrabajoSeguro existing = getPtsById(pts.getId());
+        if (existing == null) {
+            return null;
+        }
+
+        if (!EstadoPts.STANDBY.equals(existing.getRtoEstado())) {
+            throw new IllegalStateException("Solo se pueden actualizar PTS en estado STANDBY.");
+        }
+
+        // Si el nuevo estado NO es STANDBY, aplicar lógica de equipo
+        if (!EstadoPts.STANDBY.equals(pts.getRtoEstado())) {
+            try {
+                String tag = pts.getEquipoOInstalacion();
+                equipoService.actualizarEstadoEquipo(tag, EstadoDcs.DESHABILITADO);
+                equipoService.actualizarCondicionEquipo(tag, CondicionEquipo.BLOQUEADO);
+            } catch (Exception e) {
+                System.err.println("[ERROR][TEST] No se pudo actualizar el estado/condición del equipo: " + e.getMessage());
+            }
+        }
+
+        // Reemplazar el PTS en la lista en memoria
+        ptsInMemory.removeIf(p -> pts.getId().equals(p.getId()));
+        ptsInMemory.add(pts);
+        System.out.println("PTS actualizado en modo test: " + pts.getId() + " - Estado: " + pts.getRtoEstado());
         return pts;
     }
 
@@ -124,9 +168,10 @@ public class TestPtsService implements IPtsService {
             return null; // PTS no encontrado
         }
 
-        // Validacion en modo test - Supervisores 
-        if (!"SUP222".equals(request.getDniFirmante()) && !"12345678".equals(request.getDniFirmante())) {
-            throw new SecurityException("Firmante no autorizado en modo test. Supervisores válidos: SUP222");
+        // Validacion - solo el supervisor asignado al PTS puede firmarlo
+        String supervisorAsignado = pts.getSupervisorLegajo();
+        if (supervisorAsignado == null || !supervisorAsignado.equals(request.getDniFirmante())) {
+            throw new SecurityException("Firmante no autorizado. Solo el supervisor asignado (" + supervisorAsignado + ") puede firmar este PTS.");
         }
 
         // Simula que ya esta firmado
@@ -165,11 +210,11 @@ public class TestPtsService implements IPtsService {
         }
 
         // Validaciones para en modo test
-        if ("CERRADO".equals(pts.getRtoEstado())) {
+        if (EstadoPts.CERRADO.equals(pts.getRtoEstado())) {
             throw new IllegalStateException("El PTS ID " + request.getPtsId() + " ya ha sido cerrado.");
         }
         
-        if ("CANCELADO".equals(pts.getRtoEstado())) {
+        if (EstadoPts.CANCELADO.equals(pts.getRtoEstado())) {
             throw new IllegalStateException("El PTS ID " + request.getPtsId() + " está cancelado y no puede ser cerrado.");
         }
 
@@ -193,14 +238,14 @@ public class TestPtsService implements IPtsService {
             } catch (Exception ex) {
                 System.err.println("[DEBUG][RTO] Equipo NO encontrado en base de datos: '" + tag + "'. Excepción: " + ex.getMessage());
             }
-            equipoService.actualizarCondicionEquipo(tag, "DESBLOQUEADO");
-            // Si también quieres habilitar el equipo, descomenta la siguiente línea:
-            // equipoService.actualizarEstadoEquipo(tag, "HABILITADO");
+            equipoService.actualizarCondicionEquipo(tag, CondicionEquipo.DESBLOQUEADO);
+            // !!! Solo para prueba para habilitar el equipo
+            // equipoService.actualizarEstadoEquipo(tag, EstadoDcs.HABILITADO);
         } catch (Exception e) {
             System.err.println("[ERROR][TEST] No se pudo desbloquear el equipo al cerrar PTS: " + e.getMessage());
         }
         // Hacer cierre simulado
-        pts.setRtoEstado("CERRADO");
+        pts.setRtoEstado(EstadoPts.CERRADO);
         pts.setRtoResponsableCierreLegajo(request.getRtoResponsableCierreLegajo());
         pts.setRtoObservaciones(request.getRtoObservaciones());
         pts.setRtoFechaHoraCierre(LocalDateTime.now());
@@ -269,15 +314,14 @@ public class TestPtsService implements IPtsService {
     public int obtenerUltimoNumeroPtsPorFecha(String fechaInicio) {
         int max = 0;
         for (PermisoTrabajoSeguro pts : ptsInMemory) {
-            if (fechaInicio.equals(pts.getFechaInicio())) {
-                String id = pts.getId();
-                if (id != null && id.matches("PTS-\\d+")) {
-                    String[] partes = id.split("-");
-                    try {
-                        int num = Integer.parseInt(partes[1]);
-                        if (num > max) max = num;
-                    } catch (NumberFormatException ignored) {}
-                }
+            String id = pts.getId();
+            if (id != null && id.matches("PTS-\\d{6}-\\d+")) {
+                // Formato PTS-YYMMDD-XXX
+                String[] partes = id.split("-");
+                try {
+                    int num = Integer.parseInt(partes[2]);
+                    if (num > max) max = num;
+                } catch (NumberFormatException ignored) {}
             }
         }
         return max;

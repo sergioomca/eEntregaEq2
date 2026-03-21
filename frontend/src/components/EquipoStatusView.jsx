@@ -16,7 +16,7 @@ export default function EquipoStatusView() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch(`http://localhost:8080/public/consulta/equipo/${tag}`)
+    fetch(`/public/consulta/equipo/${tag}`)
       .then((res) => {
         if (!res.ok) throw new Error(res.status === 404 ? "Equipo no encontrado" : "Error al consultar el equipo");
         return res.json();

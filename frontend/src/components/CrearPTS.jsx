@@ -1,8 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchSupervisores } from '../api/supervisores';
 
 const CrearPTS = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  // PTS en standby que se está retomando (viene desde la navegación)
+  const editingPts = location.state?.editingPts || null;
   // Estado para el nombre real del solicitante
   const [nombreSolicitante, setNombreSolicitante] = useState('');
   // Lista de supervisores disponibles
@@ -67,6 +72,34 @@ const CrearPTS = () => {
   const [equipoError, setEquipoError] = useState(null);
   const [equipoLoading, setEquipoLoading] = useState(false);
   const [equipoDescripcion, setEquipoDescripcion] = useState("");
+
+  // Cargar datos del PTS en standby si se está retomando
+  useEffect(() => {
+    if (editingPts) {
+      setFormData(prev => ({
+        ...prev,
+        numeroPermiso: editingPts.id || '',
+        fecha: editingPts.fechaInicio || prev.fecha,
+        horaInicio: editingPts.horaInicio || '',
+        horaFin: editingPts.horaFin || '',
+        ubicacion: editingPts.ubicacion || '',
+        descripcionTrabajo: editingPts.descripcionTrabajo || '',
+        solicitanteLegajo: editingPts.solicitanteLegajo || '',
+        nombreSolicitante: editingPts.nombreSolicitante || '',
+        solicitante: editingPts.nombreSolicitante || prev.solicitante,
+        supervisor: editingPts.supervisorLegajo || '',
+        responsableAreaTrabajo: '', // extraer de observaciones si existe
+        requiereAnalisisRiesgo: editingPts.requiereAnalisisRiesgoAdicional || false,
+        observaciones: editingPts.rtoObservaciones || editingPts.observaciones || '',
+        riesgosControles: editingPts.riesgosControles && editingPts.riesgosControles.length > 0
+          ? editingPts.riesgosControles.map(rc => ({ riesgo: rc.peligro || '', control: rc.controlRequerido || '' }))
+          : [{ riesgo: '', control: '' }],
+        equiposSeguridad: editingPts.equiposSeguridad && editingPts.equiposSeguridad.length > 0
+          ? editingPts.equiposSeguridad.map(es => ({ equipo: es.equipo || '', cantidad: 1 }))
+          : [{ equipo: '', cantidad: 1 }]
+      }));
+    }
+  }, [editingPts]);
 
   // Validar equipo por tag (solo 1 equipo por PTS)
   const handleValidarEquipo = async () => {
@@ -217,6 +250,89 @@ const CrearPTS = () => {
 
   // handleBuscarLegajo eliminado
 
+  // Funcion para guardar PTS en Stand by (formulario parcial)
+  const handleStandby = async () => {
+    setIsSubmitting(true);
+    setSubmitMessage('');
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      const ptsData = {
+        fechaInicio: formData.fecha || new Date().toISOString().split('T')[0],
+        fechaFin: formData.fecha || new Date().toISOString().split('T')[0],
+        horaInicio: formData.horaInicio || '',
+        horaFin: formData.horaFin || '',
+        ubicacion: formData.ubicacion || '',
+        descripcionTrabajo: formData.descripcionTrabajo || '',
+        tareaDetallada: formData.descripcionTrabajo || '',
+        nombreSolicitante: formData.solicitante || '',
+        solicitanteLegajo: user?.dni || '',
+        supervisorLegajo: formData.supervisor || '',
+        observaciones: formData.observaciones || '',
+        area: formData.ubicacion || '',
+        equipoOInstalacion: formData.equiposSeguridad.map(e => e.equipo).filter(e => e).join(', ') || '',
+        tipoTrabajo: 'GENERAL',
+        riesgosControles: formData.riesgosControles
+          .filter(rc => rc.riesgo || rc.control)
+          .map(rc => ({
+            peligro: rc.riesgo || '',
+            consecuencia: 'A definir',
+            controlRequerido: rc.control || ''
+          })),
+        equiposSeguridad: formData.equiposSeguridad
+          .filter(es => es.equipo)
+          .map(es => ({
+            equipo: es.equipo,
+            esRequerido: true,
+            esProporcionado: false,
+            observacion: `Cantidad: ${es.cantidad}`
+          })),
+        rtoEstado: 'STANDBY',
+        requiereAnalisisRiesgoAdicional: formData.requiereAnalisisRiesgo === true
+      };
+
+      let response;
+      if (editingPts) {
+        // Actualizar PTS existente en standby
+        response = await fetch(`/api/pts/${editingPts.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(ptsData)
+        });
+      } else {
+        // Crear nuevo PTS en standby
+        response = await fetch('/api/pts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(ptsData)
+        });
+      }
+
+      if (response.ok) {
+        const result = await response.json();
+        setSubmitMessage(`PTS guardado en Stand by. ID: ${result.id || 'asignado'}`);
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
+      } else {
+        const errorText = await response.text();
+        setSubmitMessage(`Error al guardar en Stand by: ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Error al guardar en Stand by:', error);
+      setSubmitMessage('Error de conexión al guardar en Stand by.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Validacion del formulario
   const validateForm = () => {
     const newErrors = {};
@@ -333,14 +449,27 @@ const CrearPTS = () => {
 
       // console.log eliminado (control)
 
-      const response = await fetch('http://localhost:8080/api/pts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(ptsData)
-      });
+      let response;
+      // Si estamos editando un PTS en standby, usar PUT para actualizar
+      if (editingPts) {
+        response = await fetch(`/api/pts/${editingPts.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(ptsData)
+        });
+      } else {
+        response = await fetch('/api/pts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(ptsData)
+        });
+      }
 
       if (response.ok) {
         const result = await response.json();
@@ -417,10 +546,13 @@ const CrearPTS = () => {
         <div className="bg-white rounded-lg shadow-md">
           {/* Header */}
           <div className="bg-epu-primary text-white p-6 rounded-t-lg">
-            <h1 className="text-2xl font-bold">Crear Permiso de Trabajo Seguro</h1>
+            <h1 className="text-2xl font-bold">
+              {editingPts ? `Continuar PTS - ${editingPts.id}` : 'Crear Permiso de Trabajo Seguro'}
+            </h1>
             <p className="mt-2 opacity-90">
               Usuario: {user.nombre}
               {userRole && ` | Rol: ${userRole}`}
+              {editingPts && ' | Retomando PTS en Stand by'}
             </p>
           </div>
 
@@ -820,11 +952,19 @@ const CrearPTS = () => {
                 Limpiar
               </button>
               <button
+                type="button"
+                onClick={handleStandby}
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Guardando...' : 'Stand by'}
+              </button>
+              <button
                 type="submit"
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-epu-primary text-white rounded-md hover:bg-epu-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Creando...' : 'Crear PTS'}
+                {isSubmitting ? 'Creando...' : (editingPts ? 'Crear PTS' : 'Crear PTS')}
               </button>
             </div>
           </form>

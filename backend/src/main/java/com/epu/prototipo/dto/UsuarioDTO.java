@@ -1,21 +1,37 @@
 package com.epu.prototipo.dto;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 // DTO para representar la informacion basica de usuario
-// (fuente externa simulada)
 
 public class UsuarioDTO {
     private String legajo;
     private String nombreCompleto;
     private String sector;
+    // Roles posibles: "EMISOR" | "SUPERVISOR" | "RTO MANT" | "EJECUTANTE" | "ADMIN"
+    private List<String> roles;
 
     // Constructor vacio para JSON
-    public UsuarioDTO() {}
+    public UsuarioDTO() {
+        this.roles = new ArrayList<>();
+    }
 
-    // Constructor con parametros
+    // Constructor con parametros (sin roles)
     public UsuarioDTO(String legajo, String nombreCompleto, String sector) {
         this.legajo = legajo;
         this.nombreCompleto = nombreCompleto;
         this.sector = sector;
+        this.roles = new ArrayList<>();
+    }
+
+    // Constructor completo con roles
+    public UsuarioDTO(String legajo, String nombreCompleto, String sector, String... roles) {
+        this.legajo = legajo;
+        this.nombreCompleto = nombreCompleto;
+        this.sector = sector;
+        this.roles = new ArrayList<>(Arrays.asList(roles));
     }
 
     // Getters y Setters
@@ -43,12 +59,21 @@ public class UsuarioDTO {
         this.sector = sector;
     }
 
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
+    }
+
     @Override
     public String toString() {
         return "UsuarioDTO{" +
                 "legajo='" + legajo + '\'' +
                 ", nombreCompleto='" + nombreCompleto + '\'' +
                 ", sector='" + sector + '\'' +
+                ", roles=" + roles +
                 '}';
     }
 }

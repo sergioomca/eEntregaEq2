@@ -4,6 +4,9 @@ package com.epu.prototipo.service;
 import com.epu.prototipo.dto.CerrarPtsRequest;
 import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
+import com.epu.prototipo.model.EstadoPts;
+import com.epu.prototipo.model.EstadoDcs;
+import com.epu.prototipo.model.CondicionEquipo;
 // ...existing code...
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
@@ -16,17 +19,17 @@ import java.util.concurrent.ExecutionException;
 import java.time.LocalDateTime;
 import javax.annotation.Nullable;
 
-// Servicio principal para la gestión de Permisos de Trabajo Seguro (PTS) en Firestore.
+// Servicio principal para la gestion de PTS en Firestore.
 @Service
 @Profile("default")
 public class PtsService implements IPtsService {
 
     private final Firestore firestore;
-    private final EquipoService equipoService;
+    private final IEquipoService equipoService;
     private static final String COLLECTION_NAME = "permisos-trabajo-seguro";
 
-    // Para inyectar la instancia de Firestore y EquipoService configurada
-    public PtsService(Firestore firestore, EquipoService equipoService) {
+    // Para inyectar la instancia de Firestore y IEquipoService configurada
+    public PtsService(Firestore firestore, IEquipoService equipoService) {
         this.firestore = firestore;
         this.equipoService = equipoService;
     }
@@ -73,9 +76,8 @@ public class PtsService implements IPtsService {
             }
             
         } catch (InterruptedException | ExecutionException e) {
-            // Si Firestore falla, usar datos simulados
-            System.err.println("Firestore no disponible, usando datos simulados: " + e.getMessage());
-            ptsList = createSimulatedPts();
+            System.err.println("Error al obtener PTS de Firestore: " + e.getMessage());
+            throw new RuntimeException("Error al obtener los Permisos de Trabajo Seguro.", e);
         }
         
         // Filtros en memoria (para campos que no soportan query Firestore)
@@ -147,11 +149,11 @@ public class PtsService implements IPtsService {
      */
     private boolean filtrarPorEquipo(PermisoTrabajoSeguro pts, String equipo) {
         if (equipo == null || equipo.trim().isEmpty()) {
-            return true; // Sin filtro, incluir todos
+            return true; 
         }
         
         if (pts.getEquipoOInstalacion() == null) {
-            return false; // No hay equipo definido en el PTS
+            return false; 
         }
         
         return pts.getEquipoOInstalacion().toLowerCase().contains(equipo.trim().toLowerCase());
@@ -165,83 +167,17 @@ public class PtsService implements IPtsService {
      */
     private boolean filtrarPorArea(PermisoTrabajoSeguro pts, String area) {
         if (area == null || area.trim().isEmpty()) {
-            return true; // Sin filtro, incluir todos
+            return true; 
         }
         
         if (pts.getArea() == null) {
-            return false; // No hay área definida en el PTS
+            return false;
         }
         
         return pts.getArea().toLowerCase().contains(area.trim().toLowerCase());
     }
 
-    // Para crear datos simulados para pruebas cuando Firestore no está disponible
-    
-    private List<PermisoTrabajoSeguro> createSimulatedPts() {
-        List<PermisoTrabajoSeguro> simulatedList = new ArrayList<>();
-        
-        // PTS 1 - Mantenimiento electrico
-        PermisoTrabajoSeguro pts1 = new PermisoTrabajoSeguro();
-        pts1.setId("PTS-SIM-001");
-        pts1.setDescripcionTrabajo("Mantenimiento eléctrico en tablero principal");
-        pts1.setFechaInicio("2025-11-07");
-        pts1.setUbicacion("Sala de máquinas A");
-        pts1.setSolicitanteLegajo("VINF011422");
-        pts1.setNombreSolicitante("Juan Pérez");
-        pts1.setSupervisorLegajo("SUP222");
-        pts1.setTipoTrabajo("ELECTRICO");
-        pts1.setArea("Mantenimiento");
-        pts1.setEquipoOInstalacion("Tablero Eléctrico Principal TP-001");
-        pts1.setRtoEstado("PENDIENTE");
-        simulatedList.add(pts1);
-        
-        // PTS 2 - Reparacion mecanica
-        PermisoTrabajoSeguro pts2 = new PermisoTrabajoSeguro();
-        pts2.setId("PTS-SIM-002");
-        pts2.setDescripcionTrabajo("Reparación de tubería de vapor");
-        pts2.setFechaInicio("2025-11-07");
-        pts2.setUbicacion("Área de producción B");
-        pts2.setSolicitanteLegajo("EJE444");
-        pts2.setNombreSolicitante("Ana Gómez");
-        pts2.setSupervisorLegajo("SUP222");
-        pts2.setTipoTrabajo("MECANICO");
-        pts2.setArea("Producción");
-        pts2.setEquipoOInstalacion("Bomba Centrífuga BC-205");
-        pts2.setRtoEstado("CERRADO");
-        simulatedList.add(pts2);
-        
-        // PTS 3 - Mantenimiento preventivo
-        PermisoTrabajoSeguro pts3 = new PermisoTrabajoSeguro();
-        pts3.setId("PTS-SIM-003");
-        pts3.setDescripcionTrabajo("Inspección de compresores");
-        pts3.setFechaInicio("2025-11-08");
-        pts3.setUbicacion("Planta de aire comprimido");
-        pts3.setSolicitanteLegajo("VINF011422");
-        pts3.setNombreSolicitante("Juan Pérez");
-        pts3.setSupervisorLegajo("ADM999");
-        pts3.setTipoTrabajo("PREVENTIVO");
-        pts3.setArea("Mantenimiento");
-        pts3.setEquipoOInstalacion("Compresor Atlas Copco AC-301");
-        pts3.setRtoEstado("PENDIENTE");
-        simulatedList.add(pts3);
-        
-        // PTS 4 - Control de intrumento
-        PermisoTrabajoSeguro pts4 = new PermisoTrabajoSeguro();
-        pts4.setId("PTS-SIM-004");
-        pts4.setDescripcionTrabajo("Calibración de instrumentos de medición");
-        pts4.setFechaInicio("2025-11-08");
-        pts4.setUbicacion("Laboratorio de calidad");
-        pts4.setSolicitanteLegajo("ADM999");
-        pts4.setNombreSolicitante("María Rodriguez");
-        pts4.setSupervisorLegajo("SUP222");
-        pts4.setTipoTrabajo("CALIBRACION");
-        pts4.setArea("Control de Calidad");
-        pts4.setEquipoOInstalacion("Balanza Analítica BA-150");
-        pts4.setRtoEstado("PENDIENTE");
-        simulatedList.add(pts4);
-        
-        return simulatedList;
-    }
+
 
     // Para crear un nuevo PTS y guardar en Firestore.
      
@@ -249,21 +185,26 @@ public class PtsService implements IPtsService {
         if (pts.getSolicitanteLegajo() == null) {
             throw new RuntimeException("Legajo de solicitante no puede ser nulo.");
         }
-        // Solo validar supervisor si requiere análisis de riesgo adicional
-        if (pts.isRequiereAnalisisRiesgoAdicional() && (pts.getSupervisorLegajo() == null || pts.getSupervisorLegajo().trim().isEmpty())) {
+
+        boolean isStandby = EstadoPts.STANDBY.equals(pts.getRtoEstado());
+
+        // Solo validar supervisor si requiere analisis de riesgo adicional y NO es standby
+        if (!isStandby && pts.isRequiereAnalisisRiesgoAdicional() && (pts.getSupervisorLegajo() == null || pts.getSupervisorLegajo().trim().isEmpty())) {
             throw new RuntimeException("Debe definir un supervisor si requiere análisis de riesgo adicional.");
         }
 
-        // Validar que el equipo exista antes de crear el PTS y deshabilitarlo
-        try {
-            String tag = pts.getEquipoOInstalacion();
-            equipoService.actualizarEstadoEquipo(tag, "DESHABILITADO");
-            equipoService.actualizarCondicionEquipo(tag, "BLOQUEADO");
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Error al crear PTS: " + e.getMessage());
+        // Validar que el equipo exista antes de crear el PTS y deshabilitarlo (solo si no es standby)
+        if (!isStandby) {
+            try {
+                String tag = pts.getEquipoOInstalacion();
+                equipoService.actualizarEstadoEquipo(tag, EstadoDcs.DESHABILITADO);
+                equipoService.actualizarCondicionEquipo(tag, CondicionEquipo.BLOQUEADO);
+            } catch (RuntimeException e) {
+                throw new RuntimeException("Error al crear PTS: " + e.getMessage());
+            }
         }
 
-        // Generar ID único en formato PTS-YYMMDD-###
+        // Generar ID unico en formato PTS-YYMMDD-###
         String fechaInicio = pts.getFechaInicio();
         if (fechaInicio == null || fechaInicio.length() < 10) {
             throw new RuntimeException("La fecha de inicio debe estar en formato YYYY-MM-DD");
@@ -274,20 +215,22 @@ public class PtsService implements IPtsService {
         String idGenerado = String.format("PTS-%s-%03d", yymmdd, nuevoNumero);
         pts.setId(idGenerado);
 
-        // Lógica para estado inicial según requiereAnalisisRiesgoAdicional
-        if (!pts.isRequiereAnalisisRiesgoAdicional()) {
-            // No requiere firma de supervisor, va directo a "Firmado (Pend. Cierre)"
-            pts.setRtoEstado("FIRMADO_PEND_CIERRE");
-            // Asignar un valor válido (ejemplo: firma vacía en base64)
-            pts.setFirmaSupervisorBase64("data:image/png;base64,");
-            pts.setDniSupervisorFirmante("AUTOMATICO");
-            pts.setFechaHoraFirmaSupervisor(java.time.LocalDateTime.now());
+        // Si es standby, mantener ese estado
+        if (isStandby) {
+            pts.setRtoEstado(EstadoPts.STANDBY);
         } else {
-            // Requiere firma, estado inicial pendiente
-            pts.setRtoEstado("PENDIENTE");
-            pts.setFirmaSupervisorBase64(null);
-            pts.setDniSupervisorFirmante(null);
-            pts.setFechaHoraFirmaSupervisor(null);
+            // Logica para estado inicial por requiereAnalisisRiesgoAdicional
+            if (!pts.isRequiereAnalisisRiesgoAdicional()) {
+                pts.setRtoEstado(EstadoPts.FIRMADO_PEND_CIERRE);
+                pts.setFirmaSupervisorBase64("data:image/png;base64,");
+                pts.setDniSupervisorFirmante("AUTOMATICO");
+                pts.setFechaHoraFirmaSupervisor(java.time.LocalDateTime.now());
+            } else {
+                pts.setRtoEstado(EstadoPts.PENDIENTE);
+                pts.setFirmaSupervisorBase64(null);
+                pts.setDniSupervisorFirmante(null);
+                pts.setFechaHoraFirmaSupervisor(null);
+            }
         }
 
         try {
@@ -297,11 +240,59 @@ public class PtsService implements IPtsService {
             System.out.println("PTS creado con ID: " + idGenerado);
             return pts;
         } catch (InterruptedException | ExecutionException e) {
-            // Si Firestore falla, simula creado
-            System.err.println("Firestore no disponible para creación, simulando: " + e.getMessage());
-            pts.setId("PTS-SIM-" + System.currentTimeMillis());
-            System.out.println("PTS simulado creado con ID: " + pts.getId());
+            System.err.println("Error al crear PTS en Firestore: " + e.getMessage());
+            throw new RuntimeException("Error al guardar el Permiso de Trabajo Seguro.", e);
+        }
+    }
+
+    // Actualizar un PTS existente (para retomar un PTS en Stand by)
+    @Override
+    public PermisoTrabajoSeguro updatePts(PermisoTrabajoSeguro pts) {
+        if (pts.getId() == null || pts.getId().trim().isEmpty()) {
+            throw new IllegalArgumentException("El ID del PTS es requerido para actualizar.");
+        }
+
+        try {
+            DocumentReference docRef = firestore.collection(COLLECTION_NAME).document(pts.getId());
+            ApiFuture<DocumentSnapshot> future = docRef.get();
+            DocumentSnapshot document = future.get();
+
+            if (!document.exists()) {
+                return null;
+            }
+
+            PermisoTrabajoSeguro existing = document.toObject(PermisoTrabajoSeguro.class);
+            if (existing == null || !EstadoPts.STANDBY.equals(existing.getRtoEstado())) {
+                throw new IllegalStateException("Solo se pueden actualizar PTS en estado STANDBY.");
+            }
+
+            // Si el nuevo estado NO es STANDBY, aplicar validaciones y lógica de equipo
+            if (!EstadoPts.STANDBY.equals(pts.getRtoEstado())) {
+                try {
+                    String tag = pts.getEquipoOInstalacion();
+                    equipoService.actualizarEstadoEquipo(tag, EstadoDcs.DESHABILITADO);
+                    equipoService.actualizarCondicionEquipo(tag, CondicionEquipo.BLOQUEADO);
+                } catch (RuntimeException e) {
+                    throw new RuntimeException("Error al actualizar PTS: " + e.getMessage());
+                }
+
+                if (!pts.isRequiereAnalisisRiesgoAdicional()) {
+                    pts.setRtoEstado(EstadoPts.FIRMADO_PEND_CIERRE);
+                    pts.setFirmaSupervisorBase64("data:image/png;base64,");
+                    pts.setDniSupervisorFirmante("AUTOMATICO");
+                    pts.setFechaHoraFirmaSupervisor(java.time.LocalDateTime.now());
+                } else {
+                    pts.setRtoEstado(EstadoPts.PENDIENTE);
+                }
+            }
+
+            // Guardar el PTS actualizado
+            ApiFuture<WriteResult> writeFuture = docRef.set(pts);
+            writeFuture.get();
+            System.out.println("PTS actualizado con ID: " + pts.getId());
             return pts;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Error al actualizar el PTS: " + e.getMessage(), e);
         }
     }
 
@@ -339,13 +330,11 @@ public class PtsService implements IPtsService {
                 throw new RuntimeException("Error al deserializar el documento PTS");
             }
 
-            // Validación de Seguridad si firmante es supervisor asignado o un supervisor autorizado
-            boolean isAuthorizedSupervisor = "SUP222".equals(request.getDniFirmante()) || 
-                                           request.getDniFirmante().equals(pts.getSupervisorLegajo());
-            if (!isAuthorizedSupervisor) {
+            // Validacion de Seguridad: verifica si el firmante es el supervisor asignado al PTS
+            if (!request.getDniFirmante().equals(pts.getSupervisorLegajo())) {
                 throw new SecurityException("DNI del firmante no autorizado para este PTS. Supervisor asignado: " + pts.getSupervisorLegajo());
             }
-            // Validación de Estado "firmado"
+            // Validacion de Estado "firmado"
             if (pts.getFirmaSupervisorBase64() != null) {
                 throw new IllegalStateException("El PTS ID " + request.getPtsId() + " ya ha sido firmado.");
             }
@@ -366,7 +355,7 @@ public class PtsService implements IPtsService {
             // Actualizar estado del equipo a DESHABILITADO
             String tagEquipo = pts.getEquipoOInstalacion();
             try {
-                equipoService.actualizarEstadoEquipo(tagEquipo, "DESHABILITADO");
+                equipoService.actualizarEstadoEquipo(tagEquipo, EstadoDcs.DESHABILITADO);
             } catch (RuntimeException e) {
                 System.out.println("ADVERTENCIA: PTS firmado, pero el equipo " + tagEquipo + " no se encontró para actualizar su estado.");
             }
@@ -378,7 +367,7 @@ public class PtsService implements IPtsService {
         }
     }
 
-    // Para obtener un PTS específico por su ID.
+    // Para obtener un PTS especifico por su ID.
     @Override
     public PermisoTrabajoSeguro getPtsById(String id) {
         if (id == null) {
@@ -400,13 +389,8 @@ public class PtsService implements IPtsService {
             return pts;
             
         } catch (InterruptedException | ExecutionException e) {
-            // Si Firestore falla, buscar en datos simulados
-            System.err.println("Firestore no disponible para búsqueda, buscando en datos simulados: " + e.getMessage());
-            List<PermisoTrabajoSeguro> simulatedData = createSimulatedPts();
-            return simulatedData.stream()
-                    .filter(pts -> id.equals(pts.getId()))
-                    .findFirst()
-                    .orElse(null);
+            System.err.println("Error al obtener PTS de Firestore: " + e.getMessage());
+            throw new RuntimeException("Error al obtener el Permiso de Trabajo Seguro.", e);
         }
     }
 
@@ -452,10 +436,10 @@ public class PtsService implements IPtsService {
             }
 
             // Para validar estado del PTS
-            if ("CERRADO".equals(pts.getRtoEstado())) {
+            if (EstadoPts.CERRADO.equals(pts.getRtoEstado())) {
                 throw new IllegalStateException("El PTS ID " + request.getPtsId() + " ya ha sido cerrado.");
             }
-            if ("CANCELADO".equals(pts.getRtoEstado())) {
+            if (EstadoPts.CANCELADO.equals(pts.getRtoEstado())) {
                 throw new IllegalStateException("El PTS ID " + request.getPtsId() + " está cancelado y no puede ser cerrado.");
             }
 
@@ -464,14 +448,14 @@ public class PtsService implements IPtsService {
                 if (pts.getFirmaSupervisorBase64() == null || pts.getFirmaSupervisorBase64().trim().isEmpty()) {
                     throw new IllegalStateException("El PTS debe estar firmado antes de ser cerrado. Use /api/pts/firmar primero.");
                 }
-                // Si requiere análisis, solo el supervisor puede cerrar
+                // Si requiere analisis, solo el supervisor puede cerrar
                 if (pts.getSupervisorLegajo() != null && !pts.getSupervisorLegajo().trim().isEmpty()) {
                     if (!request.getRtoResponsableCierreLegajo().equals(pts.getSupervisorLegajo())) {
                         throw new SecurityException("Solo el supervisor asignado puede cerrar este PTS.");
                     }
                 }
             } else {
-                // Si NO requiere análisis y NO hay supervisor, permitir que el solicitante cierre
+                // Si NO requiere analisis y NO hay supervisor, permitir que el solicitante cierre
                 if (pts.getSupervisorLegajo() == null || pts.getSupervisorLegajo().trim().isEmpty()) {
                     if (!request.getRtoResponsableCierreLegajo().equals(pts.getSolicitanteLegajo())) {
                         throw new SecurityException("Solo el emisor puede cerrar este PTS.");
@@ -481,23 +465,23 @@ public class PtsService implements IPtsService {
 
             // Para actualizar el documento con los datos de cierre
             docRef.update(
-                "rtoEstado", "CERRADO",
+                "rtoEstado", EstadoPts.CERRADO,
                 "rtoResponsableCierreLegajo", request.getRtoResponsableCierreLegajo(),
                 "rtoObservaciones", request.getRtoObservaciones(),
                 "rtoFechaHoraCierre", LocalDateTime.now()
             ).get(); 
 
             // Para devolver el objeto actualizado
-            pts.setRtoEstado("CERRADO");
+            pts.setRtoEstado(EstadoPts.CERRADO);
             pts.setRtoResponsableCierreLegajo(request.getRtoResponsableCierreLegajo());
             pts.setRtoObservaciones(request.getRtoObservaciones());
             pts.setRtoFechaHoraCierre(LocalDateTime.now());
             pts.setId(document.getId());
 
-            // Actualizar estado del equipo a HABILITADO
+            // Para actualizar estado del equipo a HABILITADO
             String tagEquipo = pts.getEquipoOInstalacion();
             try {
-                equipoService.actualizarEstadoEquipo(tagEquipo, "HABILITADO");
+                equipoService.actualizarEstadoEquipo(tagEquipo, EstadoDcs.HABILITADO);
             } catch (RuntimeException e) {
                 System.out.println("ADVERTENCIA: PTS cerrado, pero el equipo " + tagEquipo + " no se encontró para actualizar su estado.");
             }
@@ -509,11 +493,11 @@ public class PtsService implements IPtsService {
         }
     }
 
-    /**
-     * Obtiene el último número de PTS creado para una fecha dada (formato YYYY-MM-DD).
-     * Busca los PTS de esa fecha y extrae el mayor número correlativo.
-     * Si no hay ninguno, retorna 0.
-     */
+    
+    // Obtiene el ultimo numero de PTS creado para una fecha dada (formato YYYY-MM-DD).
+    // Busca los PTS de esa fecha y extrae el mayor numero correlativo.
+    // Si no hay ninguno, retorna 0.
+    
     @Override
     public int obtenerUltimoNumeroPtsPorFecha(String fechaInicio) {
         List<PermisoTrabajoSeguro> ptsList = buscarPts(null, null, null, null, fechaInicio);

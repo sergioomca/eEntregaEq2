@@ -1,5 +1,7 @@
 package com.epu.prototipo.security.service;
 
+import com.epu.prototipo.dto.UsuarioDTO;
+import com.epu.prototipo.service.IUsuarioService;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -11,43 +13,43 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-// UserDetailsService para cargar los detalles del usuario.
-// !!! para simular la contraseña es el Legajo (con prefijo {noop}).
+// UserDetailsService que carga usuarios desde IUsuarioService (Firestore o in-memory).
+// La contraseña es el legajo (con prefijo {noop}).
 
 @Service
 public class UserDetailsServiceCustom implements UserDetailsService {
 
+    private final IUsuarioService usuarioService;
+
+    public UserDetailsServiceCustom(IUsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
+    }
+
     @Override
     public UserDetails loadUserByUsername(String legajo) throws UsernameNotFoundException {
-        
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        String rol = "";
-        
-        // !!! OJO: La contraseña esperada es "{noop}" + Legajo
-        // Asi el passwordEncoder.matches() es Legajo vs. {noop}Legajo, 
-        // y siempre debe ser true si se ingreso el legajo como contraseña.
-        String expectedPassword = "{noop}" + legajo; 
-
-        switch (legajo) {
-            case "VINF011422":
-                rol = "ROLE_EMISOR";
-                break;
-            case "SUP222":
-                rol = "ROLE_SUPERVISOR";
-                break;
-            case "EJE444":
-                rol = "ROLE_EJECUTANTE";
-                break;
-            case "ADM999":
-                rol = "ROLE_ADMIN";
-                break;
-            default:
-                throw new UsernameNotFoundException("Usuario no encontrado con legajo: " + legajo);
+        UsuarioDTO usuario;
+        try {
+            usuario = usuarioService.getUsuarioByLegajo(legajo);
+        } catch (RuntimeException e) {
+            throw new UsernameNotFoundException("Usuario no encontrado con legajo: " + legajo);
         }
 
-        authorities.add(new SimpleGrantedAuthority(rol));
-        
-        // El legajo es username, y el legajo (con {noop}) es la contraseña
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        List<String> roles = usuario.getRoles();
+
+        // Mapear cada rol del usuario a Spring Security GrantedAuthority
+        if (roles != null && !roles.isEmpty()) {
+            for (String rol : roles) {
+                String springRole = "ROLE_" + rol.replace(" ", "_");
+                authorities.add(new SimpleGrantedAuthority(springRole));
+            }
+        } else {
+            throw new UsernameNotFoundException("Usuario sin roles asignados: " + legajo);
+        }
+
+        // La contraseña es {noop} + legajo
+        String expectedPassword = "{noop}" + legajo;
+
         return new User(legajo, expectedPassword, authorities);
     }
 }

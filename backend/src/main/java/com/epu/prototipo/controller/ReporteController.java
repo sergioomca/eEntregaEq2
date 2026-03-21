@@ -13,7 +13,6 @@ import java.util.Date;
 
 @RestController
 @RequestMapping("/api/reportes")
-@CrossOrigin(origins = "http://localhost:5173")
 public class ReporteController {
 
     @Autowired
@@ -86,10 +85,9 @@ public class ReporteController {
         }
     }
 
-    /**
-     * Endpoint: Información sobre reportes disponibles
-     * GET /api/reportes/info
-     */
+    // Información sobre reportes disponibles
+    //  GET /api/reportes/info
+    //
     @GetMapping("/info")
     public ResponseEntity<Object> obtenerInfoReportes() {
         try {

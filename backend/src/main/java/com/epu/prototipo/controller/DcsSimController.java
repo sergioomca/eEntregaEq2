@@ -1,6 +1,6 @@
 package com.epu.prototipo.controller;
 
-import com.epu.prototipo.service.EquipoService;
+import com.epu.prototipo.service.IEquipoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,10 +11,10 @@ import java.util.Map;
 @RequestMapping("/api/dcs")
 public class DcsSimController {
 
-    private final EquipoService equipoService;
+    private final IEquipoService equipoService;
 
     @Autowired
-    public DcsSimController(EquipoService equipoService) {
+    public DcsSimController(IEquipoService equipoService) {
         this.equipoService = equipoService;
     }
 

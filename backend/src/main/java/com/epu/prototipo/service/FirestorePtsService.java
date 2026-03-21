@@ -7,6 +7,9 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.epu.prototipo.dto.CerrarPtsRequest;
 import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
+import com.epu.prototipo.model.EstadoPts;
+import com.epu.prototipo.model.EstadoDcs;
+import com.epu.prototipo.model.CondicionEquipo;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import java.util.concurrent.ExecutionException;
@@ -19,10 +22,10 @@ import java.time.LocalDateTime;
 public class FirestorePtsService implements IPtsService {
 
     private final Firestore firestore;
-    private final EquipoService equipoService;
+    private final IEquipoService equipoService;
     private static final String COLLECTION_NAME = "permisos-trabajo-seguro";
 
-    public FirestorePtsService(Firestore firestore, EquipoService equipoService) {
+    public FirestorePtsService(Firestore firestore, IEquipoService equipoService) {
         this.firestore = firestore;
         this.equipoService = equipoService;
     }
@@ -52,8 +55,8 @@ public class FirestorePtsService implements IPtsService {
         // Actualizar estado y condición del equipo antes de guardar el PTS
         try {
             String tag = pts.getEquipoOInstalacion();
-            equipoService.actualizarEstadoEquipo(tag, "DESHABILITADO");
-            equipoService.actualizarCondicionEquipo(tag, "BLOQUEADO");
+            equipoService.actualizarEstadoEquipo(tag, EstadoDcs.DESHABILITADO);
+            equipoService.actualizarCondicionEquipo(tag, CondicionEquipo.BLOQUEADO);
         } catch (Exception e) {
             System.err.println("[ERROR] No se pudo actualizar el estado/condición del equipo: " + e.getMessage());
         }
@@ -118,16 +121,12 @@ public class FirestorePtsService implements IPtsService {
                 throw new RuntimeException("Error al deserializar el documento PTS");
             }
 
-            // Validacion de Seguridad: verifica si el firmante es el supervisor asignado o un supervisor autorizado
-            // !!! para pruebas -- SUP222 como supervisor geerico
-            boolean isAuthorizedSupervisor = "SUP222".equals(request.getDniFirmante()) || 
-                                           request.getDniFirmante().equals(pts.getSupervisorLegajo());
-            
-            if (!isAuthorizedSupervisor) {
+            // Validacion de Seguridad: verifica si el firmante es el supervisor asignado al PTS
+            if (!request.getDniFirmante().equals(pts.getSupervisorLegajo())) {
                 throw new SecurityException("Firmante no autorizado para este PTS. Supervisor asignado: " + pts.getSupervisorLegajo());
             }
             
-            // Validación de Estado: Ya esta firmado?
+            // Validacin de Estado: Ya esta firmado?
             if (pts.getFirmaSupervisorBase64() != null) {
                 throw new IllegalStateException("El PTS ID " + request.getPtsId() + " ya ha sido firmado.");
             }
@@ -179,7 +178,7 @@ public class FirestorePtsService implements IPtsService {
 
             // Para verificar si el documento existe
             if (!document.exists()) {
-                return null; // El controlador manejará el 404
+                return null; 
             }
 
             // Convertir a objeto para validaciones
@@ -189,11 +188,11 @@ public class FirestorePtsService implements IPtsService {
             }
 
             // Validaciones de estado del PTS
-            if ("CERRADO".equals(pts.getRtoEstado())) {
+            if (EstadoPts.CERRADO.equals(pts.getRtoEstado())) {
                 throw new IllegalStateException("El PTS ID " + request.getPtsId() + " ya ha sido cerrado.");
             }
             
-            if ("CANCELADO".equals(pts.getRtoEstado())) {
+            if (EstadoPts.CANCELADO.equals(pts.getRtoEstado())) {
                 throw new IllegalStateException("El PTS ID " + request.getPtsId() + " está cancelado y no puede ser cerrado.");
             }
 
@@ -204,14 +203,14 @@ public class FirestorePtsService implements IPtsService {
 
             // Actualizar el documento con los datos de cierre
             docRef.update(
-                "rtoEstado", "CERRADO",
+                "rtoEstado", EstadoPts.CERRADO,
                 "rtoResponsableCierreLegajo", request.getRtoResponsableCierreLegajo(),
                 "rtoObservaciones", request.getRtoObservaciones(),
                 "rtoFechaHoraCierre", LocalDateTime.now()
             ).get(); 
 
             // Devolver el objeto actualizado
-            pts.setRtoEstado("CERRADO");
+            pts.setRtoEstado(EstadoPts.CERRADO);
             pts.setRtoResponsableCierreLegajo(request.getRtoResponsableCierreLegajo());
             pts.setRtoObservaciones(request.getRtoObservaciones());
             pts.setRtoFechaHoraCierre(LocalDateTime.now());
@@ -226,8 +225,8 @@ public class FirestorePtsService implements IPtsService {
 
     @Override
     public List<PermisoTrabajoSeguro> buscarPts(String equipo, String usuario, String area, String estado, String fechaInicio) {
-        // En entorno de producción, por ahora delegamos a getAllPts()
-        // En una implementación completa, se implementarían queries de Firestore optimizadas
+        // !!! En entorno de produccion, por ahora delegamos a getAllPts()
+        // Luego se implementa queries de Firestore optimizadas
         System.out.println("Búsqueda de PTS en Firestore - parámetros: equipo=" + equipo + 
                           ", usuario=" + usuario + ", area=" + area + 
                           ", estado=" + estado + ", fechaInicio=" + fechaInicio);
@@ -256,6 +255,36 @@ public class FirestorePtsService implements IPtsService {
         } catch (InterruptedException | ExecutionException e) {
             System.err.println("Error al obtener último número de PTS: " + e.getMessage());
             throw new RuntimeException("Error al obtener el último número de PTS.", e);
+        }
+    }
+
+    @Override
+    public PermisoTrabajoSeguro updatePts(PermisoTrabajoSeguro pts) {
+        try {
+            DocumentSnapshot docSnap = firestore.collection(COLLECTION_NAME)
+                    .document(pts.getId()).get().get();
+            if (!docSnap.exists()) {
+                throw new RuntimeException("PTS no encontrado: " + pts.getId());
+            }
+            PermisoTrabajoSeguro existing = docSnap.toObject(PermisoTrabajoSeguro.class);
+            if (!EstadoPts.STANDBY.equals(existing.getRtoEstado())) {
+                throw new RuntimeException("Solo se puede actualizar un PTS en estado STANDBY");
+            }
+
+            // Si cambia de STANDBY a otro estado, actualizar equipo
+            if (pts.getRtoEstado() != null && !EstadoPts.STANDBY.equals(pts.getRtoEstado())) {
+                String tag = pts.getEquipoOInstalacion();
+                if (tag != null && !tag.isEmpty()) {
+                    equipoService.actualizarEstadoEquipo(tag, EstadoDcs.DESHABILITADO);
+                    equipoService.actualizarCondicionEquipo(tag, CondicionEquipo.BLOQUEADO);
+                }
+            }
+
+            firestore.collection(COLLECTION_NAME).document(pts.getId()).set(pts).get();
+            return pts;
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Error al actualizar PTS: " + e.getMessage(), e);
         }
     }
 }

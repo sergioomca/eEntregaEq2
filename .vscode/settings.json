@@ -4,5 +4,6 @@
     "git.decorations.enabled": true,
     "scm.defaultViewMode": "tree",
     "explorer.decorations.badges": true,
-    "explorer.decorations.colors": true
+    "explorer.decorations.colors": true,
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

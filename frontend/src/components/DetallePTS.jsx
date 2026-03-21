@@ -57,7 +57,7 @@ const DetallePTS = () => {
         
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:8080/api/pts/${ptsId}`, {
+            const response = await fetch(`/api/pts/${ptsId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -131,7 +131,7 @@ const DetallePTS = () => {
             console.log(`Iniciando descarga de PDF para PTS: ${pts.id}`);
             
             // Llamada al endpoint de reportes
-            const response = await fetch(`http://localhost:8080/api/reportes/pdf/${pts.id}`, {
+            const response = await fetch(`/api/reportes/pdf/${pts.id}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -241,6 +241,7 @@ const DetallePTS = () => {
                 {/* Header con estado */}
                 <div className={`px-6 py-4 ${
                     pts.rtoEstado === 'AUTORIZADO' ? 'bg-green-100 border-l-4 border-green-500' :
+                    pts.rtoEstado === 'STANDBY' ? 'bg-gray-100 border-l-4 border-gray-400' :
                     pts.rtoEstado === 'PENDIENTE' ? 'bg-yellow-100 border-l-4 border-yellow-500' :
                     pts.rtoEstado === 'CERRADO' ? 'bg-gray-100 border-l-4 border-gray-500' :
                     'bg-blue-100 border-l-4 border-blue-500'
@@ -250,11 +251,12 @@ const DetallePTS = () => {
                             <h2 className="text-xl font-semibold text-gray-900">{pts.titulo}</h2>
                             <p className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-1 ${
                                 pts.rtoEstado === 'AUTORIZADO' ? 'bg-green-200 text-green-800' :
+                                pts.rtoEstado === 'STANDBY' ? 'bg-gray-200 text-gray-700' :
                                 pts.rtoEstado === 'PENDIENTE' ? 'bg-yellow-200 text-yellow-800' :
                                 pts.rtoEstado === 'CERRADO' ? 'bg-gray-200 text-gray-800' :
                                 'bg-blue-200 text-blue-800'
                             }`}>
-                                Estado: {pts.rtoEstado}
+                                Estado: {pts.rtoEstado === 'STANDBY' ? 'Stand by' : pts.rtoEstado}
                             </p>
                         </div>
                         {/* Indicador visual del estado de impresión */}

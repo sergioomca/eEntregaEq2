@@ -114,7 +114,7 @@ const CierreRTO = ({
       console.log('DEBUG CIERRE - Enviando petición de cierre RTO:', cerrarPtsRequest);
       console.log('DEBUG CIERRE - Token:', jwtToken ? 'Presente' : 'Ausente');
 
-      const response = await fetch('http://localhost:8080/api/pts/cerrar', {
+      const response = await fetch('/api/pts/cerrar', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -19,11 +19,11 @@ public interface IPtsService {
      * Busca PTS aplicando filtros opcionales.
      * Todos los parámetros son opcionales (@Nullable).
      * 
-     * @param equipo Filtro por nombre de equipo (búsqueda parcial, case-insensitive)
-     * @param usuario Filtro por nombre o legajo de solicitante (búsqueda parcial, case-insensitive) 
-     * @param area Filtro por área (búsqueda parcial, case-insensitive)
-     * @param estado Filtro por estado RTO: PENDIENTE, CERRADO (búsqueda exacta)
-     * @param fechaInicio Filtro por fecha de inicio en formato YYYY-MM-DD (búsqueda exacta)
+     * @param equipo Filtro por nombre de equipo 
+     * @param usuario Filtro por nombre o legajo de solicitante 
+     * @param area Filtro por area  
+     * @param estado Filtro por estado RTO: PENDIENTE, CERRADO 
+     * @param fechaInicio Filtro por fecha de inicio en formato YYYY-MM-DD 
      * @return Lista filtrada de PTS que cumplen con los criterios especificados
      */
     List<PermisoTrabajoSeguro> buscarPts(String equipo, String usuario, String area, String estado, String fechaInicio);
@@ -58,6 +58,13 @@ public interface IPtsService {
      * @throws IllegalArgumentException si los datos de entrada son invalidos
      */
     PermisoTrabajoSeguro cerrarPts(CerrarPtsRequest request);
+    /**
+     * Actualiza un PTS existente (para retomar un PTS en Stand by).
+     * @param pts El PTS con los datos actualizados
+     * @return El PTS actualizado
+     */
+    PermisoTrabajoSeguro updatePts(PermisoTrabajoSeguro pts);
+
     /**
      * Obtiene el último número de PTS creado para una fecha dada (formato YYYY-MM-DD).
      * @param fechaInicio Fecha a consultar

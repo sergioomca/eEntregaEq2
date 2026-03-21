@@ -18,6 +18,11 @@ export default defineConfig({
         // 4. Reescribe la URL si es necesario (no necesario aquí, pero buena práctica)
         // rewrite: (path) => path.replace(/^\/api/, ''), 
       },
+      // Proxy para endpoints públicos (consulta de equipos, etc.)
+      '/public': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
     },
     // Opcional: Especifica el puerto (generalmente 5173)
     port: 5173,
