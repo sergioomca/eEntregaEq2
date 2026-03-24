@@ -176,7 +176,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
         flexDirection: 'column',
         alignItems: 'center',
         padding: '24px',
-        backgroundColor: '#e6eef7', 
+        backgroundColor: '#e8f4f6', 
         borderRadius: '12px',
         maxWidth: '450px',
         margin: '20px auto',
@@ -213,7 +213,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
     }
     const iconStyle = {
         fontSize: '60px',
-        color: biometricoValidado ? '#1a7a28' : '#007bff',
+        color: biometricoValidado ? '#1a7a28' : '#0d7377',
         marginBottom: '10px'
     };
     
@@ -260,7 +260,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
                 <button 
                     onClick={simularValidacionBiometrica} 
                     disabled={loading || !ptsId} 
-                    style={buttonStyle('#007bff')}
+                    style={buttonStyle('#0d7377')}
                 >
                     {loading ? 'Leyendo Huella...' : 'Simular Lectura de Huella'}
                 </button>
@@ -274,7 +274,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
                     <button 
                         onClick={handleConfirmarFirma} 
                         disabled={loading} 
-                        style={buttonStyle('#28a745')}
+                        style={buttonStyle('#0d7377')}
                     >
                         {loading ? 'Firmando Documento...' : 'Confirmar Firma Biometrica'}
                     </button>
@@ -287,7 +287,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
             {showPrintDialog && (
                 <div style={dialogStyle}>
                     <div style={dialogContentStyle}>
-                        <h3 style={{marginBottom: '20px', color: '#28a745'}}>
+                        <h3 style={{marginBottom: '20px', color: '#0d7377'}}>
                             ✅ PTS Firmado Exitosamente
                         </h3>
                         <p style={{marginBottom: '20px', fontSize: '16px'}}>
@@ -299,7 +299,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
                                 onClick={handlePrintPTS}
                                 disabled={isPrinting}
                                 style={{
-                                    ...buttonStyle('#28a745'),
+                                    ...buttonStyle('#0d7377'),
                                     fontSize: '14px',
                                     padding: '10px 20px'
                                 }}
@@ -314,7 +314,7 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
                                 }}
                                 disabled={isPrinting}
                                 style={{
-                                    ...buttonStyle('#6c757d'),
+                                    ...buttonStyle('#64748b'),
                                     fontSize: '14px',
                                     padding: '10px 20px'
                                 }}

@@ -351,7 +351,7 @@ const CierreRTO = ({
         }
 
         .observaciones-textarea:focus {
-          border-color: #2196f3;
+          border-color: #0d7377;
           outline: none;
         }
 
@@ -440,7 +440,7 @@ const CierreRTO = ({
           background: #fff3e0;
           padding: 12px;
           border-radius: 4px;
-          border: 1px solid #ffcc02;
+          border: 1px solid #f59e0b;
           text-align: center;
         }
 

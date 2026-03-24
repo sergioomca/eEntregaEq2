@@ -49,118 +49,85 @@ const getRoutes = (role) => {
     return routes;
 };
 
-// Navegacion (Menu superior)
-const Navigation = ({ role, onInicioClick }) => {
+// Navegacion (Sidebar lateral)
+const Navigation = ({ role, onInicioClick, onLogout, user }) => {
     const routes = getRoutes(role);
+    const location = useLocation();
     
-    // Funcion para mapear las rutas internas a URLs de React Router
     const getRouterPath = (route) => {
         switch (route.id) {
-            case 'crear-pts':
-                return '/pts/nuevo';
-            case 'mis-pts':
-                return '/mis-pts';
-            case 'aprobacion':
-                return '/aprobacion';
-            case 'firma-biometrica':
-                return '/firma-biometrica';
-            case 'cierre-rto':
-                return '/cierre-rto';
-            case 'reportes':
-                return '/reportes';
-            case 'dashboard':
-                return '/?view=dashboard';
-            case 'inicio':
-                return '/'; // Inicio va a la pantalla principal
-            default:
-                return '/?view=dashboard'; // Dashboards por defecto
+            case 'crear-pts': return '/pts/nuevo';
+            case 'mis-pts': return '/mis-pts';
+            case 'aprobacion': return '/aprobacion';
+            case 'firma-biometrica': return '/firma-biometrica';
+            case 'cierre-rto': return '/cierre-rto';
+            case 'reportes': return '/reportes';
+            case 'dashboard': return '/?view=dashboard';
+            case 'inicio': return '/';
+            default: return '/?view=dashboard';
+        }
+    };
+
+    const getIcon = (id) => {
+        switch (id) {
+            case 'inicio': return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
+            case 'dashboard': return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>;
+            case 'crear-pts': return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>;
+            case 'mis-pts': return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>;
+            case 'aprobacion': return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>;
+            case 'cierre-rto': return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>;
+            case 'reportes': return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
+            default: return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>;
         }
     };
     
     return (
-        <nav className="flex items-center space-x-6">
-            {routes.map(route => {
-                // Eliminar el botón de Firma Biométrica del header
-                if (route.id === 'firma-biometrica') return null;
-                if (route.id === 'inicio') {
+        <aside className="sidebar">
+            <div className="sidebar-brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span>eEEq</span>
+            </div>
+            <nav className="sidebar-nav">
+                {routes.map(route => {
+                    if (route.id === 'firma-biometrica') return null;
+                    const path = getRouterPath(route);
+                    const isActive = location.pathname === path || (route.id === 'inicio' && location.pathname === '/');
                     return (
                         <Link
                             key={route.id}
-                            to={getRouterPath(route)}
-                            onClick={onInicioClick}
-                            className="text-primary-epu hover:text-primary-epu font-bold transition-all duration-300 rounded-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 hover:scale-110 border-b-6 border-yellow-700 hover:border-yellow-800 active:translate-y-1 active:shadow-lg relative overflow-hidden no-underline flex items-center justify-center"
-                            style={{
-                                background: 'linear-gradient(145deg, #f4c042, #e6b030, #d49e20)',
-                                boxShadow: '0 8px 20px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
-                                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                                textDecoration: 'none',
-                                width: '150px',
-                                height: '60px'
-                            }}
+                            to={path}
+                            onClick={route.id === 'inicio' ? onInicioClick : undefined}
+                            className={`sidebar-link${isActive ? ' active' : ''}`}
                         >
+                            {getIcon(route.id)}
                             {route.title}
                         </Link>
                     );
-                }
-                return (
-                    <Link
-                        key={route.id}
-                        to={getRouterPath(route)}
-                        className="text-primary-epu hover:text-primary-epu font-bold transition-all duration-300 rounded-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 hover:scale-110 border-b-6 border-yellow-700 hover:border-yellow-800 active:translate-y-1 active:shadow-lg relative overflow-hidden no-underline flex items-center justify-center"
-                        style={{
-                            background: 'linear-gradient(145deg, #f4c042, #e6b030, #d49e20)',
-                            boxShadow: '0 8px 20px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
-                            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                            textDecoration: 'none',
-                            width: '150px',
-                            height: '60px'
-                        }}
-                    >
-                        {route.title}
+                })}
+                <Link to="/admin/equipos" className="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="8" height="8" rx="1"/></svg>
+                    QR Equipos
+                </Link>
+                {role === ROLES.ADMIN && (
+                    <Link to="/admin/usuarios/nuevo" className="sidebar-link">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                        Agregar Usuario
                     </Link>
-                );
-            })}
-            {/* Link a la administración de equipos y QR */}
-            <Link
-                to="/admin/equipos"
-                className="text-primary-epu hover:text-primary-epu font-bold transition-all duration-300 rounded-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 hover:scale-110 border-b-6 border-yellow-700 hover:border-yellow-800 active:translate-y-1 active:shadow-lg relative overflow-hidden no-underline flex items-center justify-center"
-                style={{
-                    background: 'linear-gradient(145deg, #f4c042, #e6b030, #d49e20)',
-                    boxShadow: '0 8px 20px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
-                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                    textDecoration: 'none',
-                    width: '150px',
-                    height: '60px',
-                    marginLeft: 16,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign: 'center'
-                }}
-            >
-                <span style={{ width: '100%', textAlign: 'center', display: 'block' }}>Generar QRs Equipos</span>
-            </Link>
-            {/* Link a agregar usuario (solo ADMIN) */}
-            {role === ROLES.ADMIN && <Link
-                to="/admin/usuarios/nuevo"
-                className="text-primary-epu hover:text-primary-epu font-bold transition-all duration-300 rounded-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 hover:scale-110 border-b-6 border-yellow-700 hover:border-yellow-800 active:translate-y-1 active:shadow-lg relative overflow-hidden no-underline flex items-center justify-center"
-                style={{
-                    background: 'linear-gradient(145deg, #f4c042, #e6b030, #d49e20)',
-                    boxShadow: '0 8px 20px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
-                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                    textDecoration: 'none',
-                    width: '150px',
-                    height: '60px',
-                    marginLeft: 16,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign: 'center'
-                }}
-            >
-                <span style={{ width: '100%', textAlign: 'center', display: 'block' }}>Agregar Usuario</span>
-            </Link>}
-        </nav>
+                )}
+            </nav>
+            <div style={{ marginTop: 'auto', padding: '16px 12px' }}>
+                <button
+                    onClick={onLogout}
+                    className="sidebar-link"
+                    style={{ color: '#f87171', width: '100%' }}
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Salir
+                </button>
+            </div>
+        </aside>
     );
 };
 
@@ -199,39 +166,45 @@ const LoginView = ({ handleLogin }) => {
     };
 
     return (
-        <section className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-2xl mt-16">
-            <h2 className="text-3xl font-bold text-primary-epu mb-6 text-center">Inicio de Sesión eEEq</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                    <label htmlFor="legajo" className="block text-sm font-medium text-gray-700 mb-1">Legajo (Usuario)</label>
-                    <input
-                        type="text" id="legajo" required
-                        value={legajo}
-                        onChange={(e) => setLegajo(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-secondary-epu focus:border-secondary-epu transition duration-150"
-                        placeholder="Ej: VINF011422"
-                    />
+        <div className="login-page">
+            <div className="login-brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span>eEEq</span>
+            </div>
+            <div className="login-card">
+                <h2>Bienvenido de Nuevo</h2>
+                <p className="login-subtitle">Ingrese sus credenciales para acceder al sistema de Entrega de equipos.</p>
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="legajo">Usuario</label>
+                        <input
+                            type="text" id="legajo" required
+                            value={legajo}
+                            onChange={(e) => setLegajo(e.target.value)}
+                            placeholder="ej: operador@eeeq.com"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="password">Contraseña</label>
+                        <input
+                            type="password" id="password" required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: '1rem', marginTop: 8 }}>
+                        Iniciar Sesión
+                    </button>
+                    {error && <div style={{ color: '#991b1b', background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginTop: 12, fontSize: '0.875rem' }}>{error}</div>}
+                </form>
+                <div className="login-demo">
+                    <div className="login-demo-buttons">
+                    </div>
                 </div>
-                <div className="mb-6">
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                    <input
-                        type="password" id="password" required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-secondary-epu focus:border-secondary-epu transition duration-150"
-                        placeholder="Contraseña"
-                    />
-                </div>
-                <button type="submit"
-                        className="w-full bg-secondary-epu hover:bg-yellow-600 text-primary-epu font-bold py-3 rounded-lg shadow-lg transition duration-150 transform hover:scale-[1.01] focus:outline-none focus:ring-4 focus:ring-secondary-epu focus:ring-opacity-50">
-                    Ingresar
-                </button>
-                {error && <div className="text-red-500 text-center mt-3">{error}</div>}
-                <p className="text-sm text-center text-gray-500 mt-4">
-                    Usuarios de prueba: VINF011422 (EMISOR), SUP222 (SUPERVISOR), EJE444 (EJECUTANTE). Contraseña es el Legajo.
-                </p>
-            </form>
-        </section>
+            </div>
+        </div>
     );
 };
 
@@ -243,41 +216,50 @@ const RoleSelector = ({ roles, onSelect, onCancel }) => {
         'EJECUTANTE': { label: 'Ejecutante', desc: 'Ver y ejecutar tareas asignadas', icon: '🔧' },
         'ADMIN': { label: 'Administrador', desc: 'Gestión completa del sistema', icon: '⚙️' },
         'RTO_MANT': { label: 'RTO Mantenimiento', desc: 'Gestión de cierre RTO', icon: '🔒' },
+        'EHS': { label: 'EH&S', desc: 'Seguridad, Salud y Medio Ambiente', icon: '🛡️' },
+        'LIDER': { label: 'Líder', desc: 'Liderazgo y coordinación de equipos', icon: '👷' },
     };
 
     return (
-        <section className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-2xl mt-16">
-            <h2 className="text-2xl font-bold text-primary-epu mb-2 text-center">Seleccionar Rol</h2>
-            <p className="text-sm text-gray-500 text-center mb-6">
-                Tu usuario tiene múltiples roles. Seleccioná con cuál querés ingresar.
-            </p>
-            <div className="space-y-3">
-                {roles.map(role => {
-                    const info = roleLabels[role] || { label: role, desc: '', icon: '👤' };
-                    return (
-                        <button
-                            key={role}
-                            onClick={() => onSelect(role)}
-                            className="w-full text-left px-5 py-4 border-2 border-gray-200 rounded-xl hover:border-yellow-500 hover:bg-yellow-50 transition-all duration-200 group"
-                        >
-                            <div className="flex items-center gap-3">
-                                <span className="text-2xl">{info.icon}</span>
-                                <div>
-                                    <span className="font-bold text-gray-800 group-hover:text-primary-epu text-lg">{info.label}</span>
-                                    {info.desc && <p className="text-xs text-gray-500 mt-0.5">{info.desc}</p>}
-                                </div>
-                            </div>
-                        </button>
-                    );
-                })}
+        <div className="login-page">
+            <div className="login-brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span>eEEq</span>
             </div>
-            <button
-                onClick={onCancel}
-                className="w-full mt-4 text-sm text-gray-500 hover:text-gray-700 underline"
-            >
-                Cancelar y volver al login
-            </button>
-        </section>
+            <div className="login-card">
+                <h2 style={{ textAlign: 'center' }}>Seleccionar Rol</h2>
+                <p className="login-subtitle" style={{ textAlign: 'center' }}>
+                    Tu usuario tiene múltiples roles. Seleccioná con cuál querés ingresar.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {roles.map(role => {
+                        const info = roleLabels[role] || { label: role, desc: '', icon: '👤' };
+                        return (
+                            <button
+                                key={role}
+                                onClick={() => onSelect(role)}
+                                className="btn btn-outline"
+                                style={{ width: '100%', justifyContent: 'flex-start', padding: '14px 20px', gap: 12 }}
+                            >
+                                <span style={{ fontSize: '1.4rem' }}>{info.icon}</span>
+                                <div style={{ textAlign: 'left' }}>
+                                    <span style={{ fontWeight: 700, fontSize: '1rem', display: 'block' }}>{info.label}</span>
+                                    {info.desc && <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{info.desc}</span>}
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+                <button
+                    onClick={onCancel}
+                    style={{ width: '100%', marginTop: 16, background: 'none', color: '#6b7280', fontSize: '0.875rem', textDecoration: 'underline' }}
+                >
+                    Cancelar y volver al login
+                </button>
+            </div>
+        </div>
     );
 };
 
@@ -324,29 +306,30 @@ const RTOClosureList = ({ onSelectPts }) => {
         fetchAllPTS();
     }, []);
 
-    if (loading) return <div className="text-center p-4">Cargando PTS listos para cierre...</div>;
-    if (error) return <div className="text-red-600 p-4">Error: {error}</div>;
-    if (ptsList.length === 0) return <div className="text-gray-600 p-4">No hay PTS listos para cierre RTO.</div>;
+    if (loading) return <div style={{ textAlign: 'center', padding: 16, color: '#64748b' }}>Cargando PTS listos para cierre...</div>;
+    if (error) return <div style={{ color: '#dc2626', padding: 16 }}>Error: {error}</div>;
+    if (ptsList.length === 0) return <div style={{ color: '#64748b', padding: 16 }}>No hay PTS listos para cierre RTO.</div>;
 
     return (
-        <div className="space-y-4">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">PTS Firmados - Listos para Cierre RTO</h4>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1a2332', marginBottom: 8 }}>PTS Firmados - Listos para Cierre RTO</h4>
             {ptsList.map(pts => (
-                <div key={pts.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex justify-between items-center">
+                <div key={pts.id} className="card" style={{ padding: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                            <h5 className="font-medium text-gray-900">PTS: {pts.id}</h5>
-                            <p className="text-sm text-gray-600">{pts.descripcionTrabajo}</p>
-                            <p className="text-xs text-gray-500">
+                            <h5 style={{ fontWeight: 600, color: '#1a2332' }}>PTS: {pts.id}</h5>
+                            <p style={{ fontSize: '0.85rem', color: '#64748b' }}>{pts.descripcionTrabajo}</p>
+                            <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
                                 Firmado por: {pts.dniSupervisorFirmante} | Ubicación: {pts.ubicacion}
                             </p>
-                            <p className="text-xs text-green-600">
+                            <p style={{ fontSize: '0.75rem', color: '#059669' }}>
                                 ✅ Firmado el: {pts.fechaHoraFirmaSupervisor ? new Date(pts.fechaHoraFirmaSupervisor).toLocaleString() : 'Fecha no disponible'}
                             </p>
                         </div>
                         <button
                             onClick={() => onSelectPts(pts)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                            className="btn"
+                            style={{ background: '#dc2626', color: '#fff', border: 'none' }}
                         >
                             🔒 Cerrar RTO
                         </button>
@@ -398,20 +381,20 @@ const PendingApprovalList = ({ onFirmar }) => {
         }
     };
 
-    if (loading) return <div className="text-center p-4">Cargando PTS pendientes...</div>;
-    if (error) return <div className="text-red-600 p-4">Error: {error}</div>;
-    if (ptsList.length === 0) return <div className="text-gray-600 p-4">No hay PTS pendientes de aprobación.</div>;
+    if (loading) return <div style={{ textAlign: 'center', padding: 16, color: '#64748b' }}>Cargando PTS pendientes...</div>;
+    if (error) return <div style={{ color: '#dc2626', padding: 16 }}>Error: {error}</div>;
+    if (ptsList.length === 0) return <div style={{ color: '#64748b', padding: 16 }}>No hay PTS pendientes de aprobación.</div>;
 
     return (
-        <div className="space-y-4">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">PTS Pendientes de Firma</h4>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1a2332', marginBottom: 8 }}>PTS Pendientes de Firma</h4>
             {ptsList.map(pts => (
-                <div key={pts.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex justify-between items-center">
+                <div key={pts.id} className="card" style={{ padding: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                            <h5 className="font-medium text-gray-900">PTS: {pts.id}</h5>
-                            <p className="text-sm text-gray-600">{pts.descripcionTrabajo}</p>
-                            <p className="text-xs text-gray-500">
+                            <h5 style={{ fontWeight: 600, color: '#1a2332' }}>PTS: {pts.id}</h5>
+                            <p style={{ fontSize: '0.85rem', color: '#64748b' }}>{pts.descripcionTrabajo}</p>
+                            <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
                                 Supervisor asignado: {pts.supervisorLegajo} | Ubicación: {pts.ubicacion}
                             </p>
                         </div>
@@ -420,7 +403,7 @@ const PendingApprovalList = ({ onFirmar }) => {
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                                 onFirmar(pts);
                             }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                            className="btn btn-primary"
                         >
                             Firmar
                         </button>
@@ -504,21 +487,21 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
             case 'approval-list-view':
                 return (
                     <>
-                        <h3 className="text-2xl font-bold mb-4 text-primary-epu">Aprobación de PTS (SUPERVISOR)</h3>
-                        <p className="text-gray-700 mb-6">Listado de Permisos pendientes de su revisión y firma.</p>
+                        <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 16, color: '#0d7377' }}>Aprobación de PTS (SUPERVISOR)</h3>
+                        <p style={{ color: '#64748b', marginBottom: 24 }}>Listado de Permisos pendientes de su revisión y firma.</p>
                         <PendingApprovalList onFirmar={handleFirmar} />
                     </>
                 );
             case 'firma-biometrica-view':
                 return (
                     <>
-                        <h3 className="text-2xl font-bold mb-4 text-primary-epu">Firma Biométrica de PTS</h3>
+                        <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 16, color: '#0d7377' }}>Firma Biométrica de PTS</h3>
                         {showFirmaComponent && selectedPts ? (
                             <div>
-                                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                    <h4 className="font-semibold text-blue-900">PTS Seleccionado:</h4>
-                                    <p className="text-blue-800">{selectedPts.id} - {selectedPts.descripcionTrabajo}</p>
-                                    <p className="text-sm text-blue-600">Supervisor asignado: {selectedPts.supervisorLegajo}</p>
+                                <div style={{ marginBottom: 16, padding: 16, background: '#f0fafa', borderRadius: 10, border: '1px solid #b2dfdb' }}>
+                                    <h4 style={{ fontWeight: 600, color: '#0d7377' }}>PTS Seleccionado:</h4>
+                                    <p style={{ color: '#0a5c5f' }}>{selectedPts.id} - {selectedPts.descripcionTrabajo}</p>
+                                    <p style={{ fontSize: '0.85rem', color: '#0d7377' }}>Supervisor asignado: {selectedPts.supervisorLegajo}</p>
                                 </div>
                                 <FirmaBiometrica 
                                     ptsId={selectedPts.id} 
@@ -527,18 +510,18 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                                 />
                                 <button 
                                     onClick={() => { setSelectedPts(null); setShowFirmaComponent(false); }}
-                                    className="mt-4 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md"
-                                    style={{ backgroundColor: '#6b7280', color: 'white' }}
+                                    className="btn btn-outline"
+                                    style={{ marginTop: 16 }}
                                 >
                                     Cancelar
                                 </button>
                             </div>
                         ) : (
-                            <div className="text-center p-8 bg-gray-50 rounded-lg">
-                                <p className="text-gray-600 mb-4">No hay PTS seleccionado para firmar.</p>
+                            <div style={{ textAlign: 'center', padding: 32, background: '#f0fafa', borderRadius: 10 }}>
+                                <p style={{ color: '#64748b', marginBottom: 16 }}>No hay PTS seleccionado para firmar.</p>
                                 <button 
                                     onClick={() => setCurrentView({ title: 'Aprobación', content: 'approval-list-view' })}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md"
+                                    className="btn btn-primary"
                                 >
                                     Ir a Lista de Aprobaciones
                                 </button>
@@ -549,14 +532,14 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
             case 'cierre-rto-view':
                 return (
                     <>
-                        <h3 className="text-2xl font-bold mb-4 text-primary-epu">Cierre RTO - Retorno a Operaciones</h3>
+                        <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 16, color: '#0d7377' }}>Cierre RTO - Retorno a Operaciones</h3>
                         {showRTOComponent && selectedPtsForRTO ? (
                             <div>
-                                <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
-                                    <h4 className="font-semibold text-red-900">PTS Seleccionado para Cierre:</h4>
-                                    <p className="text-red-800">{selectedPtsForRTO.id} - {selectedPtsForRTO.descripcionTrabajo}</p>
-                                    <p className="text-sm text-red-600">Firmado por: {selectedPtsForRTO.dniSupervisorFirmante}</p>
-                                    <p className="text-sm text-red-600">Fecha de firma: {selectedPtsForRTO.fechaHoraFirmaSupervisor ? new Date(selectedPtsForRTO.fechaHoraFirmaSupervisor).toLocaleString() : 'No disponible'}</p>
+                                <div style={{ marginBottom: 16, padding: 16, background: '#fef2f2', borderRadius: 10, border: '1px solid #fca5a5' }}>
+                                    <h4 style={{ fontWeight: 600, color: '#991b1b' }}>PTS Seleccionado para Cierre:</h4>
+                                    <p style={{ color: '#b91c1c' }}>{selectedPtsForRTO.id} - {selectedPtsForRTO.descripcionTrabajo}</p>
+                                    <p style={{ fontSize: '0.85rem', color: '#dc2626' }}>Firmado por: {selectedPtsForRTO.dniSupervisorFirmante}</p>
+                                    <p style={{ fontSize: '0.85rem', color: '#dc2626' }}>Fecha de firma: {selectedPtsForRTO.fechaHoraFirmaSupervisor ? new Date(selectedPtsForRTO.fechaHoraFirmaSupervisor).toLocaleString() : 'No disponible'}</p>
                                 </div>
                                 <CierreRTO 
                                     ptsId={selectedPtsForRTO.id} 
@@ -567,7 +550,7 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                             </div>
                         ) : (
                             <div>
-                                <p className="text-gray-700 mb-6">Listado de PTS firmados y listos para cierre (Retorno a Operaciones).</p>
+                                <p style={{ color: '#64748b', marginBottom: 24 }}>Listado de PTS firmados y listos para cierre (Retorno a Operaciones).</p>
                                 <RTOClosureList onSelectPts={handleSelectPtsForRTO} />
                             </div>
                         )}
@@ -578,17 +561,17 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
             case 'execution-view':
                 return (
                     <>
-                        <h3 className="text-2xl font-bold mb-4 text-primary-epu">Mis Tareas de Ejecución (EJECUTANTE)</h3>
-                        <p className="text-gray-700">Tareas asignadas por el PTS para inicio, pausa y finalización.</p>
+                        <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 16, color: '#0d7377' }}>Mis Tareas de Ejecución (EJECUTANTE)</h3>
+                        <p style={{ color: '#64748b' }}>Tareas asignadas por el PTS para inicio, pausa y finalización.</p>
                     </>
                 );
             case 'reportes-view':
                 return <ReportesView />;
             case 'inicio-view':
                 return (
-                    <div className="text-center">
-                        <h4 className="text-xl font-semibold text-gray-700 mb-4">Panel de Control</h4>
-                        <p className="text-gray-600">Selecciona una opción para comenzar</p>
+                    <div style={{ textAlign: 'center' }}>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 600, color: '#1a2332', marginBottom: 16 }}>Panel de Control</h4>
+                        <p style={{ color: '#64748b' }}>Selecciona una opción para comenzar</p>
                     </div>
                 );
             default:
@@ -597,24 +580,18 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
     };
 
     return (
-        <section className="mt-8">
-            <h2 className="text-4xl font-extrabold text-primary-epu mb-8 text-center">
-                Bienvenido, {legajo}
-                <span className="block text-xl font-medium text-secondary-epu mt-1">({role})</span>
-            </h2>
-
+        <section>
             {/* Selector de Dashboards */}
             {activeView.title === 'Dashboards' && (
-                <div className="flex items-center gap-4 mb-6">
-                    <h3 className="text-2xl font-semibold text-gray-800">Dashboards</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
                     <button
-                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${activeView.content === 'pts-dashboard-view' ? 'bg-epu-primary text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
+                        className={`btn ${activeView.content === 'pts-dashboard-view' ? 'btn-primary' : 'btn-outline'}`}
                         onClick={() => setCurrentView({ title: 'Dashboards', content: 'pts-dashboard-view' })}
                     >
                         Permisos
                     </button>
                     <button
-                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${activeView.content === 'equipos-dashboard-view' ? 'bg-epu-primary text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
+                        className={`btn ${activeView.content === 'equipos-dashboard-view' ? 'btn-primary' : 'btn-outline'}`}
                         onClick={() => setCurrentView({ title: 'Dashboards', content: 'equipos-dashboard-view' })}
                     >
                         Equipos
@@ -622,8 +599,7 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                 </div>
             )}
 
-            <div className="bg-white p-8 rounded-xl shadow-2xl border-l-8 border-secondary-epu">
-                {/* Si estamos en Dashboards, mostrar el dashboard correspondiente */}
+            <div className="card">
                 {activeView.title === 'Dashboards' ? (
                     <>
                         <div id="content-container">
@@ -635,11 +611,11 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                             )}
                             {activeView.content === 'equipos-dashboard-view' && <DashboardEquipos />}
                         </div>
-                        <DcsSimForm />
+                        {activeView.content === 'equipos-dashboard-view' && <DcsSimForm />}
                     </>
                 ) : (
                     <>
-                        <h3 className="text-2xl font-semibold mb-6 text-gray-800">{activeView.title}</h3>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: 20, color: '#1a2332' }}>{activeView.title}</h3>
                         <div id="content-container">
                             {loadContent(activeView.content)}
                         </div>
@@ -647,12 +623,19 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                 )}
             </div>
 
-            {/* Botones de Accion Rapida (Control de Roles) */}
-            <div className={`mt-8 ${role === ROLES.SUPERVISOR ? 'flex justify-center gap-6' : 'grid grid-cols-1 md:grid-cols-3 gap-6'}`}>
+            {/* Botones de Accion Rapida */}
+            <div style={{ display: 'flex', gap: 16, marginTop: 24, flexWrap: 'wrap' }}>
                 {role === ROLES.EMISOR && (
                     <button
-                        onClick={() => setCurrentView({ title: 'Crear PTS', content: 'pts-form-view' })}
-                        className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]">
+                        onClick={() => {
+                            setCurrentView({ title: 'Crear PTS', content: 'pts-form-view' });
+                            if (typeof window !== 'undefined') {
+                                window.dispatchEvent(new Event('resetCrearPTS'));
+                            }
+                        }}
+                        className="btn btn-primary"
+                        style={{ padding: '14px 28px', fontSize: '0.95rem' }}
+                    >
                         + Crear Nuevo PTS
                     </button>
                 )}
@@ -660,14 +643,16 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                     <>
                         <button
                             onClick={() => setCurrentView({ title: 'Aprobación', content: 'approval-list-view' })}
-                            className="bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]"
-                            style={{ backgroundColor: '#111827', color: 'white' }}>
+                            className="btn btn-primary"
+                            style={{ padding: '14px 28px', fontSize: '0.95rem' }}
+                        >
                             Revisar Aprobaciones
                         </button>
                         <button
                             onClick={() => setCurrentView({ title: 'Cierre RTO', content: 'cierre-rto-view' })}
-                            className="bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]"
-                            style={{ backgroundColor: '#111827', color: 'white' }}>
+                            className="btn btn-primary"
+                            style={{ padding: '14px 28px', fontSize: '0.95rem' }}
+                        >
                             Cierre RTO
                         </button>
                     </>
@@ -675,32 +660,35 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                 {role === ROLES.EJECUTANTE && (
                     <button
                         onClick={() => setCurrentView({ title: 'Tareas', content: 'execution-view' })}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]">
+                        className="btn btn-primary"
+                        style={{ padding: '14px 28px', fontSize: '0.95rem' }}
+                    >
                         Ver Tareas Asignadas
                     </button>
                 )}
             </div>
 
-            {/* Botón Cambiar Rol (solo si el usuario tiene múltiples roles) */}
+            {/* Botón Cambiar Rol */}
             {availableRoles && availableRoles.length > 1 && onSwitchRole && (
-                <div className="mt-6 flex justify-center">
-                    <div className="relative group">
+                <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center' }}>
+                    <div className="relative">
                         <button
-                            className="bg-gray-900 hover:bg-black text-white font-bold py-4 px-8 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02] peer"
-                            style={{ backgroundColor: '#111827', color: 'white' }}
+                            className="btn btn-outline"
                             onClick={(e) => {
                                 const menu = e.currentTarget.nextElementSibling;
                                 menu.classList.toggle('hidden');
                             }}
                         >
-                            🔄 Cambiar Rol (actual: {role})
+                            Cambiar Rol (actual: {role})
                         </button>
-                        <div className="hidden absolute left-1/2 -translate-x-1/2 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-20 min-w-[220px]">
+                        <div className="hidden absolute" style={{ left: '50%', transform: 'translateX(-50%)', marginTop: 8, background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.12)', border: '1px solid #e2eff1', zIndex: 20, minWidth: 220 }}>
                             {availableRoles.filter(r => r !== role).map(r => (
                                 <button
                                     key={r}
                                     onClick={() => onSwitchRole(r)}
-                                    className="block w-full text-left px-5 py-3 hover:bg-yellow-50 text-gray-800 font-semibold first:rounded-t-xl last:rounded-b-xl transition-colors"
+                                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '12px 20px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, color: '#1a2332', fontSize: '0.9rem' }}
+                                    onMouseOver={(e) => e.target.style.background = '#f5fbfb'}
+                                    onMouseOut={(e) => e.target.style.background = 'none'}
                                 >
                                     Ingresar como {r}
                                 </button>
@@ -821,7 +809,8 @@ const App = () => {
 
         } catch (error) {
             console.error("Login fallido:", error);
-            setError(error.message.includes('401') ? "Legajo o contraseña inválidos." : "Error de conexión. Asegúrese de que el backend esté corriendo y se haya REINICIADO con la configuración CORS.");
+            const isNetworkError = error instanceof TypeError && error.message === 'Failed to fetch';
+            setError(isNetworkError ? "Error de conexión. Verifique que el servidor esté disponible." : "Legajo o contraseña inválidos.");
         }
     };
 
@@ -878,50 +867,31 @@ const App = () => {
 
     return (
         <BrowserRouter>
-            {/* Contenedor principal de la aplicación, usa Flexbox para sticky footer */}
-            <div className="bg-gray-100 min-h-screen flex flex-col">
+            <div className={user ? 'app-shell' : ''}>
             
-            {/* Encabezado (Header) */}
-            <header style={{backgroundColor: '#003366'}} className="text-white shadow-lg py-4 px-6 sticky top-0 z-10">
-                <div className="container mx-auto">
-                    {/* Línea Superior: Título y Usuario */}
-                    <div className="flex justify-between items-center mb-3">
-                        <div className="text-left">
-                            <h1 className="text-3xl font-bold text-white">eEntrega de Equipos - Prototipo</h1>
-                        </div>
-                        <div className="text-sm flex items-center">
-                            {user ? (
-                                <>
-                                    <span className="font-semibold mr-12 text-white">Usuario: {user.legajo} ({user.role})&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="bg-green-600 hover:bg-red-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-semibold border-b-3 border-green-700 hover:border-red-700 transform hover:-translate-y-1 hover:scale-105 flex items-center justify-center relative overflow-hidden"
-                                        style={{
-                                            background: 'linear-gradient(145deg, #16a34a, #15803d)',
-                                            boxShadow: '0 6px 15px rgba(0,0,0,0.2), inset 0 1px 2px rgba(255,255,255,0.3)',
-                                            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                                            width: '100px',
-                                            height: '45px'
-                                        }}
-                                    >
-                                        Salir
-                                    </button>
-                                </>
-                            ) : (
-                                <span className="text-gray-300">Desconectado</span>
-                            )}
-                        </div>
-                    </div>
-                    
-                    {/* Línea Inferior: Solo Navegación Centrada */}
-                    <div className="flex justify-center">
-                        {user && <Navigation role={user.role} onInicioClick={handleInicioClick} />}
-                    </div>
-                </div>
-            </header>
+            {/* Sidebar - solo cuando está autenticado */}
+            {user && (
+                <Navigation 
+                    role={user.role} 
+                    onInicioClick={handleInicioClick} 
+                    onLogout={handleLogout} 
+                    user={user} 
+                />
+            )}
 
-            {/* Contenido Principal con Rutas */}
-            <main className="container mx-auto p-4 flex-grow">
+            {/* Contenido Principal */}
+            <div className={user ? 'main-content' : ''}>
+                {/* Top Bar - solo cuando está autenticado */}
+                {user && (
+                    <div className="top-bar">
+                        <h1 className="top-bar-title">eEEq — Entrega de Equipos</h1>
+                        <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                            {user.legajo} &middot; {user.role}
+                        </span>
+                    </div>
+                )}
+
+                <div className={user ? 'page-content' : ''}>
                 <Routes>
                                         {/* Ruta protegida para administración de equipos y QR */}
                                         <Route 
@@ -1080,8 +1050,9 @@ const App = () => {
                         } 
                     />
                 </Routes>
-                    <p className="text-sm">&copy; 2025 eEEq Prototipo Tecnológico - Sergio Omar Capella</p>
-                </main>
+                    <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8', marginTop: 32, paddingBottom: 16 }}>&copy; 2025 eEEq - Sergio Omar Capella</p>
+                </div>
+            </div>
             </div>
         </BrowserRouter>
     );

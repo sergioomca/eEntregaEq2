@@ -52,22 +52,22 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
   // Estilos para estados
   const estadoStyles = {
     'Stand by': {
-      color: '#6b7280',
-      bgColor: '#f3f4f6',
+      color: '#94a3b8',
+      bgColor: '#f1f5f9',
       icon: '',
-      textColor: '#374151'
+      textColor: '#475569'
     },
     'Pendiente de Firma': { 
       color: '#f59e0b', 
-      bgColor: '#fef3c7', 
+      bgColor: '#fef9c3', 
       icon: '',
       textColor: '#92400e' 
     },
     'Firmado (Pend. Cierre)': { 
-      color: '#3b82f6', 
-      bgColor: '#dbeafe', 
+      color: '#0d7377', 
+      bgColor: '#e0f5f5', 
       icon: '',
-      textColor: '#1e40af' 
+      textColor: '#0d7377' 
     },
     'Cerrado': { 
       color: '#10b981', 
@@ -374,7 +374,12 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
     }
     if (estado === 'Pendiente de Firma' && onSelectPtsParaFirma && currentUser && pts.supervisorLegajo === currentUser.dni) {
       onSelectPtsParaFirma(pts);
-    } else if (estado === 'Firmado (Pend. Cierre)' && onSelectPtsParaCierre && currentUser && pts.supervisorLegajo === currentUser.dni) {
+    } else if (
+      estado === 'Firmado (Pend. Cierre)'
+      && onSelectPtsParaCierre
+      && currentUser
+      && (pts.supervisorLegajo === currentUser.dni || pts.solicitanteLegajo === currentUser.dni)
+    ) {
       onSelectPtsParaCierre(pts);
     }
     setSelectedPts(pts);
@@ -412,10 +417,10 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
   // Renderizado condicional para carga y errores
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-epu-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando lista de PTS...</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
+          <p style={{ color: '#64748b' }}>Cargando lista de PTS...</p>
         </div>
       </div>
     );
@@ -423,23 +428,13 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-          <h2 className="text-2xl font-bold text-center text-red-600 mb-4">Error</h2>
-          <p className="text-gray-600 text-center mb-4">{error}</p>
-            <div className="text-center">
-            <button 
-              onClick={() => fetchPTS(searchTerm, searchType)}
-              className="bg-epu-primary text-white px-4 py-2 rounded hover:bg-epu-primary-dark transition-colors mr-2"
-            >
-              Reintentar
-            </button>
-            <button 
-              onClick={() => window.location.reload()}
-              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
-            >
-              Recargar Página
-            </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
+        <div className="card" style={{ maxWidth: 480, textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#dc2626', marginBottom: 12 }}>Error</h2>
+          <p style={{ color: '#64748b', marginBottom: 16 }}>{error}</p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+            <button onClick={() => fetchPTS(searchTerm, searchType)} className="btn btn-primary">Reintentar</button>
+            <button onClick={() => window.location.reload()} className="btn btn-outline">Recargar Página</button>
           </div>
         </div>
       </div>
@@ -447,16 +442,16 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4">
+    <div style={{ padding: '0' }}>
+      <div>
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-md mb-6">
-          <div className="bg-epu-primary text-white p-6 rounded-t-lg">
-            <h1 className="text-2xl font-bold">
+        <div className="card" style={{ marginBottom: 20, padding: 0, overflow: 'hidden' }}>
+          <div style={{ background: '#0d7377', color: '#fff', padding: '20px 24px', borderRadius: '16px 16px 0 0' }}>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>
               {filter === 'MIS_PTS' ? 'Mis Permisos de Trabajo Seguro' : 'Dashboard de Permisos de Trabajo Seguro'}
             </h1>
             {currentUser && (
-              <p className="mt-2 opacity-90">
+              <p style={{ marginTop: 6, opacity: 0.9, fontSize: '0.85rem' }}>
                 Usuario: {currentUser.nombre} | 
                 {filter === 'MIS_PTS' ? ` Mis PTS: ${counts.misPts}` : ` Total PTS: ${counts.total}`}
               </p>
@@ -464,10 +459,10 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
           </div>
 
           {/* Filtros y Busqueda */}
-          <div className="px-6 pt-6 pb-10 border-b border-gray-200">
+          <div style={{ padding: '20px 24px 28px' }}>
             {/* Tabs de Filtros */}
-            <div className="flex justify-center">
-              <div className="flex gap-6 mb-4" style={{ minWidth: '1000px', width: 'max-content' }}>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
                 {Object.entries(FILTROS).map(([key, value]) => {
                   const isActive = filter === value;
                   let label = '';
@@ -489,20 +484,14 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                         setFilter(value);
                         setCurrentPage(1);
                       }}
-                      className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                        isActive 
-                          ? 'bg-epu-primary text-white' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      style={{ minWidth: '120px' }}
+                      className={isActive ? 'btn btn-primary' : 'btn btn-outline'}
+                      style={{ minWidth: 100, padding: '8px 16px', fontSize: '0.85rem' }}
                     >
                       {label}
                       {count > 0 && (
                         <>
                           &nbsp;&nbsp;
-                          <span className={`text-xs ${
-                            isActive ? 'text-white' : 'text-gray-700'
-                          }`}>
+                          <span style={{ fontSize: '0.75rem' }}>
                             {count}
                           </span>
                         </>
@@ -514,155 +503,104 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
             </div>
 
             {/* Barra de Busqueda Avanzada (HU-014) */}
-            <div className="space-y-4">
+            <div>
               {/* Búsqueda Simple */}
-              <div className="flex flex-col md:flex-row gap-4 items-center mb-4">
-                <div className="flex-1">
-                  <div className="flex gap-6">
-                    <div className="relative flex-1">
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 280 }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ position: 'relative', flex: 1 }}>
                       <input
                         type="text"
                         placeholder="Búsqueda rápida por ID, descripción, ubicación, solicitante..."
                         value={searchTerm}
                         onChange={(e) => handleSearchTermChange(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
+                        className="form-input"
+                        style={{ width: '100%' }}
                       />
                       {isSearching && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-epu-primary"></div>
+                        <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>
+                          <div className="spinner" style={{ width: 16, height: 16 }}></div>
                         </div>
                       )}
                     </div>
                     <select
                       value={searchType}
                       onChange={(e) => setSearchType(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
-                      style={{ minWidth: '120px' }}
+                      className="form-input"
+                      style={{ minWidth: 120, width: 'auto' }}
                     >
                       <option value="equipo">Equipo</option>
                       <option value="usuario">Usuario</option>
                     </select>
                   </div>
                 </div>
-                <div className="flex items-center gap-6">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <button
                     onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
-                    className="bg-epu-primary text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
+                    className="btn btn-outline"
+                    style={{ fontSize: '0.85rem', padding: '8px 14px' }}
                   >
-                    {showAdvancedSearch ? '🔼 Ocultar' : '🔽 Filtros'} Avanzados
+                    {showAdvancedSearch ? 'Ocultar' : 'Filtros Avanzados'}
                   </button>
-                  <span className="text-sm text-gray-600">
+                  <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
                     {paginatedPTS.length} de {filteredAndSortedPTS.length} PTS
                   </span>
                   <button
                     onClick={() => fetchPTS(searchTerm, searchType)}
-                    className="bg-epu-primary text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
+                    className="btn btn-outline"
+                    style={{ fontSize: '0.85rem', padding: '8px 14px' }}
                   >
-                    🔄 Actualizar
+                    Actualizar
                   </button>
                 </div>
               </div>
 
               {/* Búsqueda Avanzada - Colapsable */}
               {showAdvancedSearch && (
-                <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    {/* Equipo/Instalación */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Equipo/Instalación
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="ej: bomba, reactor..."
-                        value={localFilters.equipo}
-                        onChange={(e) => handleLocalFilterChange('equipo', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary text-sm"
-                      />
+                <div style={{ background: '#f0fafa', padding: 16, borderRadius: 12, border: '1px solid #d1e9ea' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Equipo/Instalación</label>
+                      <input type="text" placeholder="ej: bomba, reactor..." value={localFilters.equipo} onChange={(e) => handleLocalFilterChange('equipo', e.target.value)} className="form-input" />
                     </div>
-
-                    {/* Usuario/Solicitante */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Usuario/Solicitante
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="ej: Juan, VINF..."
-                        value={localFilters.usuario}
-                        onChange={(e) => handleLocalFilterChange('usuario', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary text-sm"
-                      />
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Usuario/Solicitante</label>
+                      <input type="text" placeholder="ej: Juan, VINF..." value={localFilters.usuario} onChange={(e) => handleLocalFilterChange('usuario', e.target.value)} className="form-input" />
                     </div>
-
-                    {/* Area */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Área
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="ej: Mantenimiento..."
-                        value={localFilters.area}
-                        onChange={(e) => handleLocalFilterChange('area', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary text-sm"
-                      />
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Área</label>
+                      <input type="text" placeholder="ej: Mantenimiento..." value={localFilters.area} onChange={(e) => handleLocalFilterChange('area', e.target.value)} className="form-input" />
                     </div>
-
-                    {/* Estado RTO */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Estado RTO
-                      </label>
-                      <select
-                        value={localFilters.estado}
-                        onChange={(e) => handleLocalFilterChange('estado', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary text-sm"
-                      >
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Estado RTO</label>
+                      <select value={localFilters.estado} onChange={(e) => handleLocalFilterChange('estado', e.target.value)} className="form-input">
                         <option value="">Todos los estados</option>
                         <option value="STANDBY">STAND BY</option>
                         <option value="PENDIENTE">PENDIENTE</option>
                         <option value="CERRADO">CERRADO</option>
                       </select>
                     </div>
-
-                    {/* Fecha de Inicio */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Fecha de Inicio
-                      </label>
-                      <input
-                        type="date"
-                        value={localFilters.fechaInicio}
-                        onChange={(e) => handleLocalFilterChange('fechaInicio', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary text-sm"
-                      />
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Fecha de Inicio</label>
+                      <input type="date" value={localFilters.fechaInicio} onChange={(e) => handleLocalFilterChange('fechaInicio', e.target.value)} className="form-input" />
                     </div>
                   </div>
 
-                  {/* Botones de accion */}
-                  <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid #d1e9ea' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.85rem', color: '#64748b' }}>
                       {Object.values(searchFilters).some(val => val) && (
-                        <span className="text-epu-primary font-medium">
-                          🔍 Filtros activos: {Object.values(searchFilters).filter(val => val).length}
+                        <span style={{ color: '#0d7377', fontWeight: 600 }}>
+                          Filtros activos: {Object.values(searchFilters).filter(val => val).length}
                         </span>
                       )}
                       {isSearching && (
-                        <div className="flex items-center gap-2 text-epu-secondary">
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-epu-secondary"></div>
-                          <span className="text-xs">Buscando...</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div className="spinner" style={{ width: 12, height: 12 }}></div>
+                          <span style={{ fontSize: '0.75rem' }}>Buscando...</span>
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={clearAllSearchFilters}
-                        className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors text-sm"
-                      >
-                        🗑️ Limpiar Filtros
-                      </button>
-                    </div>
+                    <button onClick={clearAllSearchFilters} className="btn btn-outline" style={{ fontSize: '0.85rem', padding: '6px 14px' }}>Limpiar Filtros</button>
                   </div>
                 </div>
               )}
@@ -671,79 +609,51 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
         </div>
 
         {/* Tabla de PTS */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead>
                 <tr>
-                  <th 
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('id')}
-                  >
+                  <th style={{ cursor: 'pointer' }} onClick={() => handleSort('id')}>
                     ID {sortConfig.key === 'id' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('descripcionTrabajo')}
-                  >
+                  <th>Estado</th>
+                  <th style={{ cursor: 'pointer' }} onClick={() => handleSort('descripcionTrabajo')}>
                     Descripción {sortConfig.key === 'descripcionTrabajo' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ubicación
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Equipos
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('nombreSolicitante')}
-                  >
+                  <th>Ubicación</th>
+                  <th>Equipos</th>
+                  <th style={{ cursor: 'pointer' }} onClick={() => handleSort('nombreSolicitante')}>
                     Solicitante {sortConfig.key === 'nombreSolicitante' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th 
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('fechaInicio')}
-                  >
+                  <th style={{ cursor: 'pointer' }} onClick={() => handleSort('fechaInicio')}>
                     Fecha {sortConfig.key === 'fechaInicio' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody>
                 {filteredAndSortedPTS.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="px-4 py-12 text-center">
-                      <div className="text-gray-500">
-                        {/* Mensaje especifico segun tipo de busqueda */}
+                    <td colSpan="8" style={{ padding: '48px 16px', textAlign: 'center' }}>
+                      <div style={{ color: '#64748b' }}>
                         {(!loading && filteredAndSortedPTS.length === 0 && (searchTerm || Object.values(searchFilters).some(val => val))) ? (
                           <div>
-                            <div className="text-lg mb-2">🔍</div>
-                            <div className="font-medium text-gray-700 mb-1">
+                            <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>🔍</div>
+                            <div style={{ fontWeight: 600, color: '#334155', marginBottom: 4 }}>
                               No se encontraron Permisos de Trabajo Seguro que coincidan con la búsqueda
                             </div>
-                            <div className="text-sm text-gray-500 mb-4">
+                            <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: 16 }}>
                               {searchTerm && `Búsqueda: "${searchTerm}"`}
                               {searchTerm && Object.values(searchFilters).some(val => val) && ' • '}
                               {Object.values(searchFilters).some(val => val) && 'Filtros avanzados activos'}
                             </div>
-                            <button
-                              onClick={clearAllSearchFilters}
-                              className="bg-epu-primary text-white px-4 py-2 rounded-md hover:bg-epu-primary-dark transition-colors text-sm"
-                            >
-                              🗑️ Limpiar búsqueda y filtros
-                            </button>
+                            <button onClick={clearAllSearchFilters} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>Limpiar búsqueda y filtros</button>
                           </div>
                         ) : (
                           <div>
-                            <div className="text-lg mb-2">📋</div>
-                            <div className="font-medium text-gray-700">
-                              No hay PTS disponibles en este momento
-                            </div>
+                            <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>📋</div>
+                            <div style={{ fontWeight: 600, color: '#334155' }}>No hay PTS disponibles en este momento</div>
                           </div>
                         )}
                       </div>
@@ -758,49 +668,43 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                     return (
                       <tr 
                         key={pts.id} 
-                        className={`hover:bg-gray-50 transition-colors ${
-                          isClickable ? 'cursor-pointer' : ''
-                        } ${selectedPts?.id === pts.id ? 'bg-blue-50' : ''}`}
+                        style={{ cursor: isClickable ? 'pointer' : 'default', background: selectedPts?.id === pts.id ? '#f0fafa' : 'transparent' }}
                         onClick={() => handleRowClick(pts)}
                       >
-                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
                           <Link 
                             to={`/pts/${pts.id}`}
-                            className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                            style={{ color: '#0d7377', textDecoration: 'none' }}
+                            onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                            onMouseOut={(e) => e.target.style.textDecoration = 'none'}
                           >
                             {pts.id || 'N/A'}
                           </Link>
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <span 
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                            style={{
-                              backgroundColor: estadoStyle.bgColor,
-                              color: estadoStyle.textColor
-                            }}
-                          >
+                        <td style={{ whiteSpace: 'nowrap' }}>
+                          <span className="badge" style={{ backgroundColor: estadoStyle.bgColor, color: estadoStyle.textColor }}>
                             {estado}
                           </span>
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-900 max-w-xs truncate">
+                        <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {pts.descripcionTrabajo || 'Sin descripción'}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>
                           {pts.ubicacion || 'N/A'}
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-600 max-w-xs truncate">
+                        <td style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b' }}>
                           {pts.equipoOInstalacion || 'N/A'}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>
                           {pts.nombreSolicitante || pts.solicitanteLegajo || 'N/A'}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>
                           {pts.fechaInicio ? new Date(pts.fechaInicio).toLocaleDateString('es-ES') : 'N/A'}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                        <td style={{ whiteSpace: 'nowrap' }}>
                           {estado === 'Stand by' && (
                             <button
-                              className="text-yellow-600 hover:text-yellow-800 font-medium"
+                              style={{ color: '#f59e0b', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}
                               onClick={e => {
                                 e.stopPropagation();
                                 navigate('/pts/nuevo', { state: { editingPts: pts } });
@@ -810,9 +714,9 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                             </button>
                           )}
                           {(estado === 'Pendiente de Firma' || estado === 'Firmado (Pend. Cierre)') && 
-                           currentUser && pts.supervisorLegajo === currentUser.dni && (
+                           currentUser && (pts.supervisorLegajo === currentUser.dni || pts.solicitanteLegajo === currentUser.dni) && (
                             <button
-                              className="text-epu-primary hover:text-epu-primary-dark"
+                              style={{ color: '#0d7377', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}
                               onClick={e => {
                                 e.stopPropagation();
                                 if (estado === 'Pendiente de Firma' && onSelectPtsParaFirma) {
@@ -826,7 +730,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                             </button>
                           )}
                           {estado === 'Cerrado' && (
-                            <span className="text-green-600">Completado</span>
+                            <span style={{ color: '#10b981', fontWeight: 600, fontSize: '0.85rem' }}>Completado</span>
                           )}
                         </td>
                       </tr>
@@ -839,54 +743,27 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
 
           {/* Paginacion */}
           {totalPages > 1 && (
-            <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200">
-              <div className="flex-1 flex justify-between sm:hidden">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Siguiente
-                </button>
-              </div>
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Mostrando{' '}
-                    <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span>
-                    {' '}a{' '}
-                    <span className="font-medium">
-                      {Math.min(currentPage * itemsPerPage, filteredAndSortedPTS.length)}
-                    </span>
-                    {' '}de{' '}
-                    <span className="font-medium">{filteredAndSortedPTS.length}</span>
-                    {' '}resultados
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          page === currentPage
-                            ? 'z-10 bg-epu-primary border-epu-primary text-white'
-                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                  </nav>
-                </div>
+            <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2eff1', background: '#f8fdfd' }}>
+              <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                Mostrando{' '}
+                <strong>{(currentPage - 1) * itemsPerPage + 1}</strong>
+                {' '}a{' '}
+                <strong>{Math.min(currentPage * itemsPerPage, filteredAndSortedPTS.length)}</strong>
+                {' '}de{' '}
+                <strong>{filteredAndSortedPTS.length}</strong>
+                {' '}resultados
+              </p>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={page === currentPage ? 'btn btn-primary' : 'btn btn-outline'}
+                    style={{ padding: '6px 12px', fontSize: '0.85rem', minWidth: 36 }}
+                  >
+                    {page}
+                  </button>
+                ))}
               </div>
             </div>
           )}

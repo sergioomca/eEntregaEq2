@@ -8,6 +8,8 @@ const ROLES_DISPONIBLES = [
     { value: ROLES.EJECUTANTE, label: 'Ejecutante' },
     { value: ROLES.ADMIN, label: 'Administrador' },
     { value: ROLES.RTO_MANT, label: 'RTO Mantenimiento' },
+    { value: ROLES.EHS, label: 'EH&S' },
+    { value: ROLES.LIDER, label: 'Líder' },
 ];
 
 const SECTORES = [
@@ -94,17 +96,16 @@ export default function AgregarUsuario() {
     };
 
     return (
-        <div className="max-w-2xl mx-auto p-6">
-            <div className="bg-white rounded-xl shadow-2xl p-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-3">
+        <div style={{ maxWidth: 640, margin: '0 auto' }}>
+            <div className="card" style={{ padding: 32 }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#1a2332', marginBottom: 20, paddingBottom: 12, borderBottom: '2px solid #e8f4f6' }}>
                     Agregar Nuevo Usuario
                 </h2>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Legajo */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Legajo (ID de Usuario) <span className="text-red-500">*</span>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    <div className="form-group">
+                        <label className="form-label">
+                            Legajo (ID de Usuario) <span style={{ color: '#ef4444' }}>*</span>
                         </label>
                         <input
                             type="text"
@@ -112,15 +113,14 @@ export default function AgregarUsuario() {
                             value={formData.legajo}
                             onChange={handleChange}
                             placeholder="Ej: VINF011422"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition"
+                            className="form-input"
                         />
-                        {errors.legajo && <p className="text-red-500 text-sm mt-1">{errors.legajo}</p>}
+                        {errors.legajo && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: 4 }}>{errors.legajo}</p>}
                     </div>
 
-                    {/* Nombre Completo */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre Completo <span className="text-red-500">*</span>
+                    <div className="form-group">
+                        <label className="form-label">
+                            Nombre Completo <span style={{ color: '#ef4444' }}>*</span>
                         </label>
                         <input
                             type="text"
@@ -128,79 +128,73 @@ export default function AgregarUsuario() {
                             value={formData.nombreCompleto}
                             onChange={handleChange}
                             placeholder="Ej: Juan Pérez"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition"
+                            className="form-input"
                         />
-                        {errors.nombreCompleto && <p className="text-red-500 text-sm mt-1">{errors.nombreCompleto}</p>}
+                        {errors.nombreCompleto && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: 4 }}>{errors.nombreCompleto}</p>}
                     </div>
 
-                    {/* Sector */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Sector <span className="text-red-500">*</span>
+                    <div className="form-group">
+                        <label className="form-label">
+                            Sector <span style={{ color: '#ef4444' }}>*</span>
                         </label>
                         <select
                             name="sector"
                             value={formData.sector}
                             onChange={handleChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition bg-white"
+                            className="form-input"
                         >
                             <option value="">Seleccionar sector...</option>
                             {SECTORES.map(s => (
                                 <option key={s} value={s}>{s}</option>
                             ))}
                         </select>
-                        {errors.sector && <p className="text-red-500 text-sm mt-1">{errors.sector}</p>}
+                        {errors.sector && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: 4 }}>{errors.sector}</p>}
                     </div>
 
-                    {/* Roles */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Roles <span className="text-red-500">*</span>
+                    <div className="form-group">
+                        <label className="form-label">
+                            Roles <span style={{ color: '#ef4444' }}>*</span>
                         </label>
-                        <div className="flex flex-wrap gap-3">
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                             {ROLES_DISPONIBLES.map(({ value, label }) => (
                                 <button
                                     key={value}
                                     type="button"
                                     onClick={() => handleRoleToggle(value)}
-                                    className={`px-4 py-2 rounded-lg font-medium border-2 transition-all duration-200 ${
-                                        formData.roles.includes(value)
-                                            ? 'bg-yellow-500 border-yellow-600 text-white shadow-md'
-                                            : 'bg-white border-gray-300 text-gray-700 hover:border-yellow-400 hover:bg-yellow-50'
-                                    }`}
+                                    className={formData.roles.includes(value) ? 'btn btn-primary' : 'btn btn-outline'}
+                                    style={{ fontSize: '0.85rem', padding: '6px 14px' }}
                                 >
                                     {formData.roles.includes(value) ? '✓ ' : ''}{label}
                                 </button>
                             ))}
                         </div>
-                        {errors.roles && <p className="text-red-500 text-sm mt-1">{errors.roles}</p>}
+                        {errors.roles && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: 4 }}>{errors.roles}</p>}
                     </div>
 
-                    {/* Mensajes */}
                     {submitMessage && (
-                        <div className="bg-green-50 border border-green-300 text-green-800 px-4 py-3 rounded-lg">
+                        <div style={{ background: '#f0fdf4', border: '1px solid #86efac', color: '#166534', padding: '12px 16px', borderRadius: 10 }}>
                             ✅ {submitMessage}
                         </div>
                     )}
                     {submitError && (
-                        <div className="bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-lg">
+                        <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', color: '#991b1b', padding: '12px 16px', borderRadius: 10 }}>
                             ❌ {submitError}
                         </div>
                     )}
 
-                    {/* Botones */}
-                    <div className="flex gap-4 pt-2">
+                    <div style={{ display: 'flex', gap: 12, paddingTop: 8 }}>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-3 rounded-xl shadow-lg transition duration-150 transform hover:scale-[1.02]"
+                            className="btn btn-primary"
+                            style={{ flex: 1, ...(loading ? { background: '#ccc', cursor: 'not-allowed' } : {}) }}
                         >
                             {loading ? 'Guardando...' : 'Crear Usuario'}
                         </button>
                         <button
                             type="button"
                             onClick={() => navigate('/')}
-                            className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl transition duration-150"
+                            className="btn btn-outline"
                         >
                             Volver
                         </button>

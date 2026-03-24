@@ -59,9 +59,9 @@ return (
             <h2>Bienvenido</h2> 
             <form onSubmit={handleSubmit} className="login-form">
                 
-                {/* Campo N° de Legajo */}
+                {/* Campo Usuario */}
                 <div className="form-group">
-                    <label htmlFor="legajo">N° de Legajo</label>
+                    <label htmlFor="legajo">Usuario</label>
                     <input
                         type="text"
                         id="legajo"
@@ -69,6 +69,7 @@ return (
                         onChange={(e) => setLegajo(e.target.value)}
                         required
                         disabled={loading}
+                        placeholder="Usuario"
                     />
                 </div>
 {/* Campo Contraseña */}

@@ -30,7 +30,7 @@ export default function GeneradorQR({ tag, url }) {
         href={`${window.location.origin}${url}`}
         target="_blank"
         rel="noopener noreferrer"
-        style={{ display: 'block', marginTop: 8, fontSize: 13, color: '#003366', textDecoration: 'underline' }}
+        style={{ display: 'block', marginTop: 8, fontSize: 13, color: '#0d7377', textDecoration: 'underline' }}
       >
         Ver página pública
       </a>

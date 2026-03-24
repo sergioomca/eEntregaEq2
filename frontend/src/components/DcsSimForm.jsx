@@ -1,10 +1,22 @@
-      import React, { useState } from "react";
+
+      import React, { useState, useEffect } from "react";
 
       const DcsSimForm = ({ onSuccess }) => {
         const [tag, setTag] = useState("");
         const [estadoDcs, setEstadoDcs] = useState("");
         const [mensaje, setMensaje] = useState("");
         const [loading, setLoading] = useState(false);
+        const [equipos, setEquipos] = useState([]);
+
+        useEffect(() => {
+          fetch("/api/equipos")
+            .then(res => res.ok ? res.json() : [])
+            .then(data => setEquipos(Array.isArray(data) ? data : []));
+        }, []);
+
+        const tagsDisponibles = equipos.map(eq => eq.tag);
+        const equipoSeleccionado = equipos.find(eq => eq.tag === tag);
+        const isBloqueadoDeshabilitado = equipoSeleccionado && equipoSeleccionado.estadoDcs === 'DESHABILITADO' && equipoSeleccionado.condicion === 'BLOQUEADO';
 
         const handleSubmit = async (e) => {
           e.preventDefault();
@@ -12,46 +24,52 @@
           setLoading(true);
           try {
             let msg = "";
-            if (estadoDcs) {
+            if (estadoDcs && !isBloqueadoDeshabilitado) {
               const res = await fetch("/api/dcs/update", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ tag, estado: estadoDcs }),
               });
               const text = await res.text();
-              msg += res.ok ? `✔️ Estado DCS: ${text}` : `❌ Estado DCS: ${text}`;
+              msg += res.ok ? `✔️ Estado DCS: ${text}` : ` Estado DCS: ${text}`;
+            } else if (isBloqueadoDeshabilitado) {
+              msg = 'No se puede cambiar el estado DCS: equipo bloqueado y deshabilitado.';
             }
             setMensaje(msg.trim());
             if (onSuccess) onSuccess();
           } catch (err) {
-            setMensaje("❌ Error de red");
+            setMensaje(" Error de red");
           } finally {
             setLoading(false);
           }
         };
 
         return (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-8 max-w-md mx-auto">
-            <h3 className="text-lg font-bold text-blue-900 mb-4">Simular señal entrante desde DCS</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-blue-800 mb-1">Tag de Equipo</label>
-                <input
-                  type="text"
+          <div className="card" style={{ maxWidth: 420, margin: '32px auto', padding: 24, borderLeft: '4px solid #0d7377' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0d7377', marginBottom: 16 }}>Simular señal entrante desde DCS</h3>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="form-group">
+                <label className="form-label">Tag de Equipo</label>
+                <select
                   value={tag}
                   onChange={e => setTag(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  placeholder="Ej: K7451"
+                  className="form-input"
                   required
-                />
+                >
+                  <option value="">Seleccionar...</option>
+                  {tagsDisponibles.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-blue-800 mb-1">Nuevo Estado DCS</label>
+              <div className="form-group">
+                <label className="form-label">Nuevo Estado DCS</label>
                 <select
                   value={estadoDcs}
                   onChange={e => setEstadoDcs(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="form-input"
                   required
+                  disabled={isBloqueadoDeshabilitado}
                 >
                   <option value="">Seleccionar...</option>
                   <option value="HABILITADO">HABILITADO</option>
@@ -62,13 +80,14 @@
               </div>
               <button
                 type="submit"
-                className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-6 rounded-lg transition-colors"
-                disabled={loading}
+                className="btn btn-primary"
+                disabled={loading || isBloqueadoDeshabilitado}
+                style={loading || isBloqueadoDeshabilitado ? { background: '#ccc', cursor: 'not-allowed' } : {}}
               >
                 {loading ? "Enviando..." : "Enviar señal DCS"}
               </button>
             </form>
-            {mensaje && <div className="mt-4 text-sm font-medium">{mensaje}</div>}
+            {mensaje && <div style={{ marginTop: 16, fontSize: '0.85rem', fontWeight: 500 }}>{mensaje}</div>}
           </div>
         );
       };

@@ -4,6 +4,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchSupervisores } from '../api/supervisores';
 
 const CrearPTS = () => {
+    // Efecto para limpiar el formulario al recibir el evento global
+    useEffect(() => {
+      const resetHandler = () => {
+        resetForm();
+      };
+      window.addEventListener('resetCrearPTS', resetHandler);
+      return () => {
+        window.removeEventListener('resetCrearPTS', resetHandler);
+      };
+    }, []);
   const navigate = useNavigate();
   const location = useLocation();
   // PTS en standby que se está retomando (viene desde la navegación)
@@ -521,19 +531,12 @@ const CrearPTS = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-          <h2 className="text-2xl font-bold text-center text-red-600 mb-4">Acceso Denegado</h2>
-          <p className="text-gray-600 text-center">
-            Debes iniciar sesión para crear un PTS.
-          </p>
-          <div className="mt-6 text-center">
-            <button 
-              onClick={() => window.location.reload()}
-              className="bg-epu-primary text-white px-4 py-2 rounded hover:bg-epu-primary-dark transition-colors"
-            >
-              Volver al Login
-            </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
+        <div className="card" style={{ maxWidth: 480, textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#dc2626', marginBottom: 12 }}>Acceso Denegado</h2>
+          <p style={{ color: '#64748b' }}>Debes iniciar sesión para crear un PTS.</p>
+          <div style={{ marginTop: 20 }}>
+            <button onClick={() => window.location.reload()} className="btn btn-primary">Volver al Login</button>
           </div>
         </div>
       </div>
@@ -541,15 +544,15 @@ const CrearPTS = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-md">
+    <div style={{ padding: 0 }}>
+      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           {/* Header */}
-          <div className="bg-epu-primary text-white p-6 rounded-t-lg">
-            <h1 className="text-2xl font-bold">
+          <div style={{ background: '#0d7377', color: '#fff', padding: '20px 24px', borderRadius: '16px 16px 0 0' }}>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>
               {editingPts ? `Continuar PTS - ${editingPts.id}` : 'Crear Permiso de Trabajo Seguro'}
             </h1>
-            <p className="mt-2 opacity-90">
+            <p style={{ marginTop: 6, opacity: 0.9, fontSize: '0.85rem' }}>
               Usuario: {user.nombre}
               {userRole && ` | Rol: ${userRole}`}
               {editingPts && ' | Retomando PTS en Stand by'}
@@ -557,21 +560,19 @@ const CrearPTS = () => {
           </div>
 
           {/* Formulario */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <form onSubmit={handleSubmit} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Información básica */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha *
-                </label>
+              <div className="form-group">
+                <label className="form-label">Fecha *</label>
                 <input
                   type="date"
                   name="fecha"
                   value={formData.fecha}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary ${
-                    errors.fecha ? 'border-red-500' : 'border-gray-300'
+                  className={`form-input ${
+                    errors.fecha ? 'border-red-500' : ''
                   }`}
                 />
                 {errors.fecha && <p className="error-validacion">{errors.fecha}</p>}
@@ -580,53 +581,47 @@ const CrearPTS = () => {
 
 
             {/* Horarios */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Hora de Inicio *
-                </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+              <div className="form-group">
+                <label className="form-label">Hora de Inicio *</label>
                 <input
                   type="time"
                   name="horaInicio"
                   value={formData.horaInicio}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary ${
-                    errors.horaInicio ? 'border-red-500' : 'border-gray-300'
+                  className={`form-input ${
+                    errors.horaInicio ? 'border-red-500' : ''
                   }`}
                 />
                 {errors.horaInicio && <p className="error-validacion">{errors.horaInicio}</p>}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Hora de Fin *
-                </label>
+              <div className="form-group">
+                <label className="form-label">Hora de Fin *</label>
                 <input
                   type="time"
                   name="horaFin"
                   value={formData.horaFin}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary ${
-                    errors.horaFin ? 'border-red-500' : 'border-gray-300'
+                  className={`form-input ${
+                    errors.horaFin ? 'border-red-500' : ''
                   }`}
                 />
-                {errors.horaFin && <p className="mt-1 text-sm text-red-600">{errors.horaFin}</p>}
+                {errors.horaFin && <p className="error-validacion">{errors.horaFin}</p>}
               </div>
             </div>
 
             {/* Equipo a Intervenir */}
             <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Equipo a Intervenir *</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1a2332' }}>Equipo a Intervenir *</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 border border-gray-200 rounded-lg">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tag de Equipo
-                  </label>
-                  <div className="flex gap-2">
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, padding: 16, border: '1px solid #e2eff1', borderRadius: 12, background: '#f8fdfd' }}>
+                <div>
+                  <label className="form-label">Tag de Equipo</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
+                      className="form-input"
                       value={formData.equiposSeguridad[0]?.equipo || ''}
                       onChange={e => handleArrayChange('equiposSeguridad', 0, 'equipo', e.target.value)}
                       onBlur={handleValidarEquipo}
@@ -670,42 +665,38 @@ const CrearPTS = () => {
                       </p>
                     );
                   })()}
-                  {equipoLoading && <p className="text-gray-500 text-sm mt-1">Validando equipo...</p>}
-                  {equipoError && <p className="text-red-600 text-sm mt-1">{equipoError}</p>}
+                  {equipoLoading && <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: 4 }}>Validando equipo...</p>}
+                  {equipoError && <p style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: 4 }}>{equipoError}</p>}
                 </div>
               </div>
-              {errors.equiposSeguridad && <p className="mt-1 text-sm text-red-600">{errors.equiposSeguridad}</p>}
+              {errors.equiposSeguridad && <p className="error-validacion">{errors.equiposSeguridad}</p>}
             </div>
 
             {/* Ubicación y descripción */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ubicación del Trabajo *
-              </label>
+            <div className="form-group">
+              <label className="form-label">Ubicación del Trabajo *</label>
               <input
                 type="text"
                 name="ubicacion"
                 value={formData.ubicacion}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary ${
-                  errors.ubicacion ? 'border-red-500' : 'border-gray-300'
+                className={`form-input ${
+                  errors.ubicacion ? 'border-red-500' : ''
                 }`}
                 placeholder="Ej: Sector A, Planta 2, Oficina 205"
               />
-              {errors.ubicacion && <p className="mt-1 text-sm text-red-600">{errors.ubicacion}</p>}
+              {errors.ubicacion && <p className="error-validacion">{errors.ubicacion}</p>}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Descripción del Trabajo *
-              </label>
+            <div className="form-group">
+              <label className="form-label">Descripción del Trabajo *</label>
               <textarea
                 name="descripcionTrabajo"
                 value={formData.descripcionTrabajo}
                 onChange={handleInputChange}
                 rows="4"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary ${
-                  errors.descripcionTrabajo ? 'border-red-500' : 'border-gray-300'
+                className={`form-input ${
+                  errors.descripcionTrabajo ? 'border-red-500' : ''
                 }`}
                 placeholder="Describe detalladamente el trabajo a realizar..."
               />
@@ -713,77 +704,62 @@ const CrearPTS = () => {
             </div>
 
             {/* Información del Solicitante - Autocompletado */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Información del Emisor</h3>
+            <div style={{ background: '#f0fafa', padding: 16, borderRadius: 12 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1a2332', marginBottom: 12 }}>Información del Emisor</h3>
               
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
 
-                {/* Solicitante fijo, solo lectura */}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Emisor *
-                  </label>
+                <div className="form-group">
+                  <label className="form-label">Emisor *</label>
                   <input
                     type="text"
                     name="solicitante"
                     value={user ? user.dni : ''}
                     readOnly
-                    className="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+                    className="form-input"
+                    style={{ background: '#e2eff1', cursor: 'not-allowed' }}
                     placeholder="Legajo del emisor"
                   />
                 </div>
 
-                {/* Nombre Emisor - Solo lectura, desde base de datos */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre Emisor *
-                  </label>
+                <div className="form-group">
+                  <label className="form-label">Nombre Emisor *</label>
                   <input
                     type="text"
                     name="nombreSolicitante"
                     value={nombreSolicitante}
                     readOnly
-                    className="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+                    className="form-input"
+                    style={{ background: '#e2eff1', cursor: 'not-allowed' }}
                     placeholder="Nombre completo del emisor"
                   />
                 </div>
-
-
-                {/* Campo nombreSolicitante eliminado, ya no es editable ni visible */}
-
-                {/* Campo de área eliminado por solicitud */}
               </div>
             </div>
 
-            {/* Información del Receptor */}
-            <div className="bg-gray-50 p-4 rounded-lg mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Información del Receptor</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Receptor *
-                  </label>
+            <div style={{ background: '#f0fafa', padding: 16, borderRadius: 12 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1a2332', marginBottom: 12 }}>Información del Receptor</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+                <div className="form-group">
+                  <label className="form-label">Receptor *</label>
                   <input
                     type="text"
                     name="receptor"
                     value={formData.receptor || ''}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary border-gray-300"
+                    className="form-input"
                     placeholder="Legajo del receptor"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre Receptor *
-                  </label>
+                <div className="form-group">
+                  <label className="form-label">Nombre Receptor *</label>
                   <input
                     type="text"
                     name="nombreReceptor"
                     value={formData.nombreReceptor || ''}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary border-gray-300"
+                    className="form-input"
                     placeholder="Nombre completo del receptor"
                   />
                 </div>
@@ -793,45 +769,26 @@ const CrearPTS = () => {
 
 
             {/* Checkboxes de requerimientos */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="requiereAnalisisRiesgo"
-                  checked={formData.requiereAnalisisRiesgo}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-epu-primary focus:ring-epu-primary border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Requiere Análisis de Riesgo Adicional
-                </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="checkbox" name="requiereAnalisisRiesgo" checked={formData.requiereAnalisisRiesgo} onChange={handleInputChange} style={{ accentColor: '#0d7377' }} />
+                <label style={{ fontSize: '0.9rem', color: '#334155' }}>Requiere Análisis de Riesgo Adicional</label>
               </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="requiereProcedimientoEspecifico"
-                  checked={formData.requiereProcedimientoEspecifico}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-epu-primary focus:ring-epu-primary border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Requiere Procedimiento Específico
-                </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="checkbox" name="requiereProcedimientoEspecifico" checked={formData.requiereProcedimientoEspecifico} onChange={handleInputChange} style={{ accentColor: '#0d7377' }} />
+                <label style={{ fontSize: '0.9rem', color: '#334155' }}>Requiere Procedimiento Específico</label>
               </div>
             </div>
 
-            {/* Otros Responsables - AHORA SI DEBAJO DE LOS CHECKBOXES */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Supervisor *
-                </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+              <div className="form-group">
+                <label className="form-label">Supervisor *</label>
                 <select
                   name="supervisor"
                   value={formData.supervisor}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary ${
-                    errors.supervisor ? 'border-red-500' : 'border-gray-300'
+                  className={`form-input ${
+                    errors.supervisor ? 'border-red-500' : ''
                   }`}
                 >
                   <option value="">-- Seleccione un supervisor --</option>
@@ -841,72 +798,61 @@ const CrearPTS = () => {
                 </select>
                 {errors.supervisor && <p className="error-validacion">{errors.supervisor}</p>}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Responsable del Área *
-                </label>
+              <div className="form-group">
+                <label className="form-label">Responsable del Área *</label>
                 <input
                   type="text"
                   name="responsableAreaTrabajo"
                   value={formData.responsableAreaTrabajo}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary ${
-                    errors.responsableAreaTrabajo ? 'border-red-500' : 'border-gray-300'
+                  className={`form-input ${
+                    errors.responsableAreaTrabajo ? 'border-red-500' : ''
                   }`}
                   placeholder="Responsable del área de trabajo"
                 />
-                {errors.responsableAreaTrabajo && <p className="mt-1 text-sm text-red-600">{errors.responsableAreaTrabajo}</p>}
+                {errors.responsableAreaTrabajo && <p className="error-validacion">{errors.responsableAreaTrabajo}</p>}
               </div>
             </div>
 
 
             {/* Riesgos y Controles */}
             <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Riesgos y Controles *</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1a2332' }}>Riesgos y Controles *</h3>
                 <button
                   type="button"
                   onClick={() => addArrayItem('riesgosControles', { riesgo: '', control: '' })}
-                  className="bg-epu-secondary text-white px-3 py-1 rounded text-sm hover:bg-yellow-600 transition-colors"
+                  className="btn btn-outline"
+                  style={{ fontSize: '0.85rem', padding: '6px 14px' }}
                 >
                   + Agregar Riesgo
                 </button>
               </div>
               
               {formData.riesgosControles.map((item, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-4 border border-gray-200 rounded-lg">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Riesgo {index + 1}
-                    </label>
+                <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12, padding: 16, border: '1px solid #e2eff1', borderRadius: 12, background: '#f8fdfd' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Riesgo {index + 1}</label>
                     <input
                       type="text"
                       value={item.riesgo}
                       onChange={(e) => handleArrayChange('riesgosControles', index, 'riesgo', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
+                      className="form-input"
                       placeholder="Describe el riesgo identificado"
                     />
                   </div>
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Control {index + 1}
-                      </label>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <label className="form-label" style={{ marginBottom: 0 }}>Control {index + 1}</label>
                       {formData.riesgosControles.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeArrayItem('riesgosControles', index)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          Eliminar
-                        </button>
+                        <button type="button" onClick={() => removeArrayItem('riesgosControles', index)} style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>Eliminar</button>
                       )}
                     </div>
                     <input
                       type="text"
                       value={item.control}
                       onChange={(e) => handleArrayChange('riesgosControles', index, 'control', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
+                      className="form-input"
                       placeholder="Medida de control para este riesgo"
                     />
                   </div>
@@ -918,52 +864,32 @@ const CrearPTS = () => {
             {/* ...se eliminó la sección duplicada de 'Equipo a Intervenir'... */}
 
             {/* Observaciones */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Observaciones Adicionales
-              </label>
+            <div className="form-group">
+              <label className="form-label">Observaciones Adicionales</label>
               <textarea
                 name="observaciones"
                 value={formData.observaciones}
                 onChange={handleInputChange}
                 rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
+                className="form-input"
                 placeholder="Información adicional relevante..."
               />
             </div>
 
             {/* Mensaje de estado */}
             {submitMessage && (
-              <div className={`p-4 rounded-md ${
-                submitMessage.includes('Error') ? 'bg-red-50 text-red-800' : 'bg-green-50 text-green-800'
-              }`}>
+              <div style={{ padding: 14, borderRadius: 10, background: submitMessage.includes('Error') ? '#fef2f2' : '#f0fdf4', color: submitMessage.includes('Error') ? '#991b1b' : '#166534', fontSize: '0.9rem' }}>
                 {submitMessage}
               </div>
             )}
 
             {/* Botones */}
-            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={resetForm}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
-                disabled={isSubmitting}
-              >
-                Limpiar
-              </button>
-              <button
-                type="button"
-                onClick={handleStandby}
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingTop: 20, borderTop: '1px solid #e2eff1' }}>
+              <button type="button" onClick={resetForm} className="btn btn-outline" disabled={isSubmitting}>Limpiar</button>
+              <button type="button" onClick={handleStandby} disabled={isSubmitting} className="btn" style={{ background: '#f59e0b', color: '#fff', border: 'none' }}>
                 {isSubmitting ? 'Guardando...' : 'Stand by'}
               </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-epu-primary text-white rounded-md hover:bg-epu-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+              <button type="submit" disabled={isSubmitting} className="btn btn-primary">
                 {isSubmitting ? 'Creando...' : (editingPts ? 'Crear PTS' : 'Crear PTS')}
               </button>
             </div>

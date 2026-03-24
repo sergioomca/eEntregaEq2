@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const ReportesView = () => {
     const [fechaDesde, setFechaDesde] = useState('');
@@ -6,6 +6,15 @@ const ReportesView = () => {
     const [area, setArea] = useState('');
     const [exportType, setExportType] = useState('excel'); 
     const [isExporting, setIsExporting] = useState(false);
+    const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+    // Estados para filtro de equipo con autocompletado
+    const [equipoInput, setEquipoInput] = useState('');
+    const [equipoSeleccionado, setEquipoSeleccionado] = useState('');
+    const [todosEquipos, setTodosEquipos] = useState([]);
+    const [equiposFiltrados, setEquiposFiltrados] = useState([]);
+    const [mostrarDropdown, setMostrarDropdown] = useState(false);
+    const equipoRef = useRef(null);
     
     // Estados para estadisticas
     const [estadisticas, setEstadisticas] = useState({
@@ -56,9 +65,60 @@ const ReportesView = () => {
     };
 
     
+    // Cargar lista de equipos al montar
     useEffect(() => {
+        const cargarEquipos = async () => {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/equipos', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setTodosEquipos(data);
+                }
+            } catch (error) {
+                console.error('Error al cargar equipos:', error);
+            }
+        };
+        cargarEquipos();
         loadEstadisticas();
     }, []);
+
+    // Cerrar dropdown al hacer click fuera
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (equipoRef.current && !equipoRef.current.contains(e.target)) {
+                setMostrarDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleEquipoInputChange = (e) => {
+        const valor = e.target.value;
+        setEquipoInput(valor);
+        setEquipoSeleccionado('');
+        if (valor.trim().length > 0) {
+            const filtrados = todosEquipos.filter(eq =>
+                (eq.tag || eq.id || '').toLowerCase().includes(valor.toLowerCase()) ||
+                (eq.descripcion || eq.nombre || '').toLowerCase().includes(valor.toLowerCase())
+            );
+            setEquiposFiltrados(filtrados);
+            setMostrarDropdown(true);
+        } else {
+            setEquiposFiltrados([]);
+            setMostrarDropdown(false);
+        }
+    };
+
+    const handleSeleccionarEquipo = (equipo) => {
+        const identificador = equipo.tag || equipo.id || '';
+        setEquipoInput(identificador);
+        setEquipoSeleccionado(identificador);
+        setMostrarDropdown(false);
+    };
 
     // Para manejar la exportacion a Excel - URL con parametros de consulta y descarga el archivo
     
@@ -79,6 +139,11 @@ const ReportesView = () => {
             }
             if (area && area.trim()) {
                 params.append('area', area.trim());
+            }
+            if (equipoSeleccionado && equipoSeleccionado.trim()) {
+                params.append('equipo', equipoSeleccionado.trim());
+            } else if (equipoInput && equipoInput.trim()) {
+                params.append('equipo', equipoInput.trim());
             }
             
             const urlWithParams = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
@@ -128,11 +193,51 @@ const ReportesView = () => {
         }
     };
 
+    const handleExportPdf = async () => {
+        setIsExportingPdf(true);
+        try {
+            const baseUrl = '/api/reportes/pdf-lista';
+            const params = new URLSearchParams();
+            if (fechaDesde) params.append('fechaDesde', fechaDesde);
+            if (fechaHasta) params.append('fechaHasta', fechaHasta);
+            if (area && area.trim()) params.append('area', area.trim());
+            if (equipoSeleccionado && equipoSeleccionado.trim()) params.append('equipo', equipoSeleccionado.trim());
+            else if (equipoInput && equipoInput.trim()) params.append('equipo', equipoInput.trim());
+
+            const urlWithParams = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(urlWithParams, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/pdf' }
+            });
+
+            if (!response.ok) throw new Error(`Error al generar PDF: ${response.status} ${response.statusText}`);
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'Reporte_PTS.pdf');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Error en la exportación PDF:', err);
+            alert(`Error al exportar PDF: ${err.message}`);
+        } finally {
+            setIsExportingPdf(false);
+        }
+    };
+
     // Para limpiar filtros
-    const handleLimpiarFiltros = () => {
-        setFechaDesde('');
+    const handleLimpiarFiltros = () => {        setFechaDesde('');
         setFechaHasta('');
         setArea('');
+        setEquipoInput('');
+        setEquipoSeleccionado('');
+        setEquiposFiltrados([]);
+        setMostrarDropdown(false);
     };
 
     // Validar que fechaDesde < fechaHasta
@@ -144,74 +249,74 @@ const ReportesView = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto p-6">
+        <div>
             {/* Encabezado */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-primary-epu mb-2">Exportación de Reportes</h1>
-                <p className="text-gray-600">
+            <div style={{ marginBottom: 32 }}>
+                <h1 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#0d7377', marginBottom: 8 }}>Exportación de Reportes</h1>
+                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
                     Configure los filtros y genere reportes de PTS en diferentes formatos.
                 </p>
             </div>
 
             {/* Panel de Control Principal */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden" style={{ width: '100%', minWidth: '1000px' }}>
+            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 {/* Header del panel */}
-                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-900">Configuración de Filtros</h2>
-                    <p className="text-sm text-gray-600 mt-1">
+                <div style={{ background: '#f0fafa', padding: '16px 24px', borderBottom: '1px solid #d1e7e7' }}>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 600, color: '#1a2332' }}>Configuración de Filtros</h2>
+                    <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: 4 }}>
                         Seleccione los criterios para filtrar los PTS en el reporte
                     </p>
                 </div>
 
                 {/* Formulario de filtros */}
-                <div className="p-6">
+                <div style={{ padding: 24 }}>
                     {/* Primera fila: Fechas separadas en 2 columnas */}
-                    <div className="grid grid-cols-2 gap-16 mb-6">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, marginBottom: 24 }}>
                         {/* Input Fecha Desde */}
-                        <div className="ml-8">
-                            <label htmlFor="fechaDesde" className="block text-sm font-medium text-gray-700 mb-2">
-                                📅 Fecha Desde
+                        <div className="form-group">
+                            <label htmlFor="fechaDesde" className="form-label">
+                                Fecha Desde
                             </label>
                             <input
                                 type="date"
                                 id="fechaDesde"
                                 value={fechaDesde}
                                 onChange={(e) => setFechaDesde(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                className="form-input"
                                 placeholder="Seleccione fecha inicial"
                             />
                         </div>
 
                         {/* Input Fecha Hasta */}
-                        <div>
-                            <label htmlFor="fechaHasta" className="block text-sm font-medium text-gray-700 mb-2">
-                                📅 Fecha Hasta
+                        <div className="form-group">
+                            <label htmlFor="fechaHasta" className="form-label">
+                                Fecha Hasta
                             </label>
                             <input
                                 type="date"
                                 id="fechaHasta"
                                 value={fechaHasta}
                                 onChange={(e) => setFechaHasta(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                className="form-input"
                                 placeholder="Seleccione fecha final"
-                                min={fechaDesde} // Validacion en el frontend
+                                min={fechaDesde}
                             />
                         </div>
                     </div>
 
                     {/* Segunda fila: area/Sector y Limpiar Filtros */}
-                    <div className="flex items-end justify-between mb-6 px-8">
+                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
                         {/* Selector area/Sector */}
-                        <div className="flex-shrink-0">
-                            <label htmlFor="area" className="block text-sm font-medium text-gray-700 mb-2">
-                                🏢 Área/Sector
+                        <div className="form-group" style={{ margin: 0 }}>
+                            <label htmlFor="area" className="form-label">
+                                Área/Sector
                             </label>
                             <select
                                 id="area"
                                 value={area}
                                 onChange={(e) => setArea(e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                style={{ width: '320px' }}
+                                className="form-input"
+                                style={{ width: 280 }}
                             >
                                 <option value="">Todas las áreas</option>
                                 <option value="Producción">Producción</option>
@@ -222,16 +327,92 @@ const ReportesView = () => {
                                 <option value="Administración">Administración</option>
                             </select>
                         </div>
+
+                        {/* Autocomplete de Equipo */}
+                        <div className="form-group" style={{ margin: 0, position: 'relative' }} ref={equipoRef}>
+                            <label htmlFor="equipo" className="form-label">
+                                Equipo
+                            </label>
+                            <input
+                                type="text"
+                                id="equipo"
+                                value={equipoInput}
+                                onChange={handleEquipoInputChange}
+                                onFocus={() => equipoInput.trim() && setMostrarDropdown(true)}
+                                autoComplete="off"
+                                placeholder="Buscar por tag o descripción..."
+                                className="form-input"
+                                style={{ width: 280 }}
+                            />
+                            {mostrarDropdown && equiposFiltrados.length > 0 && (
+                                <ul
+                                    style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: 0,
+                                        width: '280px',
+                                        zIndex: 50,
+                                        background: 'white',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '6px',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+                                        maxHeight: '200px',
+                                        overflowY: 'auto',
+                                        margin: 0,
+                                        padding: 0,
+                                        listStyle: 'none'
+                                    }}
+                                >
+                                    {equiposFiltrados.map((eq, idx) => (
+                                        <li
+                                            key={eq.id || eq.tag || idx}
+                                            onMouseDown={() => handleSeleccionarEquipo(eq)}
+                                            style={{
+                                                padding: '8px 12px',
+                                                cursor: 'pointer',
+                                                borderBottom: '1px solid #f3f4f6'
+                                            }}
+                                            onMouseEnter={e => e.currentTarget.style.background = '#f0fafa'}
+                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                        >
+                                            <span style={{ fontWeight: 600, color: '#1a2332' }}>{eq.tag || eq.id}</span>
+                                            {(eq.descripcion || eq.nombre) && (
+                                                <span style={{ color: '#64748b', fontSize: '0.75rem', marginLeft: 8 }}>{eq.descripcion || eq.nombre}</span>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                            {mostrarDropdown && equipoInput.trim() && equiposFiltrados.length === 0 && (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: 0,
+                                        width: '280px',
+                                        zIndex: 50,
+                                        background: 'white',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '6px',
+                                        padding: '8px 12px',
+                                        color: '#6b7280',
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    Sin coincidencias
+                                </div>
+                            )}
+                        </div>
                         
                         {/* para crear separacion */}
-                        <div className="flex-1"></div>
+                        <div style={{ flex: 1 }}></div>
                         
                         {/* Boton Limpiar Filtros */}
-                        <div className="mr-16">
+                        <div>
                             <button
                             onClick={handleLimpiarFiltros}
-                            className="inline-flex items-center border border-gray-300 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
-                            style={{ padding: '8px 12px', fontSize: '14px', height: '56px' }}
+                            className="btn btn-outline"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
                         >
                             <svg style={{ width: '18px', height: '18px', marginRight: '8px' }} fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
@@ -243,58 +424,54 @@ const ReportesView = () => {
 
                     {/* Validacion de fechas */}
                     {!validarFechas() && (
-                        <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
-                            <div className="flex items-center">
-                                <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                                <p className="text-sm text-red-800">
-                                    <strong>Error:</strong> La fecha "Desde" debe ser anterior a la fecha "Hasta".
-                                </p>
-                            </div>
+                        <div style={{ marginBottom: 16, background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <svg width="20" height="20" fill="#ef4444" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            <p style={{ fontSize: '0.85rem', color: '#991b1b' }}>
+                                <strong>Error:</strong> La fecha "Desde" debe ser anterior a la fecha "Hasta".
+                            </p>
                         </div>
                     )}
 
                     {/* Resumen de filtros activos */}
-                    {(fechaDesde || fechaHasta || area) && validarFechas() && (
-                        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-md p-4">
-                            <h4 className="text-sm font-medium text-blue-900 mb-2">📋 Filtros Activos:</h4>
-                            <ul className="text-sm text-blue-800 space-y-1">
+                    {(fechaDesde || fechaHasta || area || equipoInput) && validarFechas() && (
+                        <div style={{ marginBottom: 24, background: '#f0fafa', border: '1px solid #b2dfdb', borderRadius: 10, padding: 16 }}>
+                            <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0d7377', marginBottom: 8 }}>📋 Filtros Activos:</h4>
+                            <ul style={{ fontSize: '0.85rem', color: '#0a5c5f', display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 {fechaDesde && <li>• Desde: {new Date(fechaDesde).toLocaleDateString('es-ES')}</li>}
                                 {fechaHasta && <li>• Hasta: {new Date(fechaHasta).toLocaleDateString('es-ES')}</li>}
                                 {area && <li>• Área: {area}</li>}
+                                {equipoInput && <li>• Equipo: {equipoInput}</li>}
                             </ul>
                         </div>
                     )}
                 </div>
 
                 {/* Seccion de Acciones */}
-                <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                    <div className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">
+                <div style={{ background: '#f0fafa', padding: '16px 24px', borderTop: '1px solid #d1e7e7', borderRadius: '0 0 16px 16px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                         {/* Botones de exportacion */}
-                        <div className="flex items-center">
-                            <span className="text-sm font-medium text-gray-700 mr-12">Exportar:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                            <div className="flex items-center space-x-6">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1a2332' }}>Exportar:</span>
                             
                             {/* Boton Excel */}
                             <button
                                 onClick={handleExportExcel}
                                 disabled={isExporting || !validarFechas()}
-                                className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
-                                    isExporting || !validarFechas()
-                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                        : 'text-white bg-green-600 hover:bg-green-700 focus:ring-green-500 transform hover:scale-105'
-                                }`}
+                                className="btn btn-primary"
+                                style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                                    background: (isExporting || !validarFechas()) ? '#ccc' : '#059669',
+                                    ...(isExporting || !validarFechas() ? { color: '#888', cursor: 'not-allowed' } : {})
+                                }}
                                 title="Exportar a Excel"
                             >
                                 {isExporting ? (
-                                    <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
+                                    <span className="spinner" style={{ width: 16, height: 16 }}></span>
                                 ) : (
                                     <>
-                                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                                         </svg>
                                         Excel
@@ -304,53 +481,67 @@ const ReportesView = () => {
 
                             {/* Boton PDF */}
                             <button
-                                disabled
-                                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-500 bg-gray-100 cursor-not-allowed hover:bg-gray-200 transition-colors"
-                                title="Exportar PDFs individuales (Próximamente)"
+                                onClick={handleExportPdf}
+                                disabled={isExportingPdf || !validarFechas()}
+                                className="btn"
+                                style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                                    background: (isExportingPdf || !validarFechas()) ? '#eee' : '#dc2626',
+                                    color: (isExportingPdf || !validarFechas()) ? '#888' : '#fff',
+                                    border: 'none',
+                                    ...(isExportingPdf || !validarFechas() ? { cursor: 'not-allowed' } : {})
+                                }}
+                                title={validarFechas() ? 'Exportar lista a PDF' : 'Seleccione un rango de fechas válido'}
                             >
-                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                                </svg>
-                                PDF
+                                {isExportingPdf ? (
+                                    <>
+                                        <span className="spinner" style={{ width: 16, height: 16 }}></span>
+                                        Generando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                                        </svg>
+                                        PDF
+                                    </>
+                                )}
                             </button>
-                            </div>
                         </div>
-
-
                     </div>
                 </div>
             </div>
 
             {/* Informacion adicional */}
-            <div className="mt-6 bg-gray-50 rounded-lg p-4 border border-gray-200" style={{ width: '100%', minWidth: '1000px' }}>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">📋 Información del Reporte</h3>
-                <div className="text-sm text-gray-600 space-y-1">
-                    <p><strong>Formato Excel:</strong> Incluye todos los campos del PTS con filtros aplicados</p>
-                    <p><strong>Nombre del archivo:</strong> Reporte_PTS.xlsx</p>
-                    <p><strong>Filtros disponibles:</strong> Rango de fechas y área/sector</p>
+            <div className="card" style={{ marginTop: 24, padding: 20 }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1a2332', marginBottom: 8 }}>Información del Reporte</h3>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <p><strong>Formato Excel:</strong> Incluye todos los campos del PTS con filtros aplicados → <em>Reporte_PTS.xlsx</em></p>
+                    <p><strong>Formato PDF:</strong> Tabla resumen en hoja A4 apaisada con los registros filtrados → <em>Reporte_PTS.pdf</em></p>
+                    <p><strong>Filtros disponibles:</strong> Rango de fechas, área/sector y equipo</p>
                     <p><strong>Sin filtros:</strong> Se exportarán todos los PTS disponibles</p>
                 </div>
             </div>
 
             {/* Estadisticas en tiempo real */}
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4" style={{ width: '100%', minWidth: '1000px' }}>
-                <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
-                    <div className="text-2xl font-bold text-blue-600">
+            <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                <div className="card" style={{ textAlign: 'center', padding: 20 }}>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0d7377' }}>
                         {loadingStats ? '...' : estadisticas.total}
                     </div>
-                    <div className="text-sm text-gray-600">PTS Totales</div>
+                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>PTS Totales</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
-                    <div className="text-2xl font-bold text-green-600">
+                <div className="card" style={{ textAlign: 'center', padding: 20 }}>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 700, color: '#059669' }}>
                         {loadingStats ? '...' : estadisticas.autorizados}
                     </div>
-                    <div className="text-sm text-gray-600">Cerrados/Completados</div>
+                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Cerrados/Completados</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
-                    <div className="text-2xl font-bold text-yellow-600">
+                <div className="card" style={{ textAlign: 'center', padding: 20 }}>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 700, color: '#f59e0b' }}>
                         {loadingStats ? '...' : estadisticas.pendientes}
                     </div>
-                    <div className="text-sm text-gray-600">Pendientes</div>
+                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Pendientes</div>
                 </div>
             </div>
         </div>

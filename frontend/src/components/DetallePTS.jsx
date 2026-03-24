@@ -175,27 +175,20 @@ const DetallePTS = () => {
     // Estados de carga y error
     if (loading) {
         return (
-            <div className="max-w-4xl mx-auto p-6">
-                <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Cargando detalles del PTS...</p>
-                </div>
+            <div style={{ padding: 24, textAlign: 'center' }}>
+                <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
+                <p style={{ color: '#64748b' }}>Cargando detalles del PTS...</p>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="max-w-4xl mx-auto p-6">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <h3 className="text-lg font-medium text-red-900 mb-2">Error al cargar PTS</h3>
-                    <p className="text-red-700">{error}</p>
-                    <button
-                        onClick={() => navigate('/mis-pts')}
-                        className="mt-4 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md"
-                    >
-                        Volver a Lista PTS
-                    </button>
+            <div style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: 20 }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#991b1b', marginBottom: 8 }}>Error al cargar PTS</h3>
+                    <p style={{ color: '#dc2626', fontSize: '0.9rem' }}>{error}</p>
+                    <button onClick={() => navigate('/mis-pts')} className="btn btn-outline" style={{ marginTop: 12 }}>Volver a Lista PTS</button>
                 </div>
             </div>
         );
@@ -203,77 +196,79 @@ const DetallePTS = () => {
 
     if (!pts) {
         return (
-            <div className="max-w-4xl mx-auto p-6">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <h3 className="text-lg font-medium text-yellow-900 mb-2">PTS no encontrado</h3>
-                    <p className="text-yellow-700">El PTS con ID "{id}" no fue encontrado.</p>
-                    <button
-                        onClick={() => navigate('/mis-pts')}
-                        className="mt-4 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md"
-                    >
-                        Volver a Lista PTS
-                    </button>
+            <div style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+                <div style={{ background: '#fefce8', border: '1px solid #fde68a', borderRadius: 12, padding: 20 }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#92400e', marginBottom: 8 }}>PTS no encontrado</h3>
+                    <p style={{ color: '#a16207', fontSize: '0.9rem' }}>El PTS con ID "{id}" no fue encontrado.</p>
+                    <button onClick={() => navigate('/mis-pts')} className="btn btn-outline" style={{ marginTop: 12 }}>Volver a Lista PTS</button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
             {/* Encabezado */}
-            <div className="mb-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Detalle PTS</h1>
-                        <p className="text-gray-600 mt-1">ID: {pts.id}</p>
-                    </div>
-                    <button
-                        onClick={() => navigate('/mis-pts')}
-                        className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md font-medium"
-                    >
-                        ← Volver
-                    </button>
+            <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1a2332', margin: 0 }}>Detalle PTS</h1>
+                    <p style={{ color: '#64748b', marginTop: 4, fontSize: '0.9rem' }}>ID: {pts.id}</p>
                 </div>
+                <button onClick={() => navigate('/mis-pts')} className="btn btn-outline">← Volver</button>
             </div>
 
             {/* Información principal del PTS */}
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 {/* Header con estado */}
-                <div className={`px-6 py-4 ${
-                    pts.rtoEstado === 'AUTORIZADO' ? 'bg-green-100 border-l-4 border-green-500' :
-                    pts.rtoEstado === 'STANDBY' ? 'bg-gray-100 border-l-4 border-gray-400' :
-                    pts.rtoEstado === 'PENDIENTE' ? 'bg-yellow-100 border-l-4 border-yellow-500' :
-                    pts.rtoEstado === 'CERRADO' ? 'bg-gray-100 border-l-4 border-gray-500' :
-                    'bg-blue-100 border-l-4 border-blue-500'
-                }`}>
-                    <div className="flex items-center justify-between">
+                <div style={{
+                    padding: '16px 24px',
+                    background: pts.rtoEstado === 'AUTORIZADO' ? '#d1fae5' :
+                                pts.rtoEstado === 'STANDBY' ? '#f1f5f9' :
+                                pts.rtoEstado === 'PENDIENTE' ? '#fef9c3' :
+                                pts.rtoEstado === 'CERRADO' ? '#f1f5f9' :
+                                '#e0f5f5',
+                    borderLeft: `4px solid ${
+                        pts.rtoEstado === 'AUTORIZADO' ? '#10b981' :
+                        pts.rtoEstado === 'STANDBY' ? '#94a3b8' :
+                        pts.rtoEstado === 'PENDIENTE' ? '#f59e0b' :
+                        pts.rtoEstado === 'CERRADO' ? '#64748b' :
+                        '#0d7377'
+                    }`
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-900">{pts.titulo}</h2>
-                            <p className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-1 ${
-                                pts.rtoEstado === 'AUTORIZADO' ? 'bg-green-200 text-green-800' :
-                                pts.rtoEstado === 'STANDBY' ? 'bg-gray-200 text-gray-700' :
-                                pts.rtoEstado === 'PENDIENTE' ? 'bg-yellow-200 text-yellow-800' :
-                                pts.rtoEstado === 'CERRADO' ? 'bg-gray-200 text-gray-800' :
-                                'bg-blue-200 text-blue-800'
-                            }`}>
+                            <h2 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#1a2332' }}>{pts.titulo}</h2>
+                            <span className="badge" style={{
+                                marginTop: 6,
+                                display: 'inline-block',
+                                background: pts.rtoEstado === 'AUTORIZADO' ? '#d1fae5' :
+                                            pts.rtoEstado === 'STANDBY' ? '#e2e8f0' :
+                                            pts.rtoEstado === 'PENDIENTE' ? '#fef9c3' :
+                                            pts.rtoEstado === 'CERRADO' ? '#e2e8f0' :
+                                            '#e0f5f5',
+                                color: pts.rtoEstado === 'AUTORIZADO' ? '#047857' :
+                                       pts.rtoEstado === 'STANDBY' ? '#475569' :
+                                       pts.rtoEstado === 'PENDIENTE' ? '#92400e' :
+                                       pts.rtoEstado === 'CERRADO' ? '#334155' :
+                                       '#0d7377'
+                            }}>
                                 Estado: {pts.rtoEstado === 'STANDBY' ? 'Stand by' : pts.rtoEstado}
-                            </p>
+                            </span>
                         </div>
-                        {/* Indicador visual del estado de impresión */}
-                        <div className="text-right">
+                        <div style={{ textAlign: 'right' }}>
                             {canPrint() ? (
-                                <div className="flex items-center text-green-600">
-                                    <svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <div style={{ display: 'flex', alignItems: 'center', color: '#10b981' }}>
+                                    <svg style={{ width: 20, height: 20, marginRight: 4 }} fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zM5 14H4v-3h1v3zm1 0v2h8v-2H6zm9 0h1v-3h-1v3z" clipRule="evenodd" />
                                     </svg>
-                                    <span className="text-sm font-medium">Listo para imprimir</span>
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Listo para imprimir</span>
                                 </div>
                             ) : (
-                                <div className="flex items-center text-gray-500">
-                                    <svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <div style={{ display: 'flex', alignItems: 'center', color: '#94a3b8' }}>
+                                    <svg style={{ width: 20, height: 20, marginRight: 4 }} fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                                     </svg>
-                                    <span className="text-sm">Impresión bloqueada</span>
+                                    <span style={{ fontSize: '0.85rem' }}>Impresión bloqueada</span>
                                 </div>
                             )}
                         </div>
@@ -281,124 +276,109 @@ const DetallePTS = () => {
                 </div>
 
                 {/* Contenido principal */}
-                <div className="px-6 py-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Columna izquierda */}
-                        <div className="space-y-4">
+                <div style={{ padding: '24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Descripción</label>
-                                <p className="mt-1 text-gray-900 bg-gray-50 p-3 rounded-md">{pts.descripcion || 'Sin descripción'}</p>
+                                <label className="form-label">Descripción</label>
+                                <p style={{ background: '#f0fafa', padding: 12, borderRadius: 10, color: '#1a2332', fontSize: '0.9rem' }}>{pts.descripcion || 'Sin descripción'}</p>
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Equipo</label>
-                                <p className="mt-1 text-gray-900">{pts.equipo || 'No especificado'}</p>
+                                <label className="form-label">Equipo</label>
+                                <p style={{ color: '#1a2332', fontSize: '0.9rem' }}>{pts.equipo || 'No especificado'}</p>
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Usuario Responsable</label>
-                                <p className="mt-1 text-gray-900">{pts.usuario || 'No asignado'}</p>
+                                <label className="form-label">Usuario Responsable</label>
+                                <p style={{ color: '#1a2332', fontSize: '0.9rem' }}>{pts.usuario || 'No asignado'}</p>
                             </div>
                         </div>
 
-                        {/* Columna derecha */}
-                        <div className="space-y-4">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Área</label>
-                                <p className="mt-1 text-gray-900">{pts.area || 'No especificada'}</p>
+                                <label className="form-label">Área</label>
+                                <p style={{ color: '#1a2332', fontSize: '0.9rem' }}>{pts.area || 'No especificada'}</p>
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
-                                <p className="mt-1 text-gray-900">
+                                <label className="form-label">Fecha de Inicio</label>
+                                <p style={{ color: '#1a2332', fontSize: '0.9rem' }}>
                                     {pts.fechaInicio ? new Date(pts.fechaInicio).toLocaleDateString('es-ES') : 'No definida'}
                                 </p>
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Supervisor</label>
-                                <p className="mt-1 text-gray-900">{pts.supervisorLegajo || 'No asignado'}</p>
+                                <label className="form-label">Supervisor</label>
+                                <p style={{ color: '#1a2332', fontSize: '0.9rem' }}>{pts.supervisorLegajo || 'No asignado'}</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Sección de acciones */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                    <div className="flex items-center justify-between">
-                        {/* Mensaje de estado de impresión */}
-                        <div className="flex-1">
-                            {!canPrint() && (
-                                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-                                    <div className="flex items-center">
-                                        <svg className="w-5 h-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                        </svg>
-                                        <p className="text-sm text-yellow-800">
-                                            <strong>Impresión bloqueada.</strong> {(() => {
-                                                const userRole = user?.role || user?.authorities?.[0]?.authority;
-                                                if (userRole === 'EMISOR' && pts?.solicitanteLegajo !== user?.legajo && pts?.solicitanteLegajo !== user?.username) {
-                                                    return 'Solo puedes imprimir PTS que hayas creado.';
-                                                } else if (userRole === 'EJECUTANTE') {
-                                                    return 'Los ejecutantes no pueden imprimir PTS.';
-                                                }
-                                                return 'No tienes permisos para imprimir este PTS.';
-                                            })()}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Botón de impresión */}
-                        <div className="ml-4">
-                            <button
-                                onClick={handlePrint}
-                                disabled={!canPrint() || isPrinting}
-                                className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 ${
-                                    canPrint() && !isPrinting
-                                        ? 'text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 transform hover:scale-[1.02]'
-                                        : 'text-gray-500 bg-gray-200 cursor-not-allowed'
-                                }`}
-                            >
-                                {isPrinting ? (
-                                    <>
-                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Generando PDF...
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zM5 14H4v-3h1v3zm1 0v2h8v-2H6zm9 0h1v-3h-1v3z" clipRule="evenodd" />
-                                        </svg>
-                                        Imprimir Permiso (PDF)
-                                    </>
-                                )}
-                            </button>
-                        </div>
+                <div style={{ padding: '16px 24px', background: '#f0fafa', borderTop: '1px solid #d1e7e7', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, borderRadius: '0 0 16px 16px' }}>
+                    <div style={{ flex: 1 }}>
+                        {!canPrint() && (
+                            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <svg width="20" height="20" fill="#f59e0b" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                <p style={{ fontSize: '0.85rem', color: '#92400e' }}>
+                                    <strong>Impresión bloqueada.</strong> {(() => {
+                                        const userRole = user?.role || user?.authorities?.[0]?.authority;
+                                        if (userRole === 'EMISOR' && pts?.solicitanteLegajo !== user?.legajo && pts?.solicitanteLegajo !== user?.username) {
+                                            return 'Solo puedes imprimir PTS que hayas creado.';
+                                        } else if (userRole === 'EJECUTANTE') {
+                                            return 'Los ejecutantes no pueden imprimir PTS.';
+                                        }
+                                        return 'No tienes permisos para imprimir este PTS.';
+                                    })()}
+                                </p>
+                            </div>
+                        )}
                     </div>
+
+                    <button
+                        onClick={handlePrint}
+                        disabled={!canPrint() || isPrinting}
+                        className="btn btn-primary"
+                        style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 8,
+                            ...((!canPrint() || isPrinting) ? { background: '#ccc', color: '#888', cursor: 'not-allowed', border: 'none' } : {})
+                        }}
+                    >
+                        {isPrinting ? (
+                            <>
+                                <span className="spinner" style={{ width: 18, height: 18 }}></span>
+                                Generando PDF...
+                            </>
+                        ) : (
+                            <>
+                                <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zM5 14H4v-3h1v3zm1 0v2h8v-2H6zm9 0h1v-3h-1v3z" clipRule="evenodd" />
+                                </svg>
+                                Imprimir Permiso (PDF)
+                            </>
+                        )}
+                    </button>
                 </div>
             </div>
 
-            {/* Información adicional */}
             {pts.fechaHoraFirmaSupervisor && (
-                <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h3 className="text-lg font-medium text-green-900 mb-2">Información de Firma</h3>
-                    <div className="text-sm text-green-800">
+                <div className="card" style={{ marginTop: 24, borderLeft: '4px solid #0d7377', padding: 20 }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#0d7377', marginBottom: 8 }}>Información de Firma</h3>
+                    <div style={{ fontSize: '0.9rem', color: '#1a2332' }}>
                         <p><strong>Firmado por:</strong> {pts.dniSupervisorFirmante || 'No disponible'}</p>
                         <p><strong>Fecha de firma:</strong> {new Date(pts.fechaHoraFirmaSupervisor).toLocaleString('es-ES')}</p>
                     </div>
                 </div>
             )}
 
-            {/* Información de cierre RTO */}
             {pts.rtoEstado === 'CERRADO' && pts.rtoFechaHoraCierre && (
-                <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Información de Cierre RTO</h3>
-                    <div className="text-sm text-gray-800">
+                <div className="card" style={{ marginTop: 24, borderLeft: '4px solid #64748b', padding: 20 }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1a2332', marginBottom: 8 }}>Información de Cierre RTO</h3>
+                    <div style={{ fontSize: '0.9rem', color: '#1a2332' }}>
                         <p><strong>Estado RTO:</strong> {pts.rtoEstado}</p>
                         <p><strong>Cerrado por:</strong> {pts.rtoResponsableCierreLegajo || 'No disponible'}</p>
                         <p><strong>Fecha de cierre:</strong> {new Date(pts.rtoFechaHoraCierre).toLocaleString('es-ES')}</p>

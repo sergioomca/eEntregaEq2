@@ -18,9 +18,9 @@ const estadoStyles = {
     textColor: '#92400e',
   },
   'EN_MARCHA': {
-    color: '#2563eb',
-    bgColor: '#dbeafe',
-    textColor: '#1e40af',
+    color: '#0d7377',
+    bgColor: '#e4f5f5',
+    textColor: '#0a5c5f',
   },
 };
 
@@ -46,75 +46,73 @@ const DashboardEquipos = () => {
   });
 
   return (
-    <div className="mt-12 bg-white rounded-lg shadow-lg border border-gray-200">
-      <div className="bg-epu-primary text-white p-6 rounded-t-lg">
-        <h2 className="text-2xl font-bold mb-1">Dashboard de Equipos</h2>
-        <p className="text-white text-sm mb-2">Visualiza el estado y la información de todos los equipos registrados.</p>
+    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div style={{ background: '#0d7377', color: '#fff', padding: '20px 24px', borderRadius: '16px 16px 0 0' }}>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 4 }}>Dashboard de Equipos</h2>
+        <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem' }}>Visualiza el estado y la información de todos los equipos registrados.</p>
       </div>
-      <div className="px-6 pt-4 pb-2 border-b border-gray-100 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Buscar por Tag</label>
-            <input
-              type="text"
-              value={busqueda}
-              onChange={e => setBusqueda(e.target.value)}
-              className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
-              placeholder="Ej: P5511"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Estado DCS</label>
-            <select
-              value={estadoFiltro}
-              onChange={e => setEstadoFiltro(e.target.value)}
-              className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
-            >
-              <option value="TODOS">Todos</option>
-              <option value="HABILITADO">Habilitado</option>
-              <option value="DESHABILITADO">Deshabilitado</option>
-              <option value="PARADO">Parado</option>
-              <option value="EN_MARCHA">En marcha</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Condición</label>
-            <select
-              value={condicionFiltro}
-              onChange={e => setCondicionFiltro(e.target.value)}
-              className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-epu-primary"
-            >
-              <option value="TODAS">Todas</option>
-              <option value="BLOQUEADO">Bloqueado</option>
-              <option value="DESBLOQUEADO">Desbloqueado</option>
-            </select>
-          </div>
+      <div style={{ padding: '16px 24px', borderBottom: '1px solid #e8f4f6', display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-end' }}>
+        <div className="form-group" style={{ margin: 0 }}>
+          <label className="form-label">Buscar por Tag</label>
+          <input
+            type="text"
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            className="form-input"
+            placeholder="Ej: P5511"
+          />
+        </div>
+        <div className="form-group" style={{ margin: 0 }}>
+          <label className="form-label">Estado DCS</label>
+          <select
+            value={estadoFiltro}
+            onChange={e => setEstadoFiltro(e.target.value)}
+            className="form-input"
+          >
+            <option value="TODOS">Todos</option>
+            <option value="HABILITADO">Habilitado</option>
+            <option value="DESHABILITADO">Deshabilitado</option>
+            <option value="PARADO">Parado</option>
+            <option value="EN_MARCHA">En marcha</option>
+          </select>
+        </div>
+        <div className="form-group" style={{ margin: 0 }}>
+          <label className="form-label">Condición eEEq</label>
+          <select
+            value={condicionFiltro}
+            onChange={e => setCondicionFiltro(e.target.value)}
+            className="form-input"
+          >
+            <option value="TODAS">Todas</option>
+            <option value="BLOQUEADO">Bloqueado</option>
+            <option value="DESBLOQUEADO">Desbloqueado</option>
+          </select>
         </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div style={{ overflowX: 'auto' }}>
+        <table className="table">
+          <thead>
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tag</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado DCS</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condición</th>
+              <th>Tag</th>
+              <th>Descripción</th>
+              <th>Estado DCS</th>
+              <th>Condición eEEq</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody>
             {equiposFiltrados.map(eq => {
               const style = estadoStyles[eq.estadoDcs] || {};
               return (
-                <tr key={eq.tag} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-4 whitespace-nowrap font-mono text-sm text-gray-900">{eq.tag}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{eq.descripcion}</td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: style.bgColor, color: style.textColor }}>
+                <tr key={eq.tag}>
+                  <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{eq.tag}</td>
+                  <td>{eq.descripcion}</td>
+                  <td>
+                    <span className="badge" style={{ backgroundColor: style.bgColor, color: style.textColor }}>
                       {eq.estadoDcs}
                     </span>
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-xs font-semibold">
-                    <span className={eq.condicion === 'BLOQUEADO' ? 'text-red-700' : 'text-green-700'}>
+                  <td>
+                    <span style={{ fontWeight: 600, fontSize: '0.8rem', color: eq.condicion === 'BLOQUEADO' ? '#b91c1c' : '#059669' }}>
                       {eq.condicion}
                     </span>
                   </td>
@@ -123,7 +121,7 @@ const DashboardEquipos = () => {
             })}
             {equiposFiltrados.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">No se encontraron equipos.</td>
+                <td colSpan={4} style={{ textAlign: 'center', padding: 32, color: '#888' }}>No se encontraron equipos.</td>
               </tr>
             )}
           </tbody>
