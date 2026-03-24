@@ -377,7 +377,7 @@ const DetallePTS = () => {
 
             {pts.rtoEstado === 'CERRADO' && pts.rtoFechaHoraCierre && (
                 <div className="card" style={{ marginTop: 24, borderLeft: '4px solid #64748b', padding: 20 }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1a2332', marginBottom: 8 }}>Información de Cierre RTO</h3>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1a2332', marginBottom: 8 }}>Información de Cierre PTS</h3>
                     <div style={{ fontSize: '0.9rem', color: '#1a2332' }}>
                         <p><strong>Estado RTO:</strong> {pts.rtoEstado}</p>
                         <p><strong>Cerrado por:</strong> {pts.rtoResponsableCierreLegajo || 'No disponible'}</p>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 /**
- * Componente CierreRTO - Formulario para registrar el RTO de un PTS (HU-019)
+ * Componente CierrePTS - Formulario para registrar el cierre de un PTS (HU-019)
  * 
  * @param {Object} props - Propiedades del componente
  * @param {string} props.ptsId - ID del PTS a cerrar (requerido)
@@ -34,7 +34,7 @@ const CierreRTO = ({
       .finally(() => setLoading(false));
   }, [ptsId]);
 
-  // Función de validacion del formulario RTO - 
+  // Función de validacion del formulario de cierre PTS - 
   
   const validateForm = () => {
     const newErrors = {};
@@ -72,7 +72,7 @@ const CierreRTO = ({
     }
   };
 
-  /** Para manejar el cierre del PTS (RTO) - Hace una petición PUT al endpoint /api/pts/cerrar
+  /** Para manejar el cierre del PTS - Hace una petición PUT al endpoint /api/pts/cerrar
    */
   const handleCierreRTO = async () => {
     // Validación del formulario
@@ -111,7 +111,7 @@ const CierreRTO = ({
     setSuccess(false);
     setErrors({}); 
     try {
-      console.log('DEBUG CIERRE - Enviando petición de cierre RTO:', cerrarPtsRequest);
+      console.log('DEBUG CIERRE - Enviando petición de cierre PTS:', cerrarPtsRequest);
       console.log('DEBUG CIERRE - Token:', jwtToken ? 'Presente' : 'Ausente');
 
       const response = await fetch('/api/pts/cerrar', {
@@ -207,7 +207,7 @@ const CierreRTO = ({
   return (
     <div className="cierre-rto-container">
       <div className="cierre-rto-card">
-        <h3> Cerrar PTS - Retorno a Operaciones (RTO)</h3>
+        <h3> Cerrar PTS - Retorno a Operaciones</h3>
         
         <div className="pts-info">
           <p><strong>PTS ID:</strong> {ptsId}</p>
@@ -270,7 +270,7 @@ const CierreRTO = ({
             disabled={loading || !ptsId}
             className={`btn-cerrar-pts ${loading ? 'loading' : ''}`}
           >
-            {loading ? '🔄 Cerrando PTS...' : '🔒 Cerrar PTS (RTO)'}
+            {loading ? '🔄 Cerrando PTS...' : '🔒 Cerrar PTS'}
           </button>
 
           {onCancel && (

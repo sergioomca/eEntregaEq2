@@ -37,7 +37,7 @@ const getRoutes = (role) => {
             { id: 'dashboard', title: 'Dashboards', roles: [ROLES.SUPERVISOR], content: 'pts-dashboard-view' },
             { id: 'aprobacion', title: 'Aprobación', roles: [ROLES.SUPERVISOR], content: 'approval-list-view' },
             { id: 'firma-biometrica', title: 'Firma Biométrica', roles: [ROLES.SUPERVISOR], content: 'firma-biometrica-view' },
-            { id: 'cierre-rto', title: 'Cierre RTO', roles: [ROLES.SUPERVISOR], content: 'cierre-rto-view' }
+            { id: 'cierre-rto', title: 'Cierre PTS', roles: [ROLES.SUPERVISOR], content: 'cierre-rto-view' }
         ],
         [ROLES.EJECUTANTE]: [
             { id: 'dashboard', title: 'Dashboards', roles: [ROLES.EJECUTANTE], content: 'pts-dashboard-view' },
@@ -215,7 +215,7 @@ const RoleSelector = ({ roles, onSelect, onCancel }) => {
         'SUPERVISOR': { label: 'Supervisor', desc: 'Aprobar, firmar y cerrar PTS', icon: '✅' },
         'EJECUTANTE': { label: 'Ejecutante', desc: 'Ver y ejecutar tareas asignadas', icon: '🔧' },
         'ADMIN': { label: 'Administrador', desc: 'Gestión completa del sistema', icon: '⚙️' },
-        'RTO_MANT': { label: 'RTO Mantenimiento', desc: 'Gestión de cierre RTO', icon: '🔒' },
+        'RTO_MANT': { label: 'RTO Mantenimiento', desc: 'Gestión de cierre PTS', icon: '🔒' },
         'EHS': { label: 'EH&S', desc: 'Seguridad, Salud y Medio Ambiente', icon: '🛡️' },
         'LIDER': { label: 'Líder', desc: 'Liderazgo y coordinación de equipos', icon: '👷' },
     };
@@ -263,7 +263,7 @@ const RoleSelector = ({ roles, onSelect, onCancel }) => {
     );
 };
 
-// Componente para mostrar PTS listos para cierre RTO
+// Componente para mostrar PTS listos para cierre PTS
 const RTOClosureList = ({ onSelectPts }) => {
     const [ptsList, setPtsList] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -308,11 +308,11 @@ const RTOClosureList = ({ onSelectPts }) => {
 
     if (loading) return <div style={{ textAlign: 'center', padding: 16, color: '#64748b' }}>Cargando PTS listos para cierre...</div>;
     if (error) return <div style={{ color: '#dc2626', padding: 16 }}>Error: {error}</div>;
-    if (ptsList.length === 0) return <div style={{ color: '#64748b', padding: 16 }}>No hay PTS listos para cierre RTO.</div>;
+    if (ptsList.length === 0) return <div style={{ color: '#64748b', padding: 16 }}>No hay PTS listos para cierre PTS.</div>;
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1a2332', marginBottom: 8 }}>PTS Firmados - Listos para Cierre RTO</h4>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1a2332', marginBottom: 8 }}>PTS Firmados - Listos para Cierre PTS</h4>
             {ptsList.map(pts => (
                 <div key={pts.id} className="card" style={{ padding: 16 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -452,7 +452,7 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
     const handleSelectPtsForRTO = (pts) => {
         setSelectedPtsForRTO(pts);
         setShowRTOComponent(true);
-        setCurrentView({ title: 'Cierre RTO', content: 'cierre-rto-view' });
+        setCurrentView({ title: 'Cierre PTS', content: 'cierre-rto-view' });
         navigate('/cierre-rto');
     };
 
@@ -464,12 +464,12 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
         setCurrentView({ title: 'Aprobación', content: 'approval-list-view', refresh: Date.now() });
     };
 
-    // Funcion para manejar el exito del cierre RTO
+    // Funcion para manejar el exito del cierre PTS
     const handleRTOExitoso = () => {
         setSelectedPtsForRTO(null);
         setShowRTOComponent(false);
-        // Refrescar la vista de cierre RTO
-        setCurrentView({ title: 'Cierre RTO', content: 'cierre-rto-view' });
+        // Refrescar la vista de cierre PTS
+        setCurrentView({ title: 'Cierre PTS', content: 'cierre-rto-view' });
     };
 
     // Logica para cargar el contenido simulado (HU-002)
@@ -532,7 +532,7 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
             case 'cierre-rto-view':
                 return (
                     <>
-                        <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 16, color: '#0d7377' }}>Cierre RTO - Retorno a Operaciones</h3>
+                        <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 16, color: '#0d7377' }}>Cierre PTS - Retorno a Operaciones</h3>
                         {showRTOComponent && selectedPtsForRTO ? (
                             <div>
                                 <div style={{ marginBottom: 16, padding: 16, background: '#fef2f2', borderRadius: 10, border: '1px solid #fca5a5' }}>
@@ -649,11 +649,11 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                             Revisar Aprobaciones
                         </button>
                         <button
-                            onClick={() => setCurrentView({ title: 'Cierre RTO', content: 'cierre-rto-view' })}
+                            onClick={() => setCurrentView({ title: 'Cierre PTS', content: 'cierre-rto-view' })}
                             className="btn btn-primary"
                             style={{ padding: '14px 28px', fontSize: '0.95rem' }}
                         >
-                            Cierre RTO
+                            Cierre PTS
                         </button>
                     </>
                 )}
@@ -1033,7 +1033,7 @@ const App = () => {
                             <ProtectedRoute>
                                 <AppContent 
                                     user={user}
-                                    currentView={{ title: 'Cierre RTO', content: 'cierre-rto-view' }}
+                                    currentView={{ title: 'Cierre PTS', content: 'cierre-rto-view' }}
                                     setCurrentView={setCurrentView}
                                     onSwitchRole={handleSwitchRole}
                                     availableRoles={getUserRoles()}
