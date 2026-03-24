@@ -58,8 +58,7 @@ public class ReporteController {
             @RequestParam(required = false) 
             @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaHasta,
             
-            @RequestParam(required = false) String area) {
-        
+            @RequestParam(required = false) String area) {        
         try {
             System.out.println("Solicitud de exportación Excel con filtros:");
             System.out.println("- fechaDesde: " + fechaDesde);
@@ -99,6 +98,44 @@ public class ReporteController {
                 public final String version = "1.0.0";
             });
         } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Endpoint: Exportar PDF con listado de PTS filtrados
+     * GET /api/reportes/pdf-lista
+     */
+    @GetMapping("/pdf-lista")
+    public ResponseEntity<byte[]> exportarPtsListaPdf(
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaDesde,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaHasta,
+
+            @RequestParam(required = false) String area,
+
+            @RequestParam(required = false) String equipo) {
+        try {
+            System.out.println("Solicitud de exportación PDF lista con filtros:");
+            System.out.println("- fechaDesde: " + fechaDesde);
+            System.out.println("- fechaHasta: " + fechaHasta);
+            System.out.println("- area: " + area);
+            System.out.println("- equipo: " + equipo);
+
+            byte[] pdfBytes = reporteService.exportarPtsListaPdf(fechaDesde, fechaHasta, area, equipo);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Reporte_PTS.pdf");
+            headers.setContentLength(pdfBytes.length);
+
+            System.out.println("PDF lista generado exitosamente. Tamaño: " + pdfBytes.length + " bytes");
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.err.println("Error al exportar PDF lista: " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

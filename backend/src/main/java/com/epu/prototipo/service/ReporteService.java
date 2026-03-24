@@ -14,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -542,5 +543,199 @@ public class ReporteService {
         Cell cell = row.createCell(col);
         cell.setCellValue(value);
         cell.setCellStyle(style);
+    }
+
+    /**
+     * Exportar lista de PTS filtrados a PDF (tabla resumen)
+     */
+    public byte[] exportarPtsListaPdf(Date fechaDesde, Date fechaHasta, String area, String equipo) {
+        try {
+            String fechaDesdeStr = fechaDesde != null ? fechaDesde.toString() : null;
+            List<PermisoTrabajoSeguro> ptsList = ptsService.buscarPts(null, null, area, null, fechaDesdeStr);
+
+            // Filtrar por fecha hasta
+            if (fechaHasta != null) {
+                ptsList = ptsList.stream()
+                    .filter(p -> {
+                        if (p.getFechaInicio() == null) return true;
+                        try {
+                            java.time.LocalDate fi = java.time.LocalDate.parse(p.getFechaInicio().substring(0, 10));
+                            java.time.LocalDate fh = fechaHasta.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                            return !fi.isAfter(fh);
+                        } catch (Exception ex) { return true; }
+                    })
+                    .collect(Collectors.toList());
+            }
+
+            // Filtrar por equipo
+            if (equipo != null && !equipo.trim().isEmpty()) {
+                final String eq = equipo.trim().toLowerCase();
+                ptsList = ptsList.stream()
+                    .filter(p -> (p.getEquipoOInstalacion() != null && p.getEquipoOInstalacion().toLowerCase().contains(eq)))
+                    .collect(Collectors.toList());
+            }
+
+            System.out.println("Generando PDF lista con " + ptsList.size() + " registros");
+
+            // Usar A4 horizontal (landscape)
+            try (PDDocument document = new PDDocument();
+                 ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+                PDRectangle landscape = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
+                PDPage page = new PDPage(landscape);
+                document.addPage(page);
+
+                float pw = page.getMediaBox().getWidth();   // ~841
+                float ph = page.getMediaBox().getHeight();  // ~595
+                float mg = 35f;
+                float y = ph - mg;
+
+                // -- TÍTULO --
+                y = writeTextRaw(document, page, y, pw, "LISTADO DE PERMISOS DE TRABAJO SEGURO (PTS)", FONT_BOLD, 14, true);
+                y -= 4;
+
+                // -- FILTROS --
+                String filtros = "Filtros: " +
+                    (fechaDesde != null ? "Desde " + fechaDesde + "  " : "") +
+                    (fechaHasta != null ? "Hasta " + fechaHasta + "  " : "") +
+                    (area != null && !area.isEmpty() ? "Área: " + area + "  " : "") +
+                    (equipo != null && !equipo.isEmpty() ? "Equipo: " + equipo : "");
+                if (filtros.equals("Filtros: ")) filtros = "Filtros: Ninguno (todos los registros)";
+                y = writeTextRaw(document, page, y, pw, filtros, FONT_ITALIC, 9, false);
+                y -= 6;
+
+                // -- LÍNEA --
+                y = drawHLineRaw(document, page, y, mg, pw - mg);
+                y -= 6;
+
+                // Columnas: [label, width]
+                String[] colNames  = {"ID/N°", "Área", "Equipo/Instalación", "Descripción", "Solicitante", "Supervisor", "F. Inicio", "Estado", "Firmado Por"};
+                float[]  colWidths = { 55f,    70f,     100f,                  145f,           80f,           80f,          65f,         70f,      76f};
+
+                // -- ENCABEZADO TABLA --
+                y = drawTableHeader(document, page, y, mg, colNames, colWidths);
+
+                // -- FILAS --
+                for (PermisoTrabajoSeguro pts : ptsList) {
+                    if (y < mg + 15) {
+                        page = new PDPage(landscape);
+                        document.addPage(page);
+                        y = ph - mg;
+                        y = drawTableHeader(document, page, y, mg, colNames, colWidths);
+                    }
+                    String[] vals = {
+                        safe(pts.getId()),
+                        safe(pts.getArea()),
+                        safe(pts.getEquipoOInstalacion()),
+                        truncateStr(safe(pts.getDescripcionTrabajo()), 45),
+                        safe(pts.getSolicitanteLegajo()),
+                        safe(pts.getSupervisorLegajo()),
+                        safe(pts.getFechaInicio() != null && pts.getFechaInicio().length() >= 10 ? pts.getFechaInicio().substring(0, 10) : pts.getFechaInicio()),
+                        safe(pts.getRtoEstado()),
+                        safe(pts.getDniSupervisorFirmante())
+                    };
+                    y = drawTableRow(document, page, y, mg, vals, colWidths, FONT_NORMAL, 8);
+                }
+
+                // Total
+                y -= 6;
+                y = writeTextRaw(document, page, y, pw, "Total de registros: " + ptsList.size(), FONT_BOLD, 9, false);
+
+                document.save(baos);
+                System.out.println("PDF lista generado. Tamaño: " + baos.size() + " bytes");
+                return baos.toByteArray();
+            }
+        } catch (Exception e) {
+            System.err.println("Error al generar PDF lista: " + e.getMessage());
+            throw new RuntimeException("Error en la generación del PDF lista: " + e.getMessage());
+        }
+    }
+
+    // -- helpers adicionales para tabla PDF lista --
+    private float writeTextRaw(PDDocument doc, PDPage page, float y, float pw, String text, PDType1Font font, float fs, boolean centered) throws IOException {
+        try (PDPageContentStream cs = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true)) {
+            float x = 35f;
+            if (centered) {
+                float tw = font.getStringWidth(text) / 1000 * fs;
+                x = (pw - tw) / 2;
+            }
+            cs.beginText();
+            cs.setFont(font, fs);
+            cs.newLineAtOffset(x, y);
+            cs.showText(text);
+            cs.endText();
+        }
+        return y - fs - 4;
+    }
+
+    private float drawHLineRaw(PDDocument doc, PDPage page, float y, float x1, float x2) throws IOException {
+        try (PDPageContentStream cs = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true)) {
+            cs.setStrokingColor(0.3f, 0.3f, 0.3f);
+            cs.setLineWidth(0.5f);
+            cs.moveTo(x1, y);
+            cs.lineTo(x2, y);
+            cs.stroke();
+        }
+        return y - 3;
+    }
+
+    private float drawTableHeader(PDDocument doc, PDPage page, float y, float mg, String[] cols, float[] widths) throws IOException {
+        float rowH = 14f;
+        try (PDPageContentStream cs = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true)) {
+            // Fondo azul oscuro
+            cs.setNonStrokingColor(0.1f, 0.2f, 0.45f);
+            float totalW = 0; for (float w : widths) totalW += w;
+            cs.addRect(mg, y - rowH + 2, totalW, rowH);
+            cs.fill();
+            // Texto blanco
+            cs.setNonStrokingColor(1f, 1f, 1f);
+            float x = mg + 2;
+            for (int i = 0; i < cols.length; i++) {
+                String t = cols[i];
+                float maxW = widths[i] - 4;
+                while (FONT_BOLD.getStringWidth(t) / 1000 * 8 > maxW && t.length() > 2)
+                    t = t.substring(0, t.length() - 2);
+                cs.beginText();
+                cs.setFont(FONT_BOLD, 8);
+                cs.newLineAtOffset(x, y - rowH + 4);
+                cs.showText(t);
+                cs.endText();
+                x += widths[i];
+            }
+        }
+        return y - rowH;
+    }
+
+    private float drawTableRow(PDDocument doc, PDPage page, float y, float mg, String[] vals, float[] widths, PDType1Font font, float fs) throws IOException {
+        float rowH = 12f;
+        try (PDPageContentStream cs = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true)) {
+            // Línea inferior fila
+            cs.setStrokingColor(0.75f, 0.75f, 0.75f);
+            float totalW = 0; for (float w : widths) totalW += w;
+            cs.moveTo(mg, y - rowH + 2);
+            cs.lineTo(mg + totalW, y - rowH + 2);
+            cs.stroke();
+            // Texto
+            cs.setNonStrokingColor(0f, 0f, 0f);
+            float x = mg + 2;
+            for (int i = 0; i < vals.length; i++) {
+                String t = vals[i];
+                float maxW = widths[i] - 4;
+                while (font.getStringWidth(t) / 1000 * fs > maxW && t.length() > 2)
+                    t = t.substring(0, t.length() - 2) + "…";
+                cs.beginText();
+                cs.setFont(font, fs);
+                cs.newLineAtOffset(x, y - rowH + 3);
+                cs.showText(t);
+                cs.endText();
+                x += widths[i];
+            }
+        }
+        return y - rowH;
+    }
+
+    private String truncateStr(String s, int max) {
+        if (s == null) return "-";
+        return s.length() <= max ? s : s.substring(0, max) + "…";
     }
 }

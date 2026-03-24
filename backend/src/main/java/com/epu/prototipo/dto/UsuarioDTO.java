@@ -10,7 +10,7 @@ public class UsuarioDTO {
     private String legajo;
     private String nombreCompleto;
     private String sector;
-    // Roles posibles: "EMISOR" | "SUPERVISOR" | "RTO MANT" | "EJECUTANTE" | "ADMIN"
+    // Roles posibles: "EMISOR" | "SUPERVISOR" | "EJECUTANTE" | "ADMIN" | "RTO_MANT" | "EHS" | "LIDER"
     private List<String> roles;
 
     // Constructor vacio para JSON

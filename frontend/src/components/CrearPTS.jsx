@@ -67,7 +67,6 @@ const CrearPTS = () => {
       descripcionTrabajo: '',
       solicitanteLegajo: '',
       nombreSolicitante: '',
-      // area eliminado
       solicitante: '',
       supervisor: '',
       responsableAreaTrabajo: '',
@@ -75,7 +74,128 @@ const CrearPTS = () => {
       requiereProcedimientoEspecifico: false,
       observaciones: '',
       riesgosControles: [{ riesgo: '', control: '' }],
-      equiposSeguridad: [{ equipo: '', cantidad: 1 }]
+      equiposSeguridad: [{ equipo: '', cantidad: 1 }],
+      // --- Sección 1: Secciones adicionales aplicables ---
+      seccionesAdicionales: {
+        noAplica: false,
+        aislamientoFuentesEnergia: false,
+        entradaEspacioConfinado: false,
+        excavacionDemolicion: false,
+        prevencionCaidas: false,
+        trabajoElectrico: false,
+        equiposPesados: false,
+        trabajoEnCaliente: false,
+        hidrolavado: false,
+        lavadoPresion: false,
+        aperturaLineasEquipos: false,
+        sistemasAereosNoTripulados: false
+      },
+      // --- Sección 2: Herramientas y equipos ---
+      herramientasEquipos: '',
+      // --- Sección 4: Preguntas de seguridad ---
+      preguntasSeguridad: {
+        orientacionFormacion: '',
+        procedimientosEmergencia: '',
+        alcanceRevisado: '',
+        areasAdyacentesNotificadas: '',
+        equiposPreparados: '',
+        areaInspeccionadaAsbesto: '',
+        equiposPortatilesVerificados: '',
+        huecosBordesProtegidos: '',
+        trabajadoresEntrenamientoEspecial: '',
+        pruebasCampoMonitoreos: '',
+        monitoreoPor: '',
+        monitoreoFecha: '',
+        monitoreoHora: '',
+        monitoreoResultados: ''
+      },
+      // --- Sección 6: Riesgos Químicos ---
+      riesgosQuimicos: {
+        noAplica: false,
+        explosivo: false,
+        inflamable: false,
+        combustible: false,
+        toxico: false,
+        corrosivo: false,
+        irritante: false,
+        narcotico: false,
+        peligroInhalacion: false,
+        mutageno: false,
+        cancerigeno: false,
+        teratogenico: false,
+        danaMedioAmbiente: false,
+        danaCapaOzono: false
+      },
+      // --- Sección 7: Riesgos Físicos ---
+      riesgosFisicos: {
+        noAplica: false,
+        atmosferaDeficienteO2: false,
+        vibracion: false,
+        presion: false,
+        ruidoAlto: false,
+        iluminacion: false,
+        radiacion: false,
+        bordesCortantes: false,
+        shockElectrico: false,
+        arcoElectrico: false,
+        alturamayor180: false,
+        alturaMenor180: false,
+        caidaObjetos: false,
+        proyeccionParticulas: false,
+        areaCongestionada: false,
+        estresCalorFrio: false,
+        quemaduras: false,
+        polvos: false,
+        lineaDeFuego: false,
+        puntosPellizco: false,
+        tropiezos: false
+      },
+      // --- Sección 8: Riesgos Biológicos ---
+      riesgosBiologicos: {
+        noAplica: false,
+        aguaResiduosContaminados: false,
+        insectos: false,
+        animales: false,
+        bacterias: false
+      },
+      // --- Sección 9: Consideraciones Medio Ambiente ---
+      medioAmbiente: {
+        noAplica: false,
+        impactosAire: false,
+        impactosSuelo: false,
+        impactosAgua: false,
+        manejoResiduos: false,
+        ordenLimpieza: false,
+        precauciones: ''
+      },
+      // --- Sección 10: Consideraciones Ergonómicas ---
+      ergonomia: {
+        noAplica: false,
+        levantamientoCarga: false,
+        empujeArrastre: false,
+        posturaForzada: false,
+        estresContacto: false,
+        transporteManualCarga: false,
+        bipedestacion: false,
+        duracion: false,
+        movimientoRepetitivo: false,
+        rotacionDescansos: false,
+        posturaAdecuada: false,
+        esfuerzoDeDos: false,
+        facilidadesEquipos: false
+      },
+      // --- Sección 11: EPPs ---
+      epps: {
+        caraCabeza: { casco: false, protectorFacial: false, capucha: false, caretaSoldador: false },
+        ojos: { anteojosSeguridadClaro: false, anteojosSeguridadOscuro: false, antiparrasQuimicas: false, antiparrasOxicorte: false },
+        proteccionRespiratoria: { equipoAutonomo: false, mascaraCompleta: false, mascaraConFiltro: false, semimascaraFiltros: false, barbijo: false, mascaraEscapeCloro: false },
+        proteccionAuditiva: { proteccionAuricular: false, simplesDoble: false, limiteExposicion: false, endoaural: false, copa: false },
+        manos: { guantesCueroVaqueta: false, guantesQuimicos: false, telaFina: false, guantesAnticorte: false, guantesTemperatura: false, guantesSoldador: false },
+        brazos: { mangasLargas: false, mangasAnticorte: false, mangasProteccionCuero: false },
+        cuerpo: { ropaResistenteFuego: false, ropaResistenteQuimicos: false, descartableIgnifugo: false, descartableNoIgnifugo: false, trajeAluminizado: false, delantal: false, campera: false, eppCriogenicoFrio: false, ropaChalecoAltaVisibilidad: false },
+        piesPiernas: { calzadoPuntera: false, calzadoDielectrico: false, proteccionRodillas: false, proteccionPiernas: false, bolasDePVC: false, proteccionMetatarsal: false, bolasGomaPuntera: false },
+        electricidad: { mantaAislante: false, eppContraArco: false, herramientasClasificadas: false, guantesAislantesGoma: false, herramientasPlasticoReforzado: false, puestasTierra: false }
+      }
     }));
 
   // Estados para validación de equipo
@@ -258,6 +378,30 @@ const CrearPTS = () => {
     }));
   };
 
+  // Helper para cambios en objetos anidados (seccionesAdicionales, riesgosQuimicos, etc.)
+  const handleNestedChange = (section, field, value) => {
+    setFormData(prev => {
+      const updated = { ...prev[section], [field]: value };
+      // Si se activa "No Aplica", desmarcar todos los demás checkboxes de la sección
+      if (field === 'noAplica' && value === true) {
+        Object.keys(updated).forEach(k => {
+          if (k !== 'noAplica' && typeof updated[k] === 'boolean') updated[k] = false;
+        });
+      }
+      return { ...prev, [section]: updated };
+    });
+    // Limpiar error de la sección al cambiar
+    setErrors(prev => { const copy = { ...prev }; delete copy[section]; return copy; });
+  };
+
+  // Helper para cambios en EPPs (2 niveles de anidamiento)
+  const handleEppChange = (category, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      epps: { ...prev.epps, [category]: { ...prev.epps[category], [field]: value } }
+    }));
+  };
+
   // handleBuscarLegajo eliminado
 
   // Funcion para guardar PTS en Stand by (formulario parcial)
@@ -299,7 +443,17 @@ const CrearPTS = () => {
             observacion: `Cantidad: ${es.cantidad}`
           })),
         rtoEstado: 'STANDBY',
-        requiereAnalisisRiesgoAdicional: formData.requiereAnalisisRiesgo === true
+        requiereAnalisisRiesgoAdicional: formData.requiereAnalisisRiesgo === true,
+        // Nuevos campos del PTS extendido
+        seccionesAdicionales: formData.seccionesAdicionales,
+        herramientasEquipos: formData.herramientasEquipos,
+        preguntasSeguridad: formData.preguntasSeguridad,
+        riesgosQuimicos: formData.riesgosQuimicos,
+        riesgosFisicos: formData.riesgosFisicos,
+        riesgosBiologicos: formData.riesgosBiologicos,
+        medioAmbiente: formData.medioAmbiente,
+        ergonomia: formData.ergonomia,
+        epps: formData.epps
       };
 
       let response;
@@ -350,8 +504,11 @@ const CrearPTS = () => {
     // Campos requeridos HU-011
     if (!formData.descripcionTrabajo.trim()) newErrors.descripcionTrabajo = 'La descripcion del trabajo es obligatoria';
     if (!formData.solicitante.trim()) newErrors.solicitante = 'El solicitante es obligatorio';
-    // Solo pedir supervisor si requiere análisis de riesgo adicional
-    if (formData.requiereAnalisisRiesgo && !formData.supervisor.trim()) newErrors.supervisor = 'El supervisor es obligatorio';
+    // Pedir supervisor si requiere análisis de riesgo, procedimiento específico o alguna sección adicional
+    const tieneSeccionAdicional = Object.values(formData.seccionesAdicionales).some(v => v === true);
+    if ((formData.requiereAnalisisRiesgo || formData.requiereProcedimientoEspecifico || tieneSeccionAdicional) && !formData.supervisor.trim()) {
+      newErrors.supervisor = 'El supervisor es obligatorio cuando se requiere análisis de riesgo, procedimiento específico o secciones adicionales';
+    }
 
     // Validaciones de autocompletado eliminadas
     // validación de área eliminada
@@ -392,6 +549,44 @@ const CrearPTS = () => {
       }
     }
 
+    // Validar secciones de riesgos: debe estar tildado "No Aplica" o al menos un checkbox
+    const seccionesRiesgo = [
+      { key: 'riesgosQuimicos', label: 'Riesgos Químicos' },
+      { key: 'riesgosFisicos', label: 'Riesgos Físicos' },
+      { key: 'riesgosBiologicos', label: 'Riesgos Biológicos' },
+      { key: 'medioAmbiente', label: 'Consideraciones Medioambientales' },
+      { key: 'ergonomia', label: 'Consideraciones Ergonómicas' }
+    ];
+    seccionesRiesgo.forEach(({ key, label }) => {
+      const seccion = formData[key];
+      if (!seccion.noAplica) {
+        const tieneAlguno = Object.entries(seccion).some(([k, v]) => k !== 'noAplica' && k !== 'precauciones' && v === true);
+        if (!tieneAlguno) newErrors[key] = `Debe marcar "No Aplica" o al menos una opción en ${label}`;
+      }
+    });
+
+    // Validar campos de monitoreo si se seleccionó "Sí" en Pruebas de Campo
+    if (formData.preguntasSeguridad.pruebasCampoMonitoreos === 'Sí') {
+      if (!formData.preguntasSeguridad.monitoreoPor.trim()) newErrors.monitoreoPor = 'El campo "Monitoreo hecho por" es obligatorio';
+      if (!formData.preguntasSeguridad.monitoreoFecha) newErrors.monitoreoFecha = 'La fecha de monitoreo es obligatoria';
+      if (!formData.preguntasSeguridad.monitoreoHora) newErrors.monitoreoHora = 'La hora de monitoreo es obligatoria';
+      if (!formData.preguntasSeguridad.monitoreoResultados.trim()) newErrors.monitoreoResultados = 'Los resultados del monitoreo son obligatorios';
+    }
+
+    // Validar Preguntas de Seguridad
+    const preguntasNoDebenSerNo = [
+      'orientacionFormacion', 'procedimientosEmergencia', 'alcanceRevisado',
+      'areasAdyacentesNotificadas', 'equiposPreparados', 'areaInspeccionadaAsbesto',
+      'equiposPortatilesVerificados', 'trabajadoresEntrenamientoEspecial'
+    ];
+    const preguntasConNo = preguntasNoDebenSerNo.filter(k => formData.preguntasSeguridad[k] === 'No');
+    if (preguntasConNo.length > 0) {
+      newErrors.preguntasSeguridad = 'Una o más preguntas de seguridad fueron respondidas "No". No se puede crear el PTS hasta corregirlas.';
+    }
+    if (formData.preguntasSeguridad.huecosBordesProtegidos === 'Sí') {
+      newErrors.preguntasSeguridad = (newErrors.preguntasSeguridad ? newErrors.preguntasSeguridad + ' ' : '') + 'La pregunta sobre huecos/bordes desprotegidos fue respondida "Sí". No se puede crear el PTS si existen riesgos de caída sin protección.';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -425,14 +620,13 @@ const CrearPTS = () => {
         
         // Campos de personal
         nombreSolicitante: formData.solicitante,
-        solicitanteLegajo: user?.dni || '', // !!! ver si queda asi Usar DNI del usuario como legajo
-        supervisorLegajo: formData.supervisor, // El supervisor es un legajo/DNI
-        // !!! Nota: responsableAreaTrabajo se almacena en observaciones por ahora
+        solicitanteLegajo: user?.dni || '',
+        supervisorLegajo: formData.supervisor,
         observaciones: `${formData.observaciones}\n\nResponsable del Área: ${formData.responsableAreaTrabajo}`.trim(),
         
         // Campos adicionales del modelo
-        area: formData.ubicacion, // este campo es para la ubicación, no para el área del solicitante
-        equipoOInstalacion: formData.equiposSeguridad.map(e => e.equipo).join(', '), // String con equipos
+        area: formData.ubicacion,
+        equipoOInstalacion: formData.equiposSeguridad.map(e => e.equipo).join(', '),
         tipoTrabajo: 'GENERAL', 
         
         // Mapear riesgos y controles al formato backend
@@ -452,9 +646,18 @@ const CrearPTS = () => {
         
         // Estado inicial del RTO
         rtoEstado: 'PENDIENTE',
-
-        // Nuevo campo: requiereAnalisisRiesgoAdicional
-        requiereAnalisisRiesgoAdicional: formData.requiereAnalisisRiesgo === true
+        requiereAnalisisRiesgoAdicional: formData.requiereAnalisisRiesgo === true,
+        
+        // Nuevos campos del PTS extendido
+        seccionesAdicionales: formData.seccionesAdicionales,
+        herramientasEquipos: formData.herramientasEquipos,
+        preguntasSeguridad: formData.preguntasSeguridad,
+        riesgosQuimicos: formData.riesgosQuimicos,
+        riesgosFisicos: formData.riesgosFisicos,
+        riesgosBiologicos: formData.riesgosBiologicos,
+        medioAmbiente: formData.medioAmbiente,
+        ergonomia: formData.ergonomia,
+        epps: formData.epps
       };
 
       // console.log eliminado (control)
@@ -514,7 +717,6 @@ const CrearPTS = () => {
       descripcionTrabajo: '',
       solicitanteLegajo: '',
       nombreSolicitante: '',
-      // area eliminado
       solicitante: user?.nombre || '',
       supervisor: '',
       responsableAreaTrabajo: '',
@@ -522,11 +724,64 @@ const CrearPTS = () => {
       requiereProcedimientoEspecifico: false,
       observaciones: '',
       riesgosControles: [{ riesgo: '', control: '' }],
-      equiposSeguridad: [{ equipo: '', cantidad: 1 }]
+      equiposSeguridad: [{ equipo: '', cantidad: 1 }],
+      seccionesAdicionales: {
+        noAplica: false,
+        aislamientoFuentesEnergia: false, entradaEspacioConfinado: false, excavacionDemolicion: false,
+        prevencionCaidas: false, trabajoElectrico: false, equiposPesados: false, trabajoEnCaliente: false,
+        hidrolavado: false, lavadoPresion: false, aperturaLineasEquipos: false, sistemasAereosNoTripulados: false
+      },
+      herramientasEquipos: '',
+      preguntasSeguridad: {
+        orientacionFormacion: '', procedimientosEmergencia: '', alcanceRevisado: '',
+        areasAdyacentesNotificadas: '', equiposPreparados: '', areaInspeccionadaAsbesto: '',
+        equiposPortatilesVerificados: '', huecosBordesProtegidos: '', trabajadoresEntrenamientoEspecial: '',
+        pruebasCampoMonitoreos: '', monitoreoPor: '', monitoreoFecha: '', monitoreoHora: '', monitoreoResultados: ''
+      },
+      riesgosQuimicos: {
+        noAplica: false,
+        explosivo: false, inflamable: false, combustible: false, toxico: false, corrosivo: false,
+        irritante: false, narcotico: false, peligroInhalacion: false, mutageno: false,
+        cancerigeno: false, teratogenico: false, danaMedioAmbiente: false, danaCapaOzono: false
+      },
+      riesgosFisicos: {
+        noAplica: false,
+        atmosferaDeficienteO2: false, vibracion: false, presion: false, ruidoAlto: false,
+        iluminacion: false, radiacion: false, bordesCortantes: false, shockElectrico: false,
+        arcoElectrico: false, alturamayor180: false, alturaMenor180: false, caidaObjetos: false,
+        proyeccionParticulas: false, areaCongestionada: false, estresCalorFrio: false,
+        quemaduras: false, polvos: false, lineaDeFuego: false, puntosPellizco: false, tropiezos: false
+      },
+      riesgosBiologicos: {
+        noAplica: false,
+        aguaResiduosContaminados: false, insectos: false, animales: false, bacterias: false
+      },
+      medioAmbiente: {
+        noAplica: false,
+        impactosAire: false, impactosSuelo: false, impactosAgua: false,
+        manejoResiduos: false, ordenLimpieza: false, precauciones: ''
+      },
+      ergonomia: {
+        noAplica: false,
+        levantamientoCarga: false, empujeArrastre: false, posturaForzada: false,
+        estresContacto: false, transporteManualCarga: false, bipedestacion: false,
+        duracion: false, movimientoRepetitivo: false, rotacionDescansos: false,
+        posturaAdecuada: false, esfuerzoDeDos: false, facilidadesEquipos: false
+      },
+      epps: {
+        caraCabeza: { casco: false, protectorFacial: false, capucha: false, caretaSoldador: false },
+        ojos: { anteojosSeguridadClaro: false, anteojosSeguridadOscuro: false, antiparrasQuimicas: false, antiparrasOxicorte: false },
+        proteccionRespiratoria: { equipoAutonomo: false, mascaraCompleta: false, mascaraConFiltro: false, semimascaraFiltros: false, barbijo: false, mascaraEscapeCloro: false },
+        proteccionAuditiva: { proteccionAuricular: false, simplesDoble: false, limiteExposicion: false, endoaural: false, copa: false },
+        manos: { guantesCueroVaqueta: false, guantesQuimicos: false, telaFina: false, guantesAnticorte: false, guantesTemperatura: false, guantesSoldador: false },
+        brazos: { mangasLargas: false, mangasAnticorte: false, mangasProteccionCuero: false },
+        cuerpo: { ropaResistenteFuego: false, ropaResistenteQuimicos: false, descartableIgnifugo: false, descartableNoIgnifugo: false, trajeAluminizado: false, delantal: false, campera: false, eppCriogenicoFrio: false, ropaChalecoAltaVisibilidad: false },
+        piesPiernas: { calzadoPuntera: false, calzadoDielectrico: false, proteccionRodillas: false, proteccionPiernas: false, bolasDePVC: false, proteccionMetatarsal: false, bolasGomaPuntera: false },
+        electricidad: { mantaAislante: false, eppContraArco: false, herramientasClasificadas: false, guantesAislantesGoma: false, herramientasPlasticoReforzado: false, puestasTierra: false }
+      }
     });
     setErrors({});
     setSubmitMessage('');
-      // setSearchError(null); // Eliminado porque no existe o no es necesario
   };
 
   if (!user) {
@@ -768,53 +1023,6 @@ const CrearPTS = () => {
 
 
 
-            {/* Checkboxes de requerimientos */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="checkbox" name="requiereAnalisisRiesgo" checked={formData.requiereAnalisisRiesgo} onChange={handleInputChange} style={{ accentColor: '#0d7377' }} />
-                <label style={{ fontSize: '0.9rem', color: '#334155' }}>Requiere Análisis de Riesgo Adicional</label>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="checkbox" name="requiereProcedimientoEspecifico" checked={formData.requiereProcedimientoEspecifico} onChange={handleInputChange} style={{ accentColor: '#0d7377' }} />
-                <label style={{ fontSize: '0.9rem', color: '#334155' }}>Requiere Procedimiento Específico</label>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-              <div className="form-group">
-                <label className="form-label">Supervisor *</label>
-                <select
-                  name="supervisor"
-                  value={formData.supervisor}
-                  onChange={handleInputChange}
-                  className={`form-input ${
-                    errors.supervisor ? 'border-red-500' : ''
-                  }`}
-                >
-                  <option value="">-- Seleccione un supervisor --</option>
-                  {supervisores.map(sup => (
-                    <option key={sup.legajo} value={sup.legajo}>{sup.legajo} - {sup.nombre}</option>
-                  ))}
-                </select>
-                {errors.supervisor && <p className="error-validacion">{errors.supervisor}</p>}
-              </div>
-              <div className="form-group">
-                <label className="form-label">Responsable del Área *</label>
-                <input
-                  type="text"
-                  name="responsableAreaTrabajo"
-                  value={formData.responsableAreaTrabajo}
-                  onChange={handleInputChange}
-                  className={`form-input ${
-                    errors.responsableAreaTrabajo ? 'border-red-500' : ''
-                  }`}
-                  placeholder="Responsable del área de trabajo"
-                />
-                {errors.responsableAreaTrabajo && <p className="error-validacion">{errors.responsableAreaTrabajo}</p>}
-              </div>
-            </div>
-
-
             {/* Riesgos y Controles */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -863,6 +1071,473 @@ const CrearPTS = () => {
 
             {/* ...se eliminó la sección duplicada de 'Equipo a Intervenir'... */}
 
+
+
+            {/* ============================================================ */}
+            {/* SECCIÓN 1: Secciones Adicionales Aplicables */}
+            {/* ============================================================ */}
+            <div style={{ border: '1px solid #b2dfdb', borderRadius: 12, padding: 20, background: '#f8fdfd' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0d7377', margin: 0 }}>Secciones Adicionales Aplicables</h3>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', fontWeight: 600, color: '#0d7377', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={formData.seccionesAdicionales.noAplica} onChange={e => handleNestedChange('seccionesAdicionales', 'noAplica', e.target.checked)} style={{ accentColor: '#0d7377' }} />
+                  No Aplica
+                </label>
+              </div>
+              <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 12 }}>Marque las secciones que apliquen al trabajo. (Requerirá firma de supervisor)</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8, opacity: formData.seccionesAdicionales.noAplica ? 0.4 : 1, pointerEvents: formData.seccionesAdicionales.noAplica ? 'none' : 'auto' }}>
+                {[
+                  ['aislamientoFuentesEnergia', 'Aislamiento de Fuentes de Energía'],
+                  ['entradaEspacioConfinado', 'Entrada a Espacio Confinado'],
+                  ['excavacionDemolicion', 'Excavación / Demolición'],
+                  ['prevencionCaidas', 'Prevención de Caídas'],
+                  ['trabajoElectrico', 'Trabajo Eléctrico'],
+                  ['equiposPesados', 'Equipos Pesados'],
+                  ['trabajoEnCaliente', 'Trabajo en Caliente'],
+                  ['hidrolavado', 'Hidrolavado'],
+                  ['lavadoPresion', 'Lavado a Presión'],
+                  ['aperturaLineasEquipos', 'Apertura de Líneas y Equipos'],
+                  ['sistemasAereosNoTripulados', 'Sistemas Aéreos no Tripulados']
+                ].map(([key, label]) => (
+                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.88rem', color: '#334155', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={formData.seccionesAdicionales[key]} onChange={e => handleNestedChange('seccionesAdicionales', key, e.target.checked)} style={{ accentColor: '#0d7377' }} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* ============================================================ */}
+            {/* SECCIÓN 2: Herramientas y Equipos */}
+            {/* ============================================================ */}
+            <div style={{ border: '1px solid #b2dfdb', borderRadius: 12, padding: 20, background: '#f8fdfd' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0d7377', marginBottom: 14 }}>Herramientas y Equipos</h3>
+              <textarea
+                name="herramientasEquipos"
+                value={formData.herramientasEquipos}
+                onChange={handleInputChange}
+                rows="3"
+                className="form-input"
+                placeholder="Listar herramientas y equipos a utilizar..."
+              />
+            </div>
+
+            {/* ============================================================ */}
+            {/* SECCIÓN 4: Preguntas de Seguridad */}
+            {/* ============================================================ */}
+            <div style={{ border: '1px solid #b2dfdb', borderRadius: 12, padding: 20, background: '#f8fdfd' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0d7377', marginBottom: 14 }}>Preguntas de Seguridad</h3>
+              <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 12 }}>Responda Sí, No o N/A según corresponda.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[
+                  ['orientacionFormacion', '¿Los empleados cuentan con la orientación y formación necesaria?'],
+                  ['procedimientosEmergencia', '¿Se han revisado los procedimientos de emergencia y alarmas, rutas de evacuación y puntos de encuentro?'],
+                  ['alcanceRevisado', '¿Se ha revisado y comprendido el alcance y los límites de cualquier otro trabajo que pueda influir?'],
+                  ['areasAdyacentesNotificadas', '¿Otros trabajadores en áreas adyacentes han sido notificados?'],
+                  ['equiposPreparados', '¿Se han preparado e identificado adecuadamente todos los equipos que se van a trabajar?'],
+                  ['areaInspeccionadaAsbesto', '¿El área de trabajo se inspeccionó en cuanto a asbesto?'],
+                  ['equiposPortatilesVerificados', '¿Los equipos portátiles tienen protección diferencial y térmica? ¿Se encuentran verificados?'],
+                  ['huecosBordesProtegidos', '¿El trabajo creará huecos, bordes desprotegidos u otros riesgos de caída? Si es trabajo en altura, completar Sección adicional.'],
+                  ['trabajadoresEntrenamientoEspecial', '¿Los trabajadores cuentan con entrenamiento especial requerido? (Amoladoras, Manejo de JLG, Hydrorc, Movimiento de Cargas, Guía/Spotter, Oxicorte)']
+                ].map(([key, label]) => (
+                  <div key={key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '8px 0', borderBottom: '1px solid #e2eff1' }}>
+                    <div style={{ flex: 1, fontSize: '0.88rem', color: '#334155' }}>{label}</div>
+                    <div style={{ display: 'flex', gap: 8, minWidth: 160 }}>
+                      {['Sí', 'No', 'N/A'].map(opt => (
+                        <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.82rem', cursor: 'pointer' }}>
+                          <input type="radio" name={`seg_${key}`} value={opt} checked={formData.preguntasSeguridad[key] === opt} onChange={() => handleNestedChange('preguntasSeguridad', key, opt)} style={{ accentColor: '#0d7377' }} />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {errors.preguntasSeguridad && <p className="error-validacion" style={{ marginTop: 10 }}>{errors.preguntasSeguridad}</p>}
+
+              {/* Pruebas de campo / Monitoreos (Sección 5 del papel) */}
+              <div style={{ marginTop: 16, padding: 16, background: '#e8f5f5', borderRadius: 10 }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0a5c5f', marginBottom: 10 }}>Pruebas de Campo / Monitoreos</h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                  <span style={{ fontSize: '0.88rem', color: '#334155' }}>¿Se requieren pruebas de campo o monitoreos?</span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {['Sí', 'No', 'N/A'].map(opt => (
+                      <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.82rem', cursor: 'pointer' }}>
+                        <input type="radio" name="seg_pruebasCampoMonitoreos" value={opt} checked={formData.preguntasSeguridad.pruebasCampoMonitoreos === opt} onChange={() => handleNestedChange('preguntasSeguridad', 'pruebasCampoMonitoreos', opt)} style={{ accentColor: '#0d7377' }} />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                {formData.preguntasSeguridad.pruebasCampoMonitoreos === 'Sí' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Monitoreo hecho por *</label>
+                      <input type="text" className={`form-input ${errors.monitoreoPor ? 'border-red-500' : ''}`} value={formData.preguntasSeguridad.monitoreoPor} onChange={e => handleNestedChange('preguntasSeguridad', 'monitoreoPor', e.target.value)} placeholder="Nombre" />
+                      {errors.monitoreoPor && <p className="error-validacion">{errors.monitoreoPor}</p>}
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Fecha *</label>
+                      <input type="date" className={`form-input ${errors.monitoreoFecha ? 'border-red-500' : ''}`} value={formData.preguntasSeguridad.monitoreoFecha} onChange={e => handleNestedChange('preguntasSeguridad', 'monitoreoFecha', e.target.value)} />
+                      {errors.monitoreoFecha && <p className="error-validacion">{errors.monitoreoFecha}</p>}
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Hora *</label>
+                      <input type="time" className={`form-input ${errors.monitoreoHora ? 'border-red-500' : ''}`} value={formData.preguntasSeguridad.monitoreoHora} onChange={e => handleNestedChange('preguntasSeguridad', 'monitoreoHora', e.target.value)} />
+                      {errors.monitoreoHora && <p className="error-validacion">{errors.monitoreoHora}</p>}
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Resultados *</label>
+                      <input type="text" className={`form-input ${errors.monitoreoResultados ? 'border-red-500' : ''}`} value={formData.preguntasSeguridad.monitoreoResultados} onChange={e => handleNestedChange('preguntasSeguridad', 'monitoreoResultados', e.target.value)} placeholder="Resultados obtenidos" />
+                      {errors.monitoreoResultados && <p className="error-validacion">{errors.monitoreoResultados}</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ============================================================ */}
+            {/* SECCIÓN 6: Riesgos Químicos */}
+            {/* ============================================================ */}
+            <div style={{ border: '1px solid #fbbf24', borderRadius: 12, padding: 20, background: '#fffbeb' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#92400e', margin: 0 }}>Riesgos Químicos</h3>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', fontWeight: 600, color: '#92400e', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={formData.riesgosQuimicos.noAplica} onChange={e => handleNestedChange('riesgosQuimicos', 'noAplica', e.target.checked)} style={{ accentColor: '#d97706' }} />
+                  No Aplica
+                </label>
+              </div>
+              <p style={{ fontSize: '0.82rem', color: '#78716c', marginBottom: 12 }}>Si hay riesgos químicos, marque los EPP necesarios en la sección de EPPs.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8, opacity: formData.riesgosQuimicos.noAplica ? 0.4 : 1, pointerEvents: formData.riesgosQuimicos.noAplica ? 'none' : 'auto' }}>
+                {[
+                  ['explosivo', 'Explosivo'], ['inflamable', 'Inflamable'], ['combustible', 'Combustible'],
+                  ['toxico', 'Tóxico'], ['corrosivo', 'Corrosivo'], ['irritante', 'Irritante'],
+                  ['narcotico', 'Narcótico'], ['peligroInhalacion', 'Peligro por Inhalación'],
+                  ['mutageno', 'Mutagéno'], ['cancerigeno', 'Cancerígeno'], ['teratogenico', 'Teratogénico'],
+                  ['danaMedioAmbiente', 'Daña al Medio Ambiente'], ['danaCapaOzono', 'Daña Capa de Ozono']
+                ].map(([key, label]) => (
+                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.88rem', color: '#334155', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={formData.riesgosQuimicos[key]} onChange={e => handleNestedChange('riesgosQuimicos', key, e.target.checked)} style={{ accentColor: '#d97706' }} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+            {errors.riesgosQuimicos && <p className="error-validacion">{errors.riesgosQuimicos}</p>}
+
+            {/* ============================================================ */}
+            {/* SECCIÓN 7: Riesgos Físicos */}
+            {/* ============================================================ */}
+            <div style={{ border: '1px solid #fbbf24', borderRadius: 12, padding: 20, background: '#fffbeb' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#92400e', margin: 0 }}>Riesgos Físicos</h3>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', fontWeight: 600, color: '#92400e', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={formData.riesgosFisicos.noAplica} onChange={e => handleNestedChange('riesgosFisicos', 'noAplica', e.target.checked)} style={{ accentColor: '#d97706' }} />
+                  No Aplica
+                </label>
+              </div>
+              <p style={{ fontSize: '0.82rem', color: '#78716c', marginBottom: 12 }}>Si hay riesgos físicos, marque los EPP necesarios en la sección de EPPs.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8, opacity: formData.riesgosFisicos.noAplica ? 0.4 : 1, pointerEvents: formData.riesgosFisicos.noAplica ? 'none' : 'auto' }}>
+                {[
+                  ['atmosferaDeficienteO2', 'Atmósfera deficiente en Oxígeno'], ['vibracion', 'Vibración'],
+                  ['presion', 'Presión'], ['ruidoAlto', 'Ruido (>85dBA)'],
+                  ['iluminacion', 'Iluminación'], ['radiacion', 'Radiación'],
+                  ['bordesCortantes', 'Bordes Cortantes'], ['shockElectrico', 'Riesgo de Shock Eléctrico'],
+                  ['arcoElectrico', 'Arco Eléctrico'], ['alturamayor180', 'Altura >1,80m'],
+                  ['alturaMenor180', 'Altura <1,80m'], ['caidaObjetos', 'Caída de Objetos'],
+                  ['proyeccionParticulas', 'Proyección de Partículas'], ['areaCongestionada', 'Área Congestionada'],
+                  ['estresCalorFrio', 'Estrés Calor/Frío'], ['quemaduras', 'Quemaduras'],
+                  ['polvos', 'Polvos'], ['lineaDeFuego', 'Línea de Fuego'],
+                  ['puntosPellizco', 'Puntos de Pellizco'], ['tropiezos', 'Tropiezos/Caídas al mismo nivel']
+                ].map(([key, label]) => (
+                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.88rem', color: '#334155', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={formData.riesgosFisicos[key]} onChange={e => handleNestedChange('riesgosFisicos', key, e.target.checked)} style={{ accentColor: '#d97706' }} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+            {errors.riesgosFisicos && <p className="error-validacion">{errors.riesgosFisicos}</p>}
+
+            {/* ============================================================ */}
+            {/* SECCIÓN 8: Riesgos Biológicos */}
+            {/* ============================================================ */}
+            <div style={{ border: '1px solid #fbbf24', borderRadius: 12, padding: 20, background: '#fffbeb' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#92400e', margin: 0 }}>Riesgos Biológicos</h3>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', fontWeight: 600, color: '#92400e', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={formData.riesgosBiologicos.noAplica} onChange={e => handleNestedChange('riesgosBiologicos', 'noAplica', e.target.checked)} style={{ accentColor: '#d97706' }} />
+                  No Aplica
+                </label>
+              </div>
+              <p style={{ fontSize: '0.82rem', color: '#78716c', marginBottom: 12 }}>Si hay riesgos biológicos, marque los EPP necesarios en la sección de EPPs.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8, opacity: formData.riesgosBiologicos.noAplica ? 0.4 : 1, pointerEvents: formData.riesgosBiologicos.noAplica ? 'none' : 'auto' }}>
+                {[
+                  ['aguaResiduosContaminados', 'Agua o residuos contaminados con materiales potencialmente infecciosos'],
+                  ['insectos', 'Insectos'], ['animales', 'Animales'], ['bacterias', 'Bacterias']
+                ].map(([key, label]) => (
+                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.88rem', color: '#334155', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={formData.riesgosBiologicos[key]} onChange={e => handleNestedChange('riesgosBiologicos', key, e.target.checked)} style={{ accentColor: '#d97706' }} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+            {errors.riesgosBiologicos && <p className="error-validacion">{errors.riesgosBiologicos}</p>}
+
+            {/* ============================================================ */}
+            {/* SECCIÓN 9: Consideraciones al Medio Ambiente */}
+            {/* ============================================================ */}
+            <div style={{ border: '1px solid #86efac', borderRadius: 12, padding: 20, background: '#f0fdf4' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#166534', margin: 0 }}>Consideraciones al Medio Ambiente</h3>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', fontWeight: 600, color: '#166534', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={formData.medioAmbiente.noAplica} onChange={e => handleNestedChange('medioAmbiente', 'noAplica', e.target.checked)} style={{ accentColor: '#16a34a' }} />
+                  No Aplica
+                </label>
+              </div>
+              <div style={{ opacity: formData.medioAmbiente.noAplica ? 0.4 : 1, pointerEvents: formData.medioAmbiente.noAplica ? 'none' : 'auto' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8, marginBottom: 12 }}>
+                {[
+                  ['impactosAire', 'Impactos al Aire'], ['impactosSuelo', 'Impactos al Suelo'],
+                  ['impactosAgua', 'Impactos al Agua'], ['manejoResiduos', 'Manejo y Disposición de Residuos'],
+                  ['ordenLimpieza', 'Orden y Limpieza']
+                ].map(([key, label]) => (
+                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.88rem', color: '#334155', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={formData.medioAmbiente[key]} onChange={e => handleNestedChange('medioAmbiente', key, e.target.checked)} style={{ accentColor: '#16a34a' }} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Precauciones utilizadas</label>
+                <input type="text" className="form-input" value={formData.medioAmbiente.precauciones} onChange={e => handleNestedChange('medioAmbiente', 'precauciones', e.target.value)} placeholder="Describir precauciones de medio ambiente..." />
+              </div>
+              </div>
+            </div>
+            {errors.medioAmbiente && <p className="error-validacion">{errors.medioAmbiente}</p>}
+
+            {/* ============================================================ */}
+            {/* SECCIÓN 10: Consideraciones Ergonómicas */}
+            {/* ============================================================ */}
+            <div style={{ border: '1px solid #c4b5fd', borderRadius: 12, padding: 20, background: '#f5f3ff' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#5b21b6', margin: 0 }}>Consideraciones Ergonómicas</h3>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', fontWeight: 600, color: '#5b21b6', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={formData.ergonomia.noAplica} onChange={e => handleNestedChange('ergonomia', 'noAplica', e.target.checked)} style={{ accentColor: '#7c3aed' }} />
+                  No Aplica
+                </label>
+              </div>
+              <p style={{ fontSize: '0.82rem', color: '#78716c', marginBottom: 12 }}>Marque los riesgos ergonómicos identificados y las medidas de prevención.</p>
+              <div style={{ opacity: formData.ergonomia.noAplica ? 0.4 : 1, pointerEvents: formData.ergonomia.noAplica ? 'none' : 'auto' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#6d28d9', marginBottom: 8 }}>Riesgos Identificados</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8, marginBottom: 14 }}>
+                {[
+                  ['levantamientoCarga', 'Levantamiento de Carga'], ['empujeArrastre', 'Empuje / Arrastre de Carga'],
+                  ['posturaForzada', 'Postura Forzada'], ['estresContacto', 'Estrés por Contacto'],
+                  ['transporteManualCarga', 'Transporte Manual de Carga'], ['bipedestacion', 'Bipedestación'],
+                  ['duracion', 'Duración'], ['movimientoRepetitivo', 'Movimiento Repetitivo']
+                ].map(([key, label]) => (
+                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.88rem', color: '#334155', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={formData.ergonomia[key]} onChange={e => handleNestedChange('ergonomia', key, e.target.checked)} style={{ accentColor: '#7c3aed' }} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#6d28d9', marginBottom: 8 }}>Medidas de Prevención y Protección</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
+                {[
+                  ['rotacionDescansos', 'Rotación y Descansos'], ['posturaAdecuada', 'Postura Adecuada'],
+                  ['esfuerzoDeDos', 'Esfuerzo de a Dos'], ['facilidadesEquipos', 'Facilidades / Equipos']
+                ].map(([key, label]) => (
+                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.88rem', color: '#334155', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={formData.ergonomia[key]} onChange={e => handleNestedChange('ergonomia', key, e.target.checked)} style={{ accentColor: '#7c3aed' }} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+              </div>
+            </div>
+            {errors.ergonomia && <p className="error-validacion">{errors.ergonomia}</p>}
+
+            {/* ============================================================ */}
+            {/* SECCIÓN 11: Equipos de Protección Personal (EPPs) */}
+            {/* ============================================================ */}
+            <div style={{ border: '2px solid #0d7377', borderRadius: 12, padding: 20, background: '#f0fafa' }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0d7377', marginBottom: 6 }}>Equipos de Protección Personal (EPPs)</h3>
+              <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 16 }}>Marque todos los EPPs requeridos para este trabajo.</p>
+
+              {/* Cara/Cabeza */}
+              <div style={{ marginBottom: 16 }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0a5c5f', marginBottom: 8, borderBottom: '1px solid #b2dfdb', paddingBottom: 4 }}>Cara / Cabeza</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 6 }}>
+                  {[['casco', 'Casco'], ['protectorFacial', 'Protector Facial'], ['capucha', 'Capucha'], ['caretaSoldador', 'Careta de Soldador']].map(([key, label]) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={formData.epps.caraCabeza[key]} onChange={e => handleEppChange('caraCabeza', key, e.target.checked)} style={{ accentColor: '#0d7377' }} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ojos */}
+              <div style={{ marginBottom: 16 }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0a5c5f', marginBottom: 8, borderBottom: '1px solid #b2dfdb', paddingBottom: 4 }}>Ojos</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6 }}>
+                  {[['anteojosSeguridadClaro', 'Anteojos de Seguridad (claro)'], ['anteojosSeguridadOscuro', 'Anteojos de Seguridad (oscuro)'], ['antiparrasQuimicas', 'Antiparras Químicas'], ['antiparrasOxicorte', 'Antiparras de Oxicorte']].map(([key, label]) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={formData.epps.ojos[key]} onChange={e => handleEppChange('ojos', key, e.target.checked)} style={{ accentColor: '#0d7377' }} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Protección Respiratoria */}
+              <div style={{ marginBottom: 16 }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0a5c5f', marginBottom: 8, borderBottom: '1px solid #b2dfdb', paddingBottom: 4 }}>Protección Respiratoria</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6 }}>
+                  {[['equipoAutonomo', 'Equipo Autónomo (SCBA)'], ['mascaraCompleta', 'Máscara Completa c/ suministro aire'], ['mascaraConFiltro', 'Máscara Completa con Filtro'], ['semimascaraFiltros', 'Semimáscara con Filtros'], ['barbijo', 'Barbijo'], ['mascaraEscapeCloro', 'Máscara de escape de Cloro']].map(([key, label]) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={formData.epps.proteccionRespiratoria[key]} onChange={e => handleEppChange('proteccionRespiratoria', key, e.target.checked)} style={{ accentColor: '#0d7377' }} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Protección Auditiva */}
+              <div style={{ marginBottom: 16 }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0a5c5f', marginBottom: 8, borderBottom: '1px solid #b2dfdb', paddingBottom: 4 }}>Protección Auditiva</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 6 }}>
+                  {[['proteccionAuricular', 'Protección Auricular'], ['simplesDoble', 'Simples / Doble'], ['limiteExposicion', 'Límite de tiempo de exposición'], ['endoaural', 'Endoaural'], ['copa', 'Copa']].map(([key, label]) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={formData.epps.proteccionAuditiva[key]} onChange={e => handleEppChange('proteccionAuditiva', key, e.target.checked)} style={{ accentColor: '#0d7377' }} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Manos */}
+              <div style={{ marginBottom: 16 }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0a5c5f', marginBottom: 8, borderBottom: '1px solid #b2dfdb', paddingBottom: 4 }}>Manos</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 6 }}>
+                  {[['guantesCueroVaqueta', 'Guantes de Cuero / Vaqueta'], ['guantesQuimicos', 'Guantes para Químicos'], ['telaFina', 'Tela Fina'], ['guantesAnticorte', 'Guantes Anticorte'], ['guantesTemperatura', 'Guantes para Temperatura'], ['guantesSoldador', 'Guantes de Soldador']].map(([key, label]) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={formData.epps.manos[key]} onChange={e => handleEppChange('manos', key, e.target.checked)} style={{ accentColor: '#0d7377' }} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Brazos */}
+              <div style={{ marginBottom: 16 }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0a5c5f', marginBottom: 8, borderBottom: '1px solid #b2dfdb', paddingBottom: 4 }}>Brazos</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6 }}>
+                  {[['mangasLargas', 'Mangas Largas'], ['mangasAnticorte', 'Mangas Anticorte'], ['mangasProteccionCuero', 'Mangas de Protección de Cuero']].map(([key, label]) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={formData.epps.brazos[key]} onChange={e => handleEppChange('brazos', key, e.target.checked)} style={{ accentColor: '#0d7377' }} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cuerpo */}
+              <div style={{ marginBottom: 16 }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0a5c5f', marginBottom: 8, borderBottom: '1px solid #b2dfdb', paddingBottom: 4 }}>Cuerpo</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6 }}>
+                  {[['ropaResistenteFuego', 'Ropa Resistente al Fuego'], ['ropaResistenteQuimicos', 'Ropa Resistente a Químicos'], ['descartableIgnifugo', 'Descartable Ignífugo'], ['descartableNoIgnifugo', 'Descartable NO Ignífugo'], ['trajeAluminizado', 'Traje Aluminizado'], ['delantal', 'Delantal'], ['campera', 'Campera'], ['eppCriogenicoFrio', 'EPP para criogénico o muy frío'], ['ropaChalecoAltaVisibilidad', 'Ropa/Chaleco de Alta Visibilidad']].map(([key, label]) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={formData.epps.cuerpo[key]} onChange={e => handleEppChange('cuerpo', key, e.target.checked)} style={{ accentColor: '#0d7377' }} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pies/Piernas */}
+              <div style={{ marginBottom: 16 }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0a5c5f', marginBottom: 8, borderBottom: '1px solid #b2dfdb', paddingBottom: 4 }}>Pies / Piernas</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6 }}>
+                  {[['calzadoPuntera', 'Calzado con Puntera'], ['calzadoDielectrico', 'Calzado Dieléctrico c/ Puntera'], ['proteccionRodillas', 'Protección de Rodillas'], ['proteccionPiernas', 'Protección de las Piernas'], ['bolasDePVC', 'Bolas de PVC'], ['proteccionMetatarsal', 'Protección Metatarsal'], ['bolasGomaPuntera', 'Bolas de Goma con Puntera']].map(([key, label]) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={formData.epps.piesPiernas[key]} onChange={e => handleEppChange('piesPiernas', key, e.target.checked)} style={{ accentColor: '#0d7377' }} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Electricidad */}
+              <div>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0a5c5f', marginBottom: 8, borderBottom: '1px solid #b2dfdb', paddingBottom: 4 }}>Electricidad</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 6 }}>
+                  {[['mantaAislante', 'Manta/Alfombra Aislante de Goma'], ['eppContraArco', 'EPP contra Arco Eléctrico (EWP-21)'], ['herramientasClasificadas', 'Herramientas Clasificadas para Tensión (EWP-32)'], ['guantesAislantesGoma', 'Guantes Aislantes de Goma (EWP-22)'], ['herramientasPlasticoReforzado', 'Herramientas de Plástico Reforzado c/ fibras (EWP-32)'], ['puestasTierra', 'Puestas a Tierra Temporales de Protección']].map(([key, label]) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={formData.epps.electricidad[key]} onChange={e => handleEppChange('electricidad', key, e.target.checked)} style={{ accentColor: '#0d7377' }} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Mensaje de estado */}
+            {submitMessage && (
+              <div style={{ padding: 14, borderRadius: 10, background: submitMessage.includes('Error') ? '#fef2f2' : '#f0fdf4', color: submitMessage.includes('Error') ? '#991b1b' : '#166534', fontSize: '0.9rem' }}>
+                {submitMessage}
+              </div>
+            )}
+
+            {/* Checkboxes de requerimientos */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="checkbox" name="requiereAnalisisRiesgo" checked={formData.requiereAnalisisRiesgo} onChange={handleInputChange} style={{ accentColor: '#0d7377' }} />
+                <label style={{ fontSize: '0.9rem', color: '#334155' }}>Requiere Análisis de Riesgo Adicional</label>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="checkbox" name="requiereProcedimientoEspecifico" checked={formData.requiereProcedimientoEspecifico} onChange={handleInputChange} style={{ accentColor: '#0d7377' }} />
+                <label style={{ fontSize: '0.9rem', color: '#334155' }}>Requiere Procedimiento Específico</label>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+              <div className="form-group">
+                <label className="form-label">Supervisor *</label>
+                <select
+                  name="supervisor"
+                  value={formData.supervisor}
+                  onChange={handleInputChange}
+                  className={`form-input ${
+                    errors.supervisor ? 'border-red-500' : ''
+                  }`}
+                >
+                  <option value="">-- Seleccione un supervisor --</option>
+                  {supervisores.map(sup => (
+                    <option key={sup.legajo} value={sup.legajo}>{sup.legajo} - {sup.nombre}</option>
+                  ))}
+                </select>
+                {errors.supervisor && <p className="error-validacion">{errors.supervisor}</p>}
+              </div>
+              <div className="form-group">
+                <label className="form-label">Responsable del Área *</label>
+                <input
+                  type="text"
+                  name="responsableAreaTrabajo"
+                  value={formData.responsableAreaTrabajo}
+                  onChange={handleInputChange}
+                  className={`form-input ${
+                    errors.responsableAreaTrabajo ? 'border-red-500' : ''
+                  }`}
+                  placeholder="Responsable del área de trabajo"
+                />
+                {errors.responsableAreaTrabajo && <p className="error-validacion">{errors.responsableAreaTrabajo}</p>}
+              </div>
+            </div>
+
             {/* Observaciones */}
             <div className="form-group">
               <label className="form-label">Observaciones Adicionales</label>
@@ -875,13 +1550,6 @@ const CrearPTS = () => {
                 placeholder="Información adicional relevante..."
               />
             </div>
-
-            {/* Mensaje de estado */}
-            {submitMessage && (
-              <div style={{ padding: 14, borderRadius: 10, background: submitMessage.includes('Error') ? '#fef2f2' : '#f0fdf4', color: submitMessage.includes('Error') ? '#991b1b' : '#166534', fontSize: '0.9rem' }}>
-                {submitMessage}
-              </div>
-            )}
 
             {/* Botones */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingTop: 20, borderTop: '1px solid #e2eff1' }}>

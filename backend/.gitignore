@@ -1,5 +1,7 @@
 HELP.md
 target/
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
