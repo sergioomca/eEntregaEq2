@@ -505,7 +505,10 @@ const CrearPTS = () => {
     if (!formData.descripcionTrabajo.trim()) newErrors.descripcionTrabajo = 'La descripcion del trabajo es obligatoria';
     if (!formData.solicitante.trim()) newErrors.solicitante = 'El solicitante es obligatorio';
     // Pedir supervisor si requiere análisis de riesgo, procedimiento específico o alguna sección adicional
-    const tieneSeccionAdicional = Object.values(formData.seccionesAdicionales).some(v => v === true);
+    // Solo considerar secciones adicionales distintas de 'noAplica'
+    const tieneSeccionAdicional = Object.entries(formData.seccionesAdicionales)
+      .filter(([k]) => k !== 'noAplica')
+      .some(([, v]) => v === true);
     if ((formData.requiereAnalisisRiesgo || formData.requiereProcedimientoEspecifico || tieneSeccionAdicional) && !formData.supervisor.trim()) {
       newErrors.supervisor = 'El supervisor es obligatorio cuando se requiere análisis de riesgo, procedimiento específico o secciones adicionales';
     }
