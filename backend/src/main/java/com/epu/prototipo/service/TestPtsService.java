@@ -4,8 +4,10 @@ package com.epu.prototipo.service;
 import com.epu.prototipo.dto.CerrarPtsRequest;
 import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
+import com.epu.prototipo.model.RetornoOperaciones;
 import com.epu.prototipo.model.EstadoPts;
 import com.epu.prototipo.model.EstadoDcs;
+import com.epu.prototipo.model.EstadoRto;
 import com.epu.prototipo.model.CondicionEquipo;
 
 import org.springframework.context.annotation.Profile;
@@ -22,13 +24,15 @@ import org.springframework.context.annotation.Primary;
 @Profile("test")
 public class TestPtsService implements IPtsService {
     private final IEquipoService equipoService;
+    private final IRtoService rtoService;
 
 
     // Lista en memoria para almacenar PTS creados en la prueba
     private final List<PermisoTrabajoSeguro> ptsInMemory = new ArrayList<>();
 
-    public TestPtsService(IEquipoService equipoService) {
+    public TestPtsService(IEquipoService equipoService, IRtoService rtoService) {
         this.equipoService = equipoService;
+        this.rtoService = rtoService;
         // Inicializa con datos de prueba
         initializeTestData();
     }
@@ -228,21 +232,45 @@ public class TestPtsService implements IPtsService {
             }
         }
 
-        // Desbloquear el equipo asociado al cerrar el PTS
+        // Desbloquear el equipo asociado al cerrar el PTS (solo si NO requiere RTO)
         try {
             String tag = pts.getEquipoOInstalacion();
             System.out.println("[DEBUG][RTO] Tag recibido para desbloqueo: '" + tag + "'");
-            try {
-                equipoService.getEquipoByTag(tag);
-                System.out.println("[DEBUG][RTO] Equipo encontrado en base de datos: '" + tag + "'");
-            } catch (Exception ex) {
-                System.err.println("[DEBUG][RTO] Equipo NO encontrado en base de datos: '" + tag + "'. Excepción: " + ex.getMessage());
+
+            if (request.isRequiereRTO()) {
+                // Si requiere RTO: el equipo queda BLOQUEADO, se crea/asocia un RTO
+                pts.setRequiereRTO(true);
+                System.out.println("[DEBUG][RTO] PTS requiere RTO. El equipo '" + tag + "' permanece BLOQUEADO.");
+
+                // Buscar si ya existe un RTO abierto para este equipo
+                RetornoOperaciones rtoExistente = rtoService.getRtoByEquipoTag(tag);
+                if (rtoExistente != null) {
+                    // Agregar este PTS al RTO existente
+                    rtoService.agregarPtsAlRto(rtoExistente.getId(), pts.getId());
+                    pts.setRtoAsociadoId(rtoExistente.getId());
+                    System.out.println("[DEBUG][RTO] PTS " + pts.getId() + " asociado al RTO existente: " + rtoExistente.getId());
+                } else {
+                    // Crear un nuevo RTO para este equipo
+                    RetornoOperaciones nuevoRto = new RetornoOperaciones();
+                    nuevoRto.setEquipoTag(tag);
+                    nuevoRto.agregarPtsId(pts.getId());
+                    RetornoOperaciones rtoCreado = rtoService.createRto(nuevoRto);
+                    pts.setRtoAsociadoId(rtoCreado.getId());
+                    System.out.println("[DEBUG][RTO] Nuevo RTO creado: " + rtoCreado.getId() + " para equipo: " + tag);
+                }
+            } else {
+                // Si NO requiere RTO: desbloquear el equipo normalmente
+                try {
+                    equipoService.getEquipoByTag(tag);
+                    System.out.println("[DEBUG][RTO] Equipo encontrado en base de datos: '" + tag + "'");
+                } catch (Exception ex) {
+                    System.err.println("[DEBUG][RTO] Equipo NO encontrado en base de datos: '" + tag + "'. Excepción: " + ex.getMessage());
+                }
+                equipoService.actualizarCondicionEquipo(tag, CondicionEquipo.DESBLOQUEADO);
+                System.out.println("[DEBUG][RTO] Equipo '" + tag + "' DESBLOQUEADO.");
             }
-            equipoService.actualizarCondicionEquipo(tag, CondicionEquipo.DESBLOQUEADO);
-            // !!! Solo para prueba para habilitar el equipo
-            // equipoService.actualizarEstadoEquipo(tag, EstadoDcs.HABILITADO);
         } catch (Exception e) {
-            System.err.println("[ERROR][TEST] No se pudo desbloquear el equipo al cerrar PTS: " + e.getMessage());
+            System.err.println("[ERROR][TEST] Error al procesar equipo al cerrar PTS: " + e.getMessage());
         }
         // Hacer cierre simulado
         pts.setRtoEstado(EstadoPts.CERRADO);

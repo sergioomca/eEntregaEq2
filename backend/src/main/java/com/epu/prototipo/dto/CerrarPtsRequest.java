@@ -11,11 +11,11 @@ public class CerrarPtsRequest {
     private String ptsId; 
     private String rtoResponsableCierreLegajo; // Legajo 
     private String rtoObservaciones; 
+    private boolean requiereRTO; // true si se requiere formulario RTO al cerrar
 
-    /**
-     * Constructor vacio por defecto.
-     * Para el binding automatico de JSON en Spring Boot.
-     */
+    // Constructor vacio por defecto.
+    // Para el binding automatico de JSON en Spring Boot.
+    
     public CerrarPtsRequest() {}
 
     /**
@@ -34,23 +34,20 @@ public class CerrarPtsRequest {
     // --- GETTERS Y SETTERS ---
 
     // Obtener el ID del PTS que se va a cerrar.
-      
-     // @return ID del PTS
+    // @return ID del PTS
      
     public String getPtsId() {
         return ptsId;
     }
 
     // Establecer ID del PTS a cerrar.
-     
-     // @param ptsId ID del PTS
+    // @param ptsId ID del PTS
      
     public void setPtsId(String ptsId) {
         this.ptsId = ptsId;
     }
 
     // Obtener legajo del responsable pra cierre.
-      
     // @return Legajo del responsable del cierre
      
     public String getRtoResponsableCierreLegajo() {
@@ -58,7 +55,6 @@ public class CerrarPtsRequest {
     }
 
     // Establecer legajo del responsable del cierre.
-    
     // @param rtoResponsableCierreLegajo Legajo del responsable del cierre
     
     public void setRtoResponsableCierreLegajo(String rtoResponsableCierreLegajo) {
@@ -73,23 +69,27 @@ public class CerrarPtsRequest {
     }
 
     // Establecer observaciones finales o estado de la zona.
-      
     // @param rtoObservaciones Observaciones finales (opcional)
      
     public void setRtoObservaciones(String rtoObservaciones) {
         this.rtoObservaciones = rtoObservaciones;
     }
 
-    // para representacion en cadena del objeto limpieza.
-      
-    // @return String con los valores del DTO
-     
+    public boolean isRequiereRTO() {
+        return requiereRTO;
+    }
+
+    public void setRequiereRTO(boolean requiereRTO) {
+        this.requiereRTO = requiereRTO;
+    }
+
     @Override
     public String toString() {
         return "CerrarPtsRequest{" +
                 "ptsId='" + ptsId + '\'' +
                 ", rtoResponsableCierreLegajo='" + rtoResponsableCierreLegajo + '\'' +
                 ", rtoObservaciones='" + rtoObservaciones + '\'' +
+                ", requiereRTO=" + requiereRTO +
                 '}';
     }
 }

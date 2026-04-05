@@ -1478,7 +1478,7 @@ const CrearPTS = () => {
               <div>
                 <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0a5c5f', marginBottom: 8, borderBottom: '1px solid #b2dfdb', paddingBottom: 4 }}>Electricidad</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 6 }}>
-                  {[['mantaAislante', 'Manta/Alfombra Aislante de Goma'], ['eppContraArco', 'EPP contra Arco Eléctrico (EWP-21)'], ['herramientasClasificadas', 'Herramientas Clasificadas para Tensión (EWP-32)'], ['guantesAislantesGoma', 'Guantes Aislantes de Goma (EWP-22)'], ['herramientasPlasticoReforzado', 'Herramientas de Plástico Reforzado c/ fibras (EWP-32)'], ['puestasTierra', 'Puestas a Tierra Temporales de Protección']].map(([key, label]) => (
+                  {[['mantaAislante', 'Manta/Alfombra Aislante de Goma'], ['eppContraArco', 'EPP contra Arco Eléctrico'], ['herramientasClasificadas', 'Herramientas Clasificadas para Tensión '], ['guantesAislantesGoma', 'Guantes Aislantes de Goma '], ['herramientasPlasticoReforzado', 'Herramientas de Plástico Reforzado c/ fibras '], ['puestasTierra', 'Puestas a Tierra Temporales de Protección']].map(([key, label]) => (
                     <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
                       <input type="checkbox" checked={formData.epps.electricidad[key]} onChange={e => handleEppChange('electricidad', key, e.target.checked)} style={{ accentColor: '#0d7377' }} />
                       {label}

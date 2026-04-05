@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import FirmaBiometrica from './components/FirmaDigital';
 import EquipoStatusView from './components/EquipoStatusView';
-import CierreRTO from './components/CierreRTO';
+import CierrePTS from './components/CierrePTS';
 import CrearPTS from './components/CrearPTS';
 import ListaPTS from './components/ListaPTS';
 import DashboardEquipos from './components/DashboardEquipos';
@@ -15,6 +15,7 @@ import AdminEquiposView from './components/AdminEquiposView';
 import AgregarUsuario from './components/AgregarUsuario';
 import ReportesView from './components/ReportesView';
 import DcsSimForm from './components/DcsSimForm';
+import FormularioRTO from './components/FormularioRTO';
 import { ROLES, ALL_ROLES } from './constants/roles';
 
 // Constantes de Configuracion
@@ -37,7 +38,8 @@ const getRoutes = (role) => {
             { id: 'dashboard', title: 'Dashboards', roles: [ROLES.SUPERVISOR], content: 'pts-dashboard-view' },
             { id: 'aprobacion', title: 'Aprobación', roles: [ROLES.SUPERVISOR], content: 'approval-list-view' },
             { id: 'firma-biometrica', title: 'Firma Biométrica', roles: [ROLES.SUPERVISOR], content: 'firma-biometrica-view' },
-            { id: 'cierre-rto', title: 'Cierre PTS', roles: [ROLES.SUPERVISOR], content: 'cierre-rto-view' }
+            { id: 'cierre-rto', title: 'Cierre PTS', roles: [ROLES.SUPERVISOR], content: 'cierre-rto-view' },
+            { id: 'formulario-rto', title: 'Formulario RTO', roles: [ROLES.SUPERVISOR], content: 'formulario-rto-view' }
         ],
         [ROLES.EJECUTANTE]: [
             { id: 'dashboard', title: 'Dashboards', roles: [ROLES.EJECUTANTE], content: 'pts-dashboard-view' },
@@ -61,6 +63,7 @@ const Navigation = ({ role, onInicioClick, onLogout, user }) => {
             case 'aprobacion': return '/aprobacion';
             case 'firma-biometrica': return '/firma-biometrica';
             case 'cierre-rto': return '/cierre-rto';
+            case 'formulario-rto': return '/formulario-rto';
             case 'reportes': return '/reportes';
             case 'dashboard': return '/?view=dashboard';
             case 'inicio': return '/';
@@ -76,6 +79,7 @@ const Navigation = ({ role, onInicioClick, onLogout, user }) => {
             case 'mis-pts': return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>;
             case 'aprobacion': return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>;
             case 'cierre-rto': return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>;
+            case 'formulario-rto': return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>;
             case 'reportes': return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
             default: return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>;
         }
@@ -340,6 +344,82 @@ const RTOClosureList = ({ onSelectPts }) => {
     );
 };
 
+// Componente para listar RTOs existentes
+const RTOListView = ({ onSelectRto }) => {
+    const [rtoList, setRtoList] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchRtos = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/rto', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error(`Error ${response.status}`);
+                const data = await response.json();
+                setRtoList(data);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRtos();
+    }, []);
+
+    if (loading) return <div style={{ textAlign: 'center', padding: 16, color: '#64748b' }}>Cargando RTOs...</div>;
+    if (error) return <div style={{ color: '#dc2626', padding: 16 }}>Error: {error}</div>;
+    if (rtoList.length === 0) return (
+        <div style={{ textAlign: 'center', padding: 32, background: '#fffbf5', borderRadius: 10, border: '1px solid #fed7aa' }}>
+            <p style={{ color: '#92400e', fontSize: '1rem', fontWeight: 600 }}>No hay RTOs generados aún.</p>
+            <p style={{ color: '#b45309', fontSize: '0.85rem', marginTop: 8 }}>Los RTOs se crean automáticamente al cerrar un PTS con la opción "Requiere Formulario RTO = Sí".</p>
+        </div>
+    );
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1a2332', marginBottom: 8 }}>RTOs Generados</h4>
+            {rtoList.map(rto => (
+                <div key={rto.id} className="card" style={{ padding: 16, borderLeft: `4px solid ${rto.estado === 'ABIERTO' ? '#f59e0b' : '#16a34a'}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <h5 style={{ fontWeight: 600, color: '#1a2332' }}>{rto.id}</h5>
+                            <p style={{ fontSize: '0.85rem', color: '#64748b' }}>Equipo: {rto.equipoTag}</p>
+                            <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                PTS asociados: {(rto.ptsIds || []).join(', ') || 'Ninguno'}
+                            </p>
+                            <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                Especialidades: {(rto.especialidades || []).map(e => `${e.nombre}${e.cerrada ? ' ✅' : ''}`).join(', ') || 'Sin definir'}
+                            </p>
+                            <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                Creado: {rto.fechaCreacion ? new Date(rto.fechaCreacion).toLocaleString() : 'N/D'}
+                            </p>
+                            <span style={{
+                                display: 'inline-block', marginTop: 6, padding: '2px 10px', borderRadius: 12, fontSize: '0.75rem', fontWeight: 600,
+                                background: rto.estado === 'ABIERTO' ? '#fef3c7' : '#dcfce7',
+                                color: rto.estado === 'ABIERTO' ? '#92400e' : '#166534'
+                            }}>
+                                {rto.estado === 'ABIERTO' ? '⏳ Abierto' : '✅ Cerrado'}
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => onSelectRto(rto)}
+                            className="btn"
+                            style={{ background: '#7c2d12', color: '#fff', border: 'none' }}
+                        >
+                            {rto.estado === 'ABIERTO' ? '📋 Completar RTO' : '👁️ Ver RTO'}
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
 // Para mostrar PTS pendientes de firma
 const PendingApprovalList = ({ onFirmar }) => {
     const [ptsList, setPtsList] = useState([]);
@@ -428,6 +508,7 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
     const [showFirmaComponent, setShowFirmaComponent] = useState(false);
     const [selectedPtsForRTO, setSelectedPtsForRTO] = useState(null);
     const [showRTOComponent, setShowRTOComponent] = useState(false);
+    const [selectedRto, setSelectedRto] = useState(null);
     
     // Detectar parametro view en la URL
     const urlParams = new URLSearchParams(location.search);
@@ -465,11 +546,27 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
     };
 
     // Funcion para manejar el exito del cierre PTS
-    const handleRTOExitoso = () => {
+    const handleRTOExitoso = (responseData) => {
         setSelectedPtsForRTO(null);
         setShowRTOComponent(false);
-        // Refrescar la vista de cierre PTS
-        setCurrentView({ title: 'Cierre PTS', content: 'cierre-rto-view' });
+        // Si el PTS generó un RTO, navegar al formulario RTO
+        if (responseData && responseData.rtoAsociadoId) {
+            setSelectedRto({
+                id: responseData.rtoAsociadoId,
+                equipoTag: responseData.equipoOInstalacion,
+                ptsIds: [responseData.id],
+            });
+            setCurrentView({ title: 'Formulario RTO', content: 'formulario-rto-view' });
+            navigate('/formulario-rto');
+        } else {
+            setCurrentView({ title: 'Cierre PTS', content: 'cierre-rto-view' });
+        }
+    };
+
+    // Funcion para seleccionar un RTO de la lista
+    const handleSelectRto = (rto) => {
+        setSelectedRto(rto);
+        setCurrentView({ title: 'Formulario RTO', content: 'formulario-rto-view' });
     };
 
     // Logica para cargar el contenido simulado (HU-002)
@@ -532,7 +629,7 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
             case 'cierre-rto-view':
                 return (
                     <>
-                        <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 16, color: '#0d7377' }}>Cierre PTS - Retorno a Operaciones</h3>
+                        <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 16, color: '#0d7377' }}>Cerrar Permiso de Trabajo Seguro</h3>
                         {showRTOComponent && selectedPtsForRTO ? (
                             <div>
                                 <div style={{ marginBottom: 16, padding: 16, background: '#fef2f2', borderRadius: 10, border: '1px solid #fca5a5' }}>
@@ -541,7 +638,7 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                                     <p style={{ fontSize: '0.85rem', color: '#dc2626' }}>Firmado por: {selectedPtsForRTO.dniSupervisorFirmante}</p>
                                     <p style={{ fontSize: '0.85rem', color: '#dc2626' }}>Fecha de firma: {selectedPtsForRTO.fechaHoraFirmaSupervisor ? new Date(selectedPtsForRTO.fechaHoraFirmaSupervisor).toLocaleString() : 'No disponible'}</p>
                                 </div>
-                                <CierreRTO 
+                                <CierrePTS 
                                     ptsId={selectedPtsForRTO.id} 
                                     responsableLegajo={legajo}
                                     onSuccess={handleRTOExitoso}
@@ -558,6 +655,26 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                 );
             case 'my-pts-list-view':
                 return <ListaPTS defaultFilter="MIS_PTS" onSelectPtsParaFirma={handleFirmar} />;
+            case 'formulario-rto-view':
+                return (
+                    <>
+                        <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 16, color: '#7c2d12' }}>Formulario RTO (Retorno a Operaciones)</h3>
+                        {selectedRto ? (
+                            <FormularioRTO
+                                rtoId={selectedRto.id}
+                                ptsIds={selectedRto.ptsIds || []}
+                                equipoTag={selectedRto.equipoTag}
+                                onSuccess={() => { setSelectedRto(null); setCurrentView({ title: 'Formulario RTO', content: 'formulario-rto-view', refresh: Date.now() }); }}
+                                onCancel={() => { setSelectedRto(null); }}
+                            />
+                        ) : (
+                            <div>
+                                <p style={{ color: '#64748b', marginBottom: 24 }}>Listado de RTOs generados a partir del cierre de PTS.</p>
+                                <RTOListView onSelectRto={handleSelectRto} />
+                            </div>
+                        )}
+                    </>
+                );
             case 'execution-view':
                 return (
                     <>
@@ -1034,6 +1151,21 @@ const App = () => {
                                 <AppContent 
                                     user={user}
                                     currentView={{ title: 'Cierre PTS', content: 'cierre-rto-view' }}
+                                    setCurrentView={setCurrentView}
+                                    onSwitchRole={handleSwitchRole}
+                                    availableRoles={getUserRoles()}
+                                />
+                            </ProtectedRoute>
+                        } 
+                    />
+                    
+                    <Route 
+                        path="/formulario-rto" 
+                        element={
+                            <ProtectedRoute>
+                                <AppContent 
+                                    user={user}
+                                    currentView={{ title: 'Formulario RTO', content: 'formulario-rto-view' }}
                                     setCurrentView={setCurrentView}
                                     onSwitchRole={handleSwitchRole}
                                     availableRoles={getUserRoles()}

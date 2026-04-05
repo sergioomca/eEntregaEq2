@@ -9,7 +9,7 @@ import React, { useState } from 'react';
  * @param {function} [props.onSuccess] - ejecutado al cerrar exitosamente
  * @param {function} [props.onCancel] - para cancelar la operación
  */
-const CierreRTO = ({ 
+const CierrePTS = ({ 
   ptsId, 
   responsableLegajo = 'LEG-CIERRE-001', 
   onSuccess, 
@@ -17,6 +17,7 @@ const CierreRTO = ({
 }) => {
   // Estados del componente
   const [observaciones, setObservaciones] = useState('');
+  const [requiereRTO, setRequiereRTO] = useState('No');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -74,7 +75,7 @@ const CierreRTO = ({
 
   /** Para manejar el cierre del PTS - Hace una petición PUT al endpoint /api/pts/cerrar
    */
-  const handleCierreRTO = async () => {
+  const handleCierrePTS = async () => {
     // Validación del formulario
     if (!validateForm()) {
       setError('Por favor, corrige los errores en el formulario.');
@@ -90,10 +91,14 @@ const CierreRTO = ({
     }
 
     // Confirmacion del usuario
-    const confirmacion = window.confirm(
-      `¿Está seguro que desea cerrar el PTS ${ptsId}?\n\n` +
-      'Esta acción no se puede deshacer y marcará el PTS como "Retorno a Operaciones".'
-    );
+    const mensajeConfirmacion = requiereRTO === 'Si'
+      ? `¿Está seguro que desea cerrar el PTS ${ptsId}?\n\n` +
+        'El PTS quedará cerrado pero el equipo permanecerá BLOQUEADO.\n' +
+        'Se creará un formulario RTO que deberá completarse para desbloquear el equipo.'
+      : `¿Está seguro que desea cerrar el PTS ${ptsId}?\n\n` +
+        'El PTS quedará cerrado y el equipo será DESBLOQUEADO.';
+
+    const confirmacion = window.confirm(mensajeConfirmacion);
     
     if (!confirmacion) {
       return;
@@ -103,7 +108,8 @@ const CierreRTO = ({
     const cerrarPtsRequest = {
       ptsId: ptsId,
       rtoResponsableCierreLegajo: responsableLegajo,
-      rtoObservaciones: observaciones.trim() || null
+      rtoObservaciones: observaciones.trim() || null,
+      requiereRTO: requiereRTO === 'Si'
     };
 
     setLoading(true);
@@ -140,10 +146,22 @@ const CierreRTO = ({
         setSuccess(true);
         setError(null);
         
-        const mensaje = `✅ PTS ${ptsId} cerrado exitosamente\n\n` +
-                       `Estado: ${responseData.rtoEstado}\n` +
-                       `Responsable: ${responseData.rtoResponsableCierreLegajo}\n` +
-                       `Fecha de cierre: ${new Date(responseData.rtoFechaHoraCierre).toLocaleString()}`;
+        let mensaje;
+        if (requiereRTO === 'Si') {
+          mensaje = `✅ PTS ${ptsId} cerrado exitosamente\n\n` +
+                     `Estado: ${responseData.rtoEstado}\n` +
+                     `Responsable: ${responseData.rtoResponsableCierreLegajo}\n` +
+                     `Fecha de cierre: ${new Date(responseData.rtoFechaHoraCierre).toLocaleString()}\n\n` +
+                     `⚠️ Se requiere Formulario RTO.\n` +
+                     `El equipo permanece BLOQUEADO hasta que se complete el RTO.` +
+                     (responseData.rtoAsociadoId ? `\nRTO Asociado: ${responseData.rtoAsociadoId}` : '');
+        } else {
+          mensaje = `✅ PTS ${ptsId} cerrado exitosamente\n\n` +
+                     `Estado: ${responseData.rtoEstado}\n` +
+                     `Responsable: ${responseData.rtoResponsableCierreLegajo}\n` +
+                     `Fecha de cierre: ${new Date(responseData.rtoFechaHoraCierre).toLocaleString()}\n\n` +
+                     `El equipo ha sido DESBLOQUEADO.`;
+        }
         
         alert(mensaje);
         
@@ -207,11 +225,41 @@ const CierreRTO = ({
   return (
     <div className="cierre-rto-container">
       <div className="cierre-rto-card">
-        <h3> Cerrar PTS - Retorno a Operaciones</h3>
+        <h3>Cerrar Permiso de Trabajo Seguro</h3>
         
+
         <div className="pts-info">
           <p><strong>PTS ID:</strong> {ptsId}</p>
           <p><strong>Responsable de Cierre:</strong> {responsableLegajo}</p>
+        </div>
+
+        {/* Opción de selección para Formulario RTO */}
+        <div className="form-group">
+          <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>¿Requiere Formulario RTO?</label>
+          <div style={{ display: 'flex', gap: 20, marginBottom: 8 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <input
+                type="radio"
+                name="requiereRTO"
+                value="Si"
+                checked={requiereRTO === 'Si'}
+                onChange={() => setRequiereRTO('Si')}
+                disabled={loading}
+              />
+              Sí
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <input
+                type="radio"
+                name="requiereRTO"
+                value="No"
+                checked={requiereRTO === 'No'}
+                onChange={() => setRequiereRTO('No')}
+                disabled={loading}
+              />
+              No
+            </label>
+          </div>
         </div>
 
         {/* Area de texto para observaciones */}
@@ -260,17 +308,22 @@ const CierreRTO = ({
         {success && (
           <div className="success-message">
              PTS cerrado exitosamente
+            {requiereRTO === 'Si' && (
+              <div style={{ marginTop: 8, fontSize: '0.9rem' }}>
+                <strong>⚠️ RTO requerido:</strong> El equipo permanece bloqueado hasta completar el RTO.
+              </div>
+            )}
           </div>
         )}
 
         {/* Botones de acción */}
         <div className="button-group">
           <button
-            onClick={handleCierreRTO}
+            onClick={handleCierrePTS}
             disabled={loading || !ptsId}
             className={`btn-cerrar-pts ${loading ? 'loading' : ''}`}
           >
-            {loading ? '🔄 Cerrando PTS...' : '🔒 Cerrar PTS'}
+            {loading ? 'Cerrando PTS...' : 'Cerrar PTS'}
           </button>
 
           {onCancel && (
@@ -465,4 +518,4 @@ const CierreRTO = ({
   );
 };
 
-export default CierreRTO;
+export default CierrePTS;

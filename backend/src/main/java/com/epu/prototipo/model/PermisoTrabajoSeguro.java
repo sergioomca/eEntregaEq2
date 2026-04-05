@@ -39,6 +39,10 @@ public class PermisoTrabajoSeguro {
     private String rtoResponsableCierreLegajo;
     private LocalDateTime rtoFechaHoraCierre;
 
+    // Campos para asociación con RTO (Retorno a Operaciones)
+    private boolean requiereRTO;       // true si al cerrar el PTS se requiere un formulario RTO
+    private String rtoAsociadoId;       // ID del RTO al que está asociado este PTS
+
 
     // Constructor vacio JSON.
     public PermisoTrabajoSeguro() {}
@@ -179,4 +183,9 @@ public class PermisoTrabajoSeguro {
 
     public LocalDateTime getRtoFechaHoraCierre() { return rtoFechaHoraCierre; }
     public void setRtoFechaHoraCierre(LocalDateTime rtoFechaHoraCierre) { this.rtoFechaHoraCierre = rtoFechaHoraCierre; }
+
+    public boolean isRequiereRTO() { return requiereRTO; }
+    public void setRequiereRTO(boolean requiereRTO) { this.requiereRTO = requiereRTO; }
+    public String getRtoAsociadoId() { return rtoAsociadoId; }
+    public void setRtoAsociadoId(String rtoAsociadoId) { this.rtoAsociadoId = rtoAsociadoId; }
 }

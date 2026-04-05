@@ -4,8 +4,10 @@ package com.epu.prototipo.service;
 import com.epu.prototipo.dto.CerrarPtsRequest;
 import com.epu.prototipo.dto.FirmaPtsRequest;
 import com.epu.prototipo.model.PermisoTrabajoSeguro;
+import com.epu.prototipo.model.RetornoOperaciones;
 import com.epu.prototipo.model.EstadoPts;
 import com.epu.prototipo.model.EstadoDcs;
+import com.epu.prototipo.model.EstadoRto;
 import com.epu.prototipo.model.CondicionEquipo;
 // ...existing code...
 import com.google.api.core.ApiFuture;
@@ -26,12 +28,14 @@ public class PtsService implements IPtsService {
 
     private final Firestore firestore;
     private final IEquipoService equipoService;
+    private final IRtoService rtoService;
     private static final String COLLECTION_NAME = "permisos-trabajo-seguro";
 
     // Para inyectar la instancia de Firestore y IEquipoService configurada
-    public PtsService(Firestore firestore, IEquipoService equipoService) {
+    public PtsService(Firestore firestore, IEquipoService equipoService, IRtoService rtoService) {
         this.firestore = firestore;
         this.equipoService = equipoService;
+        this.rtoService = rtoService;
     }
 
     /**
@@ -468,7 +472,8 @@ public class PtsService implements IPtsService {
                 "rtoEstado", EstadoPts.CERRADO,
                 "rtoResponsableCierreLegajo", request.getRtoResponsableCierreLegajo(),
                 "rtoObservaciones", request.getRtoObservaciones(),
-                "rtoFechaHoraCierre", LocalDateTime.now()
+                "rtoFechaHoraCierre", LocalDateTime.now(),
+                "requiereRTO", request.isRequiereRTO()
             ).get(); 
 
             // Para devolver el objeto actualizado
@@ -477,13 +482,37 @@ public class PtsService implements IPtsService {
             pts.setRtoObservaciones(request.getRtoObservaciones());
             pts.setRtoFechaHoraCierre(LocalDateTime.now());
             pts.setId(document.getId());
+            pts.setRequiereRTO(request.isRequiereRTO());
 
-            // Para actualizar estado del equipo a HABILITADO
+            // Para actualizar estado del equipo
             String tagEquipo = pts.getEquipoOInstalacion();
-            try {
-                equipoService.actualizarEstadoEquipo(tagEquipo, EstadoDcs.HABILITADO);
-            } catch (RuntimeException e) {
-                System.out.println("ADVERTENCIA: PTS cerrado, pero el equipo " + tagEquipo + " no se encontró para actualizar su estado.");
+            if (request.isRequiereRTO()) {
+                // Si requiere RTO: el equipo permanece BLOQUEADO, se crea/asocia un RTO
+                try {
+                    RetornoOperaciones rtoExistente = rtoService.getRtoByEquipoTag(tagEquipo);
+                    if (rtoExistente != null) {
+                        rtoService.agregarPtsAlRto(rtoExistente.getId(), pts.getId());
+                        pts.setRtoAsociadoId(rtoExistente.getId());
+                    } else {
+                        RetornoOperaciones nuevoRto = new RetornoOperaciones();
+                        nuevoRto.setEquipoTag(tagEquipo);
+                        nuevoRto.agregarPtsId(pts.getId());
+                        RetornoOperaciones rtoCreado = rtoService.createRto(nuevoRto);
+                        pts.setRtoAsociadoId(rtoCreado.getId());
+                    }
+                    // Guardar el rtoAsociadoId en Firestore
+                    docRef.update("rtoAsociadoId", pts.getRtoAsociadoId()).get();
+                    System.out.println("PTS " + pts.getId() + " cerrado con RTO asociado: " + pts.getRtoAsociadoId() + ". Equipo " + tagEquipo + " permanece BLOQUEADO.");
+                } catch (RuntimeException e) {
+                    System.err.println("ADVERTENCIA: Error al crear/asociar RTO para equipo " + tagEquipo + ": " + e.getMessage());
+                }
+            } else {
+                // Si NO requiere RTO: habilitar equipo normalmente
+                try {
+                    equipoService.actualizarEstadoEquipo(tagEquipo, EstadoDcs.HABILITADO);
+                } catch (RuntimeException e) {
+                    System.out.println("ADVERTENCIA: PTS cerrado, pero el equipo " + tagEquipo + " no se encontró para actualizar su estado.");
+                }
             }
 
             return pts;
