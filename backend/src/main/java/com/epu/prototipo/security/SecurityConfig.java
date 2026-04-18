@@ -47,7 +47,7 @@ public class SecurityConfig {
                 // PAra prueba de usuarios
                 .requestMatchers("/api/usuarios/test").permitAll()
                 // Endpoint de usuarios requiere autenticacion
-                .requestMatchers("/api/usuarios/**").authenticated()
+                .requestMatchers("/api/usuarios", "/api/usuarios/**").authenticated()
                 // Endpoints de equipos requieren autenticacion
                 .requestMatchers("/api/equipos/**").authenticated()
                 // Cualquier otra solicitud debe estar autenticada

@@ -297,11 +297,6 @@ const DetallePTS = () => {
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                             <div>
-                                <label className="form-label">Área</label>
-                                <p style={{ color: '#1a2332', fontSize: '0.9rem' }}>{pts.area || 'No especificada'}</p>
-                            </div>
-                            
-                            <div>
                                 <label className="form-label">Fecha de Inicio</label>
                                 <p style={{ color: '#1a2332', fontSize: '0.9rem' }}>
                                     {pts.fechaInicio ? new Date(pts.fechaInicio).toLocaleDateString('es-ES') : 'No definida'}

@@ -56,17 +56,14 @@ public class ReporteController {
             @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaDesde,
             
             @RequestParam(required = false) 
-            @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaHasta,
-            
-            @RequestParam(required = false) String area) {        
+            @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaHasta) {        
         try {
             System.out.println("Solicitud de exportación Excel con filtros:");
             System.out.println("- fechaDesde: " + fechaDesde);
             System.out.println("- fechaHasta: " + fechaHasta);
-            System.out.println("- area: " + area);
             
             // Generar Excel con el servicio
-            byte[] excelBytes = reporteService.exportarPtsExcel(fechaDesde, fechaHasta, area);
+            byte[] excelBytes = reporteService.exportarPtsExcel(fechaDesde, fechaHasta);
             
             // Configura headers para descarga de Excel
             HttpHeaders headers = new HttpHeaders();
@@ -93,7 +90,7 @@ public class ReporteController {
             return ResponseEntity.ok(new Object() {
                 public final String[] formatosDisponibles = {"PDF", "Excel"};
                 public final String pdfEndpoint = "/api/reportes/pdf/{ptsId}";
-                public final String excelEndpoint = "/api/reportes/excel?fechaDesde=yyyy-MM-dd&fechaHasta=yyyy-MM-dd&area=string";
+                public final String excelEndpoint = "/api/reportes/excel?fechaDesde=yyyy-MM-dd&fechaHasta=yyyy-MM-dd";
                 public final String descripcion = "Servicio de generación de reportes para PTS";
                 public final String version = "1.0.0";
             });
@@ -114,17 +111,14 @@ public class ReporteController {
             @RequestParam(required = false)
             @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaHasta,
 
-            @RequestParam(required = false) String area,
-
             @RequestParam(required = false) String equipo) {
         try {
             System.out.println("Solicitud de exportación PDF lista con filtros:");
             System.out.println("- fechaDesde: " + fechaDesde);
             System.out.println("- fechaHasta: " + fechaHasta);
-            System.out.println("- area: " + area);
             System.out.println("- equipo: " + equipo);
 
-            byte[] pdfBytes = reporteService.exportarPtsListaPdf(fechaDesde, fechaHasta, area, equipo);
+            byte[] pdfBytes = reporteService.exportarPtsListaPdf(fechaDesde, fechaHasta, equipo);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);

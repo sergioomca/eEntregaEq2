@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 
 const ReportesView = () => {
     const [fechaDesde, setFechaDesde] = useState('');
     const [fechaHasta, setFechaHasta] = useState('');
-    const [area, setArea] = useState('');
+    // Eliminado filtro de área/sector
     const [exportType, setExportType] = useState('excel'); 
     const [isExporting, setIsExporting] = useState(false);
     const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -137,9 +138,7 @@ const ReportesView = () => {
             if (fechaHasta) {
                 params.append('fechaHasta', fechaHasta);
             }
-            if (area && area.trim()) {
-                params.append('area', area.trim());
-            }
+            // Eliminado filtro de área/sector
             if (equipoSeleccionado && equipoSeleccionado.trim()) {
                 params.append('equipo', equipoSeleccionado.trim());
             } else if (equipoInput && equipoInput.trim()) {
@@ -149,7 +148,7 @@ const ReportesView = () => {
             const urlWithParams = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
             
             console.log('Exportando Excel con URL:', urlWithParams);
-            console.log('Filtros aplicados:', { fechaDesde, fechaHasta, area });
+            console.log('Filtros aplicados:', { fechaDesde, fechaHasta });
             
             // Llamada fetch
             const token = localStorage.getItem('authToken');
@@ -200,7 +199,7 @@ const ReportesView = () => {
             const params = new URLSearchParams();
             if (fechaDesde) params.append('fechaDesde', fechaDesde);
             if (fechaHasta) params.append('fechaHasta', fechaHasta);
-            if (area && area.trim()) params.append('area', area.trim());
+            // Eliminado filtro de área/sector
             if (equipoSeleccionado && equipoSeleccionado.trim()) params.append('equipo', equipoSeleccionado.trim());
             else if (equipoInput && equipoInput.trim()) params.append('equipo', equipoInput.trim());
 
@@ -231,9 +230,9 @@ const ReportesView = () => {
     };
 
     // Para limpiar filtros
-    const handleLimpiarFiltros = () => {        setFechaDesde('');
+    const handleLimpiarFiltros = () => {
+        setFechaDesde('');
         setFechaHasta('');
-        setArea('');
         setEquipoInput('');
         setEquipoSeleccionado('');
         setEquiposFiltrados([]);
@@ -304,29 +303,8 @@ const ReportesView = () => {
                         </div>
                     </div>
 
-                    {/* Segunda fila: area/Sector y Limpiar Filtros */}
+                    {/* Segunda fila: solo Limpiar Filtros */}
                     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
-                        {/* Selector area/Sector */}
-                        <div className="form-group" style={{ margin: 0 }}>
-                            <label htmlFor="area" className="form-label">
-                                Área/Sector
-                            </label>
-                            <select
-                                id="area"
-                                value={area}
-                                onChange={(e) => setArea(e.target.value)}
-                                className="form-input"
-                                style={{ width: 280 }}
-                            >
-                                <option value="">Todas las áreas</option>
-                                <option value="Producción">Producción</option>
-                                <option value="Mantenimiento">Mantenimiento</option>
-                                <option value="Calidad">Calidad</option>
-                                <option value="Logística">Logística</option>
-                                <option value="Seguridad">Seguridad</option>
-                                <option value="Administración">Administración</option>
-                            </select>
-                        </div>
 
                         {/* Autocomplete de Equipo */}
                         <div className="form-group" style={{ margin: 0, position: 'relative' }} ref={equipoRef}>
@@ -435,13 +413,12 @@ const ReportesView = () => {
                     )}
 
                     {/* Resumen de filtros activos */}
-                    {(fechaDesde || fechaHasta || area || equipoInput) && validarFechas() && (
+                    {(fechaDesde || fechaHasta || equipoInput) && validarFechas() && (
                         <div style={{ marginBottom: 24, background: '#f0fafa', border: '1px solid #b2dfdb', borderRadius: 10, padding: 16 }}>
                             <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0d7377', marginBottom: 8 }}>📋 Filtros Activos:</h4>
                             <ul style={{ fontSize: '0.85rem', color: '#0a5c5f', display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 {fechaDesde && <li>• Desde: {new Date(fechaDesde).toLocaleDateString('es-ES')}</li>}
                                 {fechaHasta && <li>• Hasta: {new Date(fechaHasta).toLocaleDateString('es-ES')}</li>}
-                                {area && <li>• Área: {area}</li>}
                                 {equipoInput && <li>• Equipo: {equipoInput}</li>}
                             </ul>
                         </div>
@@ -518,7 +495,7 @@ const ReportesView = () => {
                 <div style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <p><strong>Formato Excel:</strong> Incluye todos los campos del PTS con filtros aplicados → <em>Reporte_PTS.xlsx</em></p>
                     <p><strong>Formato PDF:</strong> Tabla resumen en hoja A4 apaisada con los registros filtrados → <em>Reporte_PTS.pdf</em></p>
-                    <p><strong>Filtros disponibles:</strong> Rango de fechas, área/sector y equipo</p>
+                    <p><strong>Filtros disponibles:</strong> Rango de fechas y equipo</p>
                     <p><strong>Sin filtros:</strong> Se exportarán todos los PTS disponibles</p>
                 </div>
             </div>

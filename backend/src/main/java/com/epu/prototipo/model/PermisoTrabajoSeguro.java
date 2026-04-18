@@ -9,12 +9,13 @@ import java.time.LocalDateTime;
 public class PermisoTrabajoSeguro {
 
     private String id;
-    private String area;
     private String equipoOInstalacion;
     private String descripcionTrabajo;
     private String solicitanteLegajo; 
     private String nombreSolicitante;
     private String supervisorLegajo;  
+    private String receptorLegajo;
+    private String nombreReceptor;
     private String fechaInicio;
     private String fechaFin;
     private String horaInicio;
@@ -48,12 +49,11 @@ public class PermisoTrabajoSeguro {
     public PermisoTrabajoSeguro() {}
 
     // Constructor completo (simplificado para pruebas)
-    public PermisoTrabajoSeguro(String id, String area, String equipoOInstalacion, String descripcionTrabajo,
+    public PermisoTrabajoSeguro(String id, String equipoOInstalacion, String descripcionTrabajo,
         String solicitanteLegajo, String nombreSolicitante, String supervisorLegajo, String fechaInicio, String fechaFin,
         String horaInicio, String horaFin, String ubicacion, String tareaDetallada, String tipoTrabajo,
         List<RiesgoControl> riesgosControles, List<EquipoSeguridad> equiposSeguridad) {
         this.id = id;
-        this.area = area;
         this.equipoOInstalacion = equipoOInstalacion;
         this.descripcionTrabajo = descripcionTrabajo;
         this.solicitanteLegajo = solicitanteLegajo;
@@ -126,8 +126,6 @@ public class PermisoTrabajoSeguro {
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
-    public String getArea() { return area; }
-    public void setArea(String area) { this.area = area; }
     public String getEquipoOInstalacion() { return equipoOInstalacion; }
     public void setEquipoOInstalacion(String equipoOInstalacion) { this.equipoOInstalacion = equipoOInstalacion; }
     public String getDescripcionTrabajo() { return descripcionTrabajo; }
@@ -188,4 +186,9 @@ public class PermisoTrabajoSeguro {
     public void setRequiereRTO(boolean requiereRTO) { this.requiereRTO = requiereRTO; }
     public String getRtoAsociadoId() { return rtoAsociadoId; }
     public void setRtoAsociadoId(String rtoAsociadoId) { this.rtoAsociadoId = rtoAsociadoId; }
+
+    public String getReceptorLegajo() { return receptorLegajo; }
+    public void setReceptorLegajo(String receptorLegajo) { this.receptorLegajo = receptorLegajo; }
+    public String getNombreReceptor() { return nombreReceptor; }
+    public void setNombreReceptor(String nombreReceptor) { this.nombreReceptor = nombreReceptor; }
 }

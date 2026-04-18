@@ -232,8 +232,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
         (pts.descripcionTrabajo && pts.descripcionTrabajo.toLowerCase().includes(term)) ||
         (pts.ubicacion && pts.ubicacion.toLowerCase().includes(term)) ||
         (pts.nombreSolicitante && pts.nombreSolicitante.toLowerCase().includes(term)) ||
-        (pts.equipoOInstalacion && pts.equipoOInstalacion.toLowerCase().includes(term)) ||
-        (pts.area && pts.area.toLowerCase().includes(term))
+        (pts.equipoOInstalacion && pts.equipoOInstalacion.toLowerCase().includes(term))
       );
     }
 
@@ -566,10 +565,6 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                     <div className="form-group" style={{ marginBottom: 0 }}>
                       <label className="form-label">Usuario/Solicitante</label>
                       <input type="text" placeholder="ej: Juan, VINF..." value={localFilters.usuario} onChange={(e) => handleLocalFilterChange('usuario', e.target.value)} className="form-input" />
-                    </div>
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label">Área</label>
-                      <input type="text" placeholder="ej: Mantenimiento..." value={localFilters.area} onChange={(e) => handleLocalFilterChange('area', e.target.value)} className="form-input" />
                     </div>
                     <div className="form-group" style={{ marginBottom: 0 }}>
                       <label className="form-label">Estado RTO</label>

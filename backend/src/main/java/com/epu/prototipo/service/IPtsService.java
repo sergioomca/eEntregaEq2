@@ -21,7 +21,6 @@ public interface IPtsService {
      * 
      * @param equipo Filtro por nombre de equipo 
      * @param usuario Filtro por nombre o legajo de solicitante 
-     * @param area Filtro por area  
      * @param estado Filtro por estado RTO: PENDIENTE, CERRADO 
      * @param fechaInicio Filtro por fecha de inicio en formato YYYY-MM-DD 
      * @return Lista filtrada de PTS que cumplen con los criterios especificados

@@ -203,6 +203,11 @@ const CrearPTS = () => {
   const [equipoLoading, setEquipoLoading] = useState(false);
   const [equipoDescripcion, setEquipoDescripcion] = useState("");
 
+  // Estados para simulación de lectura de huella del receptor
+  const [huellaLoading, setHuellaLoading] = useState(false);
+  const [huellaError, setHuellaError] = useState(null);
+  const [receptorValidado, setReceptorValidado] = useState(false);
+
   // Cargar datos del PTS en standby si se está retomando
   useEffect(() => {
     if (editingPts) {
@@ -265,6 +270,48 @@ const CrearPTS = () => {
       setEquipoError("Error de conexión al validar equipo.");
     } finally {
       setEquipoLoading(false);
+    }
+  };
+
+  // Simulación de lectura de huella digital del receptor
+  const simularLecturaHuella = async () => {
+    setHuellaLoading(true);
+    setHuellaError(null);
+    setReceptorValidado(false);
+
+    try {
+      const token = localStorage.getItem('authToken');
+      // Simular latencia de lectura de huella (1.5 segundos)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const response = await fetch('/api/usuarios/receptor-aleatorio', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        setHuellaError('Error al leer huella digital');
+        return;
+      }
+
+      const data = await response.json();
+
+      // Actualizar campos del receptor en el formulario
+      setFormData(prev => ({
+        ...prev,
+        receptor: data.legajo,
+        nombreReceptor: data.nombreCompleto
+      }));
+
+      if (data.error) {
+        setHuellaError(data.mensaje);
+        setReceptorValidado(false);
+      } else {
+        setReceptorValidado(true);
+      }
+    } catch (error) {
+      setHuellaError('Error de conexión al leer huella digital');
+    } finally {
+      setHuellaLoading(false);
     }
   };
 
@@ -423,6 +470,8 @@ const CrearPTS = () => {
         nombreSolicitante: formData.solicitante || '',
         solicitanteLegajo: user?.dni || '',
         supervisorLegajo: formData.supervisor || '',
+        receptorLegajo: formData.receptor || '',
+        nombreReceptor: formData.nombreReceptor || '',
         observaciones: formData.observaciones || '',
         area: formData.ubicacion || '',
         equipoOInstalacion: formData.equiposSeguridad.map(e => e.equipo).filter(e => e).join(', ') || '',
@@ -504,6 +553,14 @@ const CrearPTS = () => {
     // Campos requeridos HU-011
     if (!formData.descripcionTrabajo.trim()) newErrors.descripcionTrabajo = 'La descripcion del trabajo es obligatoria';
     if (!formData.solicitante.trim()) newErrors.solicitante = 'El solicitante es obligatorio';
+
+    // Validar receptor (debe estar validado por huella)
+    if (!formData.receptor || !formData.receptor.trim()) {
+      newErrors.receptor = 'Debe leer la huella del receptor para continuar';
+    } else if (!receptorValidado) {
+      newErrors.receptor = huellaError || 'El receptor no ha sido validado correctamente';
+    }
+
     // Pedir supervisor si requiere análisis de riesgo, procedimiento específico o alguna sección adicional
     // Solo considerar secciones adicionales distintas de 'noAplica'
     const tieneSeccionAdicional = Object.entries(formData.seccionesAdicionales)
@@ -625,6 +682,8 @@ const CrearPTS = () => {
         nombreSolicitante: formData.solicitante,
         solicitanteLegajo: user?.dni || '',
         supervisorLegajo: formData.supervisor,
+        receptorLegajo: formData.receptor,
+        nombreReceptor: formData.nombreReceptor,
         observaciones: `${formData.observaciones}\n\nResponsable del Área: ${formData.responsableAreaTrabajo}`.trim(),
         
         // Campos adicionales del modelo
@@ -711,6 +770,9 @@ const CrearPTS = () => {
   const resetForm = async () => {
     const fechaHoy = new Date().toISOString().split('T')[0];
     const numeroPermiso = await fetchNumeroPermiso(fechaHoy);
+    // Resetear estados de huella
+    setHuellaError(null);
+    setReceptorValidado(false);
     setFormData({
       numeroPermiso,
       fecha: fechaHoy,
@@ -722,6 +784,8 @@ const CrearPTS = () => {
       nombreSolicitante: '',
       solicitante: user?.nombre || '',
       supervisor: '',
+      receptor: '',
+      nombreReceptor: '',
       responsableAreaTrabajo: '',
       requiereAnalisisRiesgo: false,
       requiereProcedimientoEspecifico: false,
@@ -812,7 +876,7 @@ const CrearPTS = () => {
             </h1>
             <p style={{ marginTop: 6, opacity: 0.9, fontSize: '0.85rem' }}>
               Usuario: {user.nombre}
-              {userRole && ` | Rol: ${userRole}`}
+              {userRole && ` | Rol: ${userRole.replace(/^ROLE_/, '').charAt(0) + userRole.replace(/^ROLE_/, '').slice(1).toLowerCase()}`}
               {editingPts && ' | Retomando PTS en Stand by'}
             </p>
           </div>
@@ -998,16 +1062,57 @@ const CrearPTS = () => {
 
             <div style={{ background: '#f0fafa', padding: 16, borderRadius: 12 }}>
               <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1a2332', marginBottom: 12 }}>Información del Receptor</h3>
+              
+              {/* Botón de lectura de huella */}
+              <div style={{ marginBottom: 12, textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={simularLecturaHuella}
+                  disabled={huellaLoading}
+                  style={{
+                    background: huellaLoading ? '#94a3b8' : receptorValidado ? '#16a34a' : '#0d7377',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '10px 24px',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    cursor: huellaLoading ? 'wait' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    transition: 'background 0.2s'
+                  }}
+                >
+                  {huellaLoading ? 'Leyendo Huella...' : 'Habilitar lectura de huella'}
+                </button>
+              </div>
+
+              {/* Mensaje de error de huella */}
+              {huellaError && (
+                <p style={{ color: '#dc2626', fontSize: '0.9rem', textAlign: 'center', marginBottom: 12, fontWeight: 500 }}>
+                  ⚠️ {huellaError}
+                </p>
+              )}
+
+              {/* Mensaje de éxito */}
+              {receptorValidado && !huellaError && (
+                <p style={{ color: '#16a34a', fontSize: '0.9rem', textAlign: 'center', marginBottom: 12, fontWeight: 500 }}>
+                  Huella leída correctamente — Receptor validado
+                </p>
+              )}
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
                 <div className="form-group">
-                  <label className="form-label">Receptor *</label>
+                  <label className="form-label">Legajo Receptor *</label>
                   <input
                     type="text"
                     name="receptor"
                     value={formData.receptor || ''}
-                    onChange={handleInputChange}
+                    readOnly
                     className="form-input"
-                    placeholder="Legajo del receptor"
+                    style={{ background: '#e2eff1', cursor: 'not-allowed' }}
+                    placeholder="Se completa al leer huella"
                   />
                 </div>
                 <div className="form-group">
@@ -1016,12 +1121,14 @@ const CrearPTS = () => {
                     type="text"
                     name="nombreReceptor"
                     value={formData.nombreReceptor || ''}
-                    onChange={handleInputChange}
+                    readOnly
                     className="form-input"
-                    placeholder="Nombre completo del receptor"
+                    style={{ background: '#e2eff1', cursor: 'not-allowed' }}
+                    placeholder="Se completa al leer huella"
                   />
                 </div>
               </div>
+              {errors.receptor && <p className="error-validacion">{errors.receptor}</p>}
             </div>
 
 

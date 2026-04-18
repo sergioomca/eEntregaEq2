@@ -32,6 +32,11 @@ public class UsuarioService implements IUsuarioService {
         baseDeDatosUsuarios.put("54321", new UsuarioDTO("54321", "Ana Gómez", "Mantenimiento Eléctrico", "EJECUTANTE"));
         baseDeDatosUsuarios.put("98765", new UsuarioDTO("98765", "Carlos Sanchez", "Seguridad e Higiene", "SUPERVISOR", "EMISOR"));
         baseDeDatosUsuarios.put("11111", new UsuarioDTO("11111", "María Rodriguez", "Control de Calidad", "EMISOR"));
+        baseDeDatosUsuarios.put("REC001", new UsuarioDTO("REC001", "Luis Fernández", "Operaciones Planta", "RECEPTOR"));
+        baseDeDatosUsuarios.put("REC002", new UsuarioDTO("REC002", "Roberto Díaz", "Mantenimiento Mecánico", "RECEPTOR"));
+        baseDeDatosUsuarios.put("REC003", new UsuarioDTO("REC003", "Patricia Morales", "Mantenimiento Eléctrico", "RECEPTOR"));
+        baseDeDatosUsuarios.put("REC004", new UsuarioDTO("REC004", "Gabriel Torres", "Producción", "RECEPTOR"));
+        baseDeDatosUsuarios.put("REC005", new UsuarioDTO("REC005", "Sandra Vega", "Control de Proceso", "RECEPTOR"));
     }
 
     @Override
@@ -66,6 +71,11 @@ public class UsuarioService implements IUsuarioService {
         if (baseDeDatosUsuarios.containsKey(usuario.getLegajo())) {
             throw new RuntimeException("Ya existe un usuario con legajo: " + usuario.getLegajo());
         }
+        // Contraseña por defecto = legajo, y marcar que debe cambiarla
+        if (usuario.getPassword() == null || usuario.getPassword().isEmpty()) {
+            usuario.setPassword(usuario.getLegajo());
+        }
+        usuario.setMustChangePassword(true);
         baseDeDatosUsuarios.put(usuario.getLegajo(), usuario);
         return usuario;
     }
@@ -75,7 +85,19 @@ public class UsuarioService implements IUsuarioService {
         if (!baseDeDatosUsuarios.containsKey(legajo)) {
             throw new RuntimeException("Usuario no encontrado");
         }
+        UsuarioDTO existing = baseDeDatosUsuarios.get(legajo);
         usuario.setLegajo(legajo);
+        // Preservar campos de autenticación si no vienen en el request
+        if (usuario.getPassword() == null || usuario.getPassword().isEmpty()) {
+            usuario.setPassword(existing.getPassword());
+        }
+        if (usuario.getHuellaDigital() == null && existing.getHuellaDigital() != null) {
+            usuario.setHuellaDigital(existing.getHuellaDigital());
+        }
+        if (!usuario.isMustChangePassword() && existing.isMustChangePassword()) {
+            // Solo preservar si el update no lo está seteando explícitamente a false
+            // (cambiar-contrasena sí lo setea a false explícitamente)
+        }
         baseDeDatosUsuarios.put(legajo, usuario);
         return usuario;
     }

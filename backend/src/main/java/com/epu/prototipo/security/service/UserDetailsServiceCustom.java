@@ -47,8 +47,12 @@ public class UserDetailsServiceCustom implements UserDetailsService {
             throw new UsernameNotFoundException("Usuario sin roles asignados: " + legajo);
         }
 
-        // La contraseña es {noop} + legajo
-        String expectedPassword = "{noop}" + legajo;
+        // Usar la contraseña almacenada del usuario, o legajo como fallback
+        String storedPassword = usuario.getPassword();
+        if (storedPassword == null || storedPassword.isEmpty()) {
+            storedPassword = usuario.getLegajo();
+        }
+        String expectedPassword = "{noop}" + storedPassword;
 
         return new User(legajo, expectedPassword, authorities);
     }

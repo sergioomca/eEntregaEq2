@@ -13,9 +13,11 @@ import DashboardEquipos from './components/DashboardEquipos';
 import DetallePTS from './components/DetallePTS';
 import AdminEquiposView from './components/AdminEquiposView';
 import AgregarUsuario from './components/AgregarUsuario';
+import UsuariosView from './components/UsuariosView';
 import ReportesView from './components/ReportesView';
 import DcsSimForm from './components/DcsSimForm';
 import FormularioRTO from './components/FormularioRTO';
+import CambiarContrasena from './components/CambiarContrasena';
 import { ROLES, ALL_ROLES } from './constants/roles';
 
 // Constantes de Configuracion
@@ -115,9 +117,9 @@ const Navigation = ({ role, onInicioClick, onLogout, user }) => {
                     QR Equipos
                 </Link>
                 {role === ROLES.ADMIN && (
-                    <Link to="/admin/usuarios/nuevo" className="sidebar-link">
+                    <Link to="/admin/usuarios" className="sidebar-link">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                        Agregar Usuario
+                        Usuarios
                     </Link>
                 )}
             </nav>
@@ -215,13 +217,13 @@ const LoginView = ({ handleLogin }) => {
 // Componente de selección de rol (cuando el usuario tiene múltiples roles)
 const RoleSelector = ({ roles, onSelect, onCancel }) => {
     const roleLabels = {
-        'EMISOR': { label: 'Emisor', desc: 'Crear y gestionar Permisos de Trabajo Seguro', icon: '📝' },
-        'SUPERVISOR': { label: 'Supervisor', desc: 'Aprobar, firmar y cerrar PTS', icon: '✅' },
-        'EJECUTANTE': { label: 'Ejecutante', desc: 'Ver y ejecutar tareas asignadas', icon: '🔧' },
-        'ADMIN': { label: 'Administrador', desc: 'Gestión completa del sistema', icon: '⚙️' },
-        'RTO_MANT': { label: 'RTO Mantenimiento', desc: 'Gestión de cierre PTS', icon: '🔒' },
-        'EHS': { label: 'EH&S', desc: 'Seguridad, Salud y Medio Ambiente', icon: '🛡️' },
-        'LIDER': { label: 'Líder', desc: 'Liderazgo y coordinación de equipos', icon: '👷' },
+        'EMISOR': { label: 'Emisor', desc: 'Crear y gestionar Permisos de Trabajo Seguro' },
+        'SUPERVISOR': { label: 'Supervisor', desc: 'Aprobar, firmar y cerrar PTS' },
+        'EJECUTANTE': { label: 'Ejecutante', desc: 'Ver y ejecutar tareas asignadas' },
+        'ADMIN': { label: 'Administrador', desc: 'Gestión completa del sistema' },
+        'RTO_MANT': { label: 'RTO Mantenimiento', desc: 'Gestión de cierre PTS' },
+        'EHS': { label: 'EH&S', desc: 'Seguridad, Salud y Medio Ambiente' },
+        'LIDER': { label: 'Líder', desc: 'Liderazgo y coordinación de equipos' },
     };
 
     return (
@@ -238,23 +240,22 @@ const RoleSelector = ({ roles, onSelect, onCancel }) => {
                     Tu usuario tiene múltiples roles. Seleccioná con cuál querés ingresar.
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {roles.map(role => {
-                        const info = roleLabels[role] || { label: role, desc: '', icon: '👤' };
-                        return (
-                            <button
-                                key={role}
-                                onClick={() => onSelect(role)}
-                                className="btn btn-outline"
-                                style={{ width: '100%', justifyContent: 'flex-start', padding: '14px 20px', gap: 12 }}
-                            >
-                                <span style={{ fontSize: '1.4rem' }}>{info.icon}</span>
-                                <div style={{ textAlign: 'left' }}>
-                                    <span style={{ fontWeight: 700, fontSize: '1rem', display: 'block' }}>{info.label}</span>
-                                    {info.desc && <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{info.desc}</span>}
-                                </div>
-                            </button>
-                        );
-                    })}
+                        {roles.map(role => {
+                            const info = roleLabels[role] || { label: role, desc: '' };
+                            return (
+                                <button
+                                    key={role}
+                                    onClick={() => onSelect(role)}
+                                    className="btn btn-outline"
+                                    style={{ width: '100%', justifyContent: 'flex-start', padding: '14px 20px', gap: 12 }}
+                                >
+                                    <div style={{ textAlign: 'left' }}>
+                                        <span style={{ fontWeight: 700, fontSize: '1rem', display: 'block' }}>{info.label}</span>
+                                        {info.desc && <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{info.desc}</span>}
+                                    </div>
+                                </button>
+                            );
+                        })}
                 </div>
                 <button
                     onClick={onCancel}
@@ -851,6 +852,7 @@ const App = () => {
     const [currentView, setCurrentView] = useState({ title: 'Inicio', content: 'inicio-view' });
     const [selectedPtsId, setSelectedPtsId] = useState(null);
     const [pendingRoles, setPendingRoles] = useState(null); // Para selección de rol cuando hay múltiples
+    const [pendingPasswordChange, setPendingPasswordChange] = useState(null); // Legajo del usuario que debe cambiar contraseña
 
     // Función para manejar la navegación interna
     const handleNavigate = useCallback((title, content) => {
@@ -909,6 +911,14 @@ const App = () => {
 
             const data = await response.json();
             const newToken = data.token;
+
+            // Verificar si debe cambiar contraseña antes de continuar
+            console.log('[LOGIN] requiresPasswordChange:', data.requiresPasswordChange, '| response:', data);
+            if (data.requiresPasswordChange) {
+                setPendingPasswordChange(legajo);
+                return;
+            }
+
             localStorage.setItem('authToken', newToken);
             setAuthToken(newToken);
 
@@ -1019,12 +1029,12 @@ const App = () => {
                                                 </ProtectedRoute>
                                             }
                                         />
-                                        {/* Ruta protegida para agregar usuarios */}
+                                        {/* Ruta protegida para gestión de usuarios */}
                                         <Route 
-                                            path="/admin/usuarios/nuevo" 
+                                            path="/admin/usuarios" 
                                             element={
                                                 <ProtectedRoute>
-                                                    <AgregarUsuario />
+                                                    <UsuariosView />
                                                 </ProtectedRoute>
                                             }
                                         />
@@ -1037,7 +1047,9 @@ const App = () => {
                     <Route 
                         path="/login" 
                         element={
-                            pendingRoles ? (
+                            pendingPasswordChange ? (
+                                <Navigate to="/cambiar-contrasena" replace />
+                            ) : pendingRoles ? (
                                 <RoleSelector 
                                     roles={pendingRoles} 
                                     onSelect={handleRoleSelect} 
@@ -1047,6 +1059,20 @@ const App = () => {
                                 <Navigate to="/" replace />
                             ) : (
                                 <LoginView handleLogin={handleLogin} />
+                            )
+                        } 
+                    />
+                    {/* Ruta de cambio de contraseña (primer ingreso) */}
+                    <Route 
+                        path="/cambiar-contrasena" 
+                        element={
+                            pendingPasswordChange ? (
+                                <CambiarContrasena 
+                                    legajo={pendingPasswordChange} 
+                                    onPasswordChanged={() => { setPendingPasswordChange(null); }}
+                                />
+                            ) : (
+                                <Navigate to="/login" replace />
                             )
                         } 
                     />

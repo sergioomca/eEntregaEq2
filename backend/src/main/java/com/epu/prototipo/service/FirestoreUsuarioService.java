@@ -83,6 +83,11 @@ public class FirestoreUsuarioService implements IUsuarioService {
             if (existing.exists()) {
                 throw new RuntimeException("Ya existe un usuario con legajo: " + usuario.getLegajo());
             }
+            // Contraseña por defecto = legajo, y marcar que debe cambiarla
+            if (usuario.getPassword() == null || usuario.getPassword().isEmpty()) {
+                usuario.setPassword(usuario.getLegajo());
+            }
+            usuario.setMustChangePassword(true);
             firestore.collection(COLLECTION_NAME).document(usuario.getLegajo()).set(usuario).get();
             return usuario;
         } catch (InterruptedException | ExecutionException e) {
@@ -98,7 +103,15 @@ public class FirestoreUsuarioService implements IUsuarioService {
             if (!existing.exists()) {
                 throw new RuntimeException("Usuario no encontrado");
             }
+            UsuarioDTO existingUser = existing.toObject(UsuarioDTO.class);
             usuario.setLegajo(legajo);
+            // Preservar campos de autenticación si no vienen en el request
+            if (usuario.getPassword() == null || usuario.getPassword().isEmpty()) {
+                usuario.setPassword(existingUser != null ? existingUser.getPassword() : null);
+            }
+            if (usuario.getHuellaDigital() == null && existingUser != null && existingUser.getHuellaDigital() != null) {
+                usuario.setHuellaDigital(existingUser.getHuellaDigital());
+            }
             firestore.collection(COLLECTION_NAME).document(legajo).set(usuario).get();
             return usuario;
         } catch (InterruptedException | ExecutionException e) {

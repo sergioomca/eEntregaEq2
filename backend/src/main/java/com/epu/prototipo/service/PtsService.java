@@ -85,7 +85,7 @@ public class PtsService implements IPtsService {
         }
         
         // Filtros en memoria (para campos que no soportan query Firestore)
-        return aplicarFiltrosEnMemoria(ptsList, equipo, usuario, area);
+        return aplicarFiltrosEnMemoria(ptsList, equipo, usuario);
     }
     
     /**
@@ -102,10 +102,9 @@ public class PtsService implements IPtsService {
      * @param ptsList Lista base de PTS a filtrar
      * @param equipo Filtro por nombre de equipo 
      * @param usuario Filtro por nombre o legajo 
-     * @param area Filtro por area
      * @return Lista filtrada
      */
-    private List<PermisoTrabajoSeguro> aplicarFiltrosEnMemoria(List<PermisoTrabajoSeguro> ptsList, String equipo, String usuario, String area) {
+    private List<PermisoTrabajoSeguro> aplicarFiltrosEnMemoria(List<PermisoTrabajoSeguro> ptsList, String equipo, String usuario) {
         if (ptsList == null || ptsList.isEmpty()) {
             return ptsList;
         }
@@ -113,7 +112,6 @@ public class PtsService implements IPtsService {
         return ptsList.stream()
                 .filter(pts -> filtrarPorEquipo(pts, equipo))
                 .filter(pts -> filtrarPorUsuario(pts, usuario))
-                .filter(pts -> filtrarPorArea(pts, area))
                 .collect(java.util.stream.Collectors.toList());
     }
     
@@ -163,23 +161,6 @@ public class PtsService implements IPtsService {
         return pts.getEquipoOInstalacion().toLowerCase().contains(equipo.trim().toLowerCase());
     }
     
-    /**
-     * Filtro en memoria para areae
-     * @param pts PTS a evaluar
-     * @param area Texto a buscar (puede ser null)
-     * @return true si el PTS = filtro o si no hay filtro
-     */
-    private boolean filtrarPorArea(PermisoTrabajoSeguro pts, String area) {
-        if (area == null || area.trim().isEmpty()) {
-            return true; 
-        }
-        
-        if (pts.getArea() == null) {
-            return false;
-        }
-        
-        return pts.getArea().toLowerCase().contains(area.trim().toLowerCase());
-    }
 
 
 

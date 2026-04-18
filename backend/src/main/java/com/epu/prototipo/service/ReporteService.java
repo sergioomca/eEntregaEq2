@@ -72,7 +72,6 @@ public class ReporteService {
                 yRef[0] = writeSectionHeader(document, currentPage, yRef[0], "DATOS GENERALES");
 
                 String[][] datosGenerales = {
-                    {"Área:", safe(pts.getArea())},
                     {"Equipo / Instalación:", safe(pts.getEquipoOInstalacion())},
                     {"Ubicación:", safe(pts.getUbicacion())},
                     {"Tipo de Trabajo:", safe(pts.getTipoTrabajo())},
@@ -409,13 +408,12 @@ public class ReporteService {
      * Para exportar multiples PTS filtrados a formato Excel
      * @param fechaDesde Fecha de inicio del filtro
      * @param fechaHasta Fecha de fin del filtro
-     * @param area FIltro area
      * @return byte[] representa el archivo Excel generado
      */
-    public byte[] exportarPtsExcel(Date fechaDesde, Date fechaHasta, String area) {
+    public byte[] exportarPtsExcel(Date fechaDesde, Date fechaHasta) {
         try {
             String fechaDesdeStr = fechaDesde != null ? fechaDesde.toString() : null;
-            List<PermisoTrabajoSeguro> ptsList = ptsService.buscarPts(null, null, area, null, fechaDesdeStr);
+            List<PermisoTrabajoSeguro> ptsList = ptsService.buscarPts(null, null, null, null, fechaDesdeStr);
 
             System.out.println("Generando Excel real con " + ptsList.size() + " registros");
 
@@ -477,8 +475,7 @@ public class ReporteService {
                 Cell filterCell = filterRow.createCell(0);
                 String filtrosTexto = "Filtros: " +
                     (fechaDesde != null ? "Desde " + fechaDesde + " " : "") +
-                    (fechaHasta != null ? "Hasta " + fechaHasta + " " : "") +
-                    (area != null && !area.isEmpty() ? "Área: " + area : "");
+                    (fechaHasta != null ? "Hasta " + fechaHasta + " " : "");
                 if (filtrosTexto.equals("Filtros: ")) filtrosTexto = "Filtros: Ninguno (todos los registros)";
                 filterCell.setCellValue(filtrosTexto);
                 filterCell.setCellStyle(filterStyle);
@@ -488,7 +485,7 @@ public class ReporteService {
 
                 // === Encabezados ===
                 String[] headers = {
-                    "ID", "Área", "Equipo/Instalación", "Descripción",
+                    "ID", "Equipo/Instalación", "Descripción",
                     "Solicitante", "Supervisor", "Fecha Inicio", "Fecha Fin",
                     "Ubicación", "Estado", "Firmado Por"
                 };
@@ -506,7 +503,6 @@ public class ReporteService {
                     int col = 0;
 
                     createDataCell(dataRow, col++, safe(pts.getId()), dataStyle);
-                    createDataCell(dataRow, col++, safe(pts.getArea()), dataStyle);
                     createDataCell(dataRow, col++, safe(pts.getEquipoOInstalacion()), dataStyle);
                     createDataCell(dataRow, col++, safe(pts.getDescripcionTrabajo()), dataStyle);
                     createDataCell(dataRow, col++, safe(pts.getSolicitanteLegajo()), dataStyle);
@@ -548,10 +544,10 @@ public class ReporteService {
     /**
      * Exportar lista de PTS filtrados a PDF (tabla resumen)
      */
-    public byte[] exportarPtsListaPdf(Date fechaDesde, Date fechaHasta, String area, String equipo) {
+    public byte[] exportarPtsListaPdf(Date fechaDesde, Date fechaHasta, String equipo) {
         try {
             String fechaDesdeStr = fechaDesde != null ? fechaDesde.toString() : null;
-            List<PermisoTrabajoSeguro> ptsList = ptsService.buscarPts(null, null, area, null, fechaDesdeStr);
+            List<PermisoTrabajoSeguro> ptsList = ptsService.buscarPts(null, null, null, null, fechaDesdeStr);
 
             // Filtrar por fecha hasta
             if (fechaHasta != null) {
@@ -598,7 +594,6 @@ public class ReporteService {
                 String filtros = "Filtros: " +
                     (fechaDesde != null ? "Desde " + fechaDesde + "  " : "") +
                     (fechaHasta != null ? "Hasta " + fechaHasta + "  " : "") +
-                    (area != null && !area.isEmpty() ? "Área: " + area + "  " : "") +
                     (equipo != null && !equipo.isEmpty() ? "Equipo: " + equipo : "");
                 if (filtros.equals("Filtros: ")) filtros = "Filtros: Ninguno (todos los registros)";
                 y = writeTextRaw(document, page, y, pw, filtros, FONT_ITALIC, 9, false);
@@ -609,8 +604,8 @@ public class ReporteService {
                 y -= 6;
 
                 // Columnas: [label, width]
-                String[] colNames  = {"ID/N°", "Área", "Equipo/Instalación", "Descripción", "Solicitante", "Supervisor", "F. Inicio", "Estado", "Firmado Por"};
-                float[]  colWidths = { 55f,    70f,     100f,                  145f,           80f,           80f,          65f,         70f,      76f};
+                String[] colNames  = {"ID/N°", "Equipo/Instalación", "Descripción", "Solicitante", "Supervisor", "F. Inicio", "Estado", "Firmado Por"};
+                float[]  colWidths = { 55f,     110f,                  175f,           80f,           80f,          65f,         70f,      76f};
 
                 // -- ENCABEZADO TABLA --
                 y = drawTableHeader(document, page, y, mg, colNames, colWidths);
@@ -625,7 +620,6 @@ public class ReporteService {
                     }
                     String[] vals = {
                         safe(pts.getId()),
-                        safe(pts.getArea()),
                         safe(pts.getEquipoOInstalacion()),
                         truncateStr(safe(pts.getDescripcionTrabajo()), 45),
                         safe(pts.getSolicitanteLegajo()),

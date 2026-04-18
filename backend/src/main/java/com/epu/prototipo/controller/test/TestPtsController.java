@@ -27,7 +27,6 @@ public class TestPtsController {
         pts1.setUbicacion("Sala de máquinas");
         pts1.setSolicitanteLegajo("USR001");
         pts1.setTipoTrabajo("ELECTRICO");
-        pts1.setArea("Mantenimiento");
 
         PermisoTrabajoSeguro pts2 = new PermisoTrabajoSeguro();
         pts2.setId("PTS-002");
@@ -36,7 +35,6 @@ public class TestPtsController {
         pts2.setUbicacion("Área de producción");
         pts2.setSolicitanteLegajo("USR002");
         pts2.setTipoTrabajo("MECANICO");
-        pts2.setArea("Producción");
 
         return Arrays.asList(pts1, pts2);
     }
@@ -56,7 +54,6 @@ public class TestPtsController {
             ptsFirmado.setFechaHoraFirmaSupervisor(LocalDateTime.now());
             ptsFirmado.setUbicacion("Área de pruebas");
             ptsFirmado.setTipoTrabajo("TEST");
-            ptsFirmado.setArea("Test");
             
             return ResponseEntity.ok(ptsFirmado);
         } catch (Exception e) {
@@ -89,7 +86,6 @@ public class TestPtsController {
             ptsCerrado.setRtoFechaHoraCierre(LocalDateTime.now());
             ptsCerrado.setUbicacion("Área de pruebas");
             ptsCerrado.setTipoTrabajo("TEST");
-            ptsCerrado.setArea("Test - Cerrado");
             
             return ResponseEntity.ok(ptsCerrado);
         } catch (Exception e) {

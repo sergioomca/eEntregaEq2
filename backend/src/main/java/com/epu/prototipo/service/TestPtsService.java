@@ -46,7 +46,6 @@ public class TestPtsService implements IPtsService {
         pts1.setSolicitanteLegajo("USR001");
         pts1.setNombreSolicitante("Juan Pérez");
         pts1.setTipoTrabajo("ELECTRICO");
-        pts1.setArea("Mantenimiento");
         pts1.setEquipoOInstalacion("Bomba Principal A1");
         pts1.setSupervisorLegajo("SUP222"); 
         pts1.setRtoEstado(EstadoPts.PENDIENTE);
@@ -59,7 +58,6 @@ public class TestPtsService implements IPtsService {
         pts2.setSolicitanteLegajo("USR002");
         pts2.setNombreSolicitante("María González");
         pts2.setTipoTrabajo("MECANICO");
-        pts2.setArea("Producción");
         pts2.setEquipoOInstalacion("Reactor Principal B2");
         pts2.setSupervisorLegajo("SUP222"); 
         pts2.setRtoEstado(EstadoPts.CERRADO);
@@ -72,7 +70,6 @@ public class TestPtsService implements IPtsService {
         pts3.setSolicitanteLegajo("VINF011422");
         pts3.setNombreSolicitante("Carlos Martínez");
         pts3.setTipoTrabajo("INSPECCION");
-        pts3.setArea("Mantenimiento");
         pts3.setEquipoOInstalacion("Bomba Secundaria C3");
         pts3.setSupervisorLegajo("SUP222");
         pts3.setRtoEstado(EstadoPts.PENDIENTE);
@@ -317,10 +314,7 @@ public class TestPtsService implements IPtsService {
         }
         
         if (area != null && !area.trim().isEmpty()) {
-            resultado = resultado.stream()
-                .filter(pts -> pts.getArea() != null && 
-                             pts.getArea().toLowerCase().contains(area.toLowerCase()))
-                .collect(java.util.stream.Collectors.toList());
+            // area filter removed - ignore parameter
         }
         
         if (estado != null && !estado.trim().isEmpty()) {
