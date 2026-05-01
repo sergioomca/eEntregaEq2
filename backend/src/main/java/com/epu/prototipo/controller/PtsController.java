@@ -18,7 +18,7 @@ public class PtsController {
 
     private final IPtsService ptsService;
 
-    // Servicio para manejar la logica de Firestore
+    // Servicio para manejar la logica de PTS
     public PtsController(IPtsService ptsService) {
         this.ptsService = ptsService;
     }
@@ -100,13 +100,13 @@ public class PtsController {
     public ResponseEntity<?> createPts(@RequestBody PermisoTrabajoSeguro pts) {
         try {
             // El objeto PermisoTrabajoSeguro se recibede la solicitud (JSON)
-            // Llama al servicio para persistir el objeto en Firestore
+            // Llama al servicio para persistir el objeto
             PermisoTrabajoSeguro newPts = ptsService.createPts(pts);
             
-            // Retorna el objeto creado (con el ID de Firestore) y el estado 201 Created
+            // Retorna el objeto creado y el estado 201 Created
             return new ResponseEntity<>(newPts, HttpStatus.CREATED);
         } catch (RuntimeException e) {
-            // Para manejar errores de Firestore
+            // Para manejar errores de persistencia
             return new ResponseEntity<>("Error al crear el PTS: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

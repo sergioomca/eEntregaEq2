@@ -37,34 +37,61 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody LoginRequest authenticationRequest) throws Exception {
         
+        String legajo = authenticationRequest.getLegajo();
+        
         try {
-            // Validacion MANUAL
+            // 1. Obtener usuario y verificar si está bloqueado
+            UsuarioDTO usuario = usuarioService.getUsuarioByLegajo(legajo);
             
-            // Carga usuario
-            final UserDetails userDetails = userDetailsService
-                    .loadUserByUsername(authenticationRequest.getLegajo());
+            if (usuario == null) {
+                return ResponseEntity.status(401).body("Error: Legajo o contraseña inválidos.");
+            }
 
-            // Verifica contraseña manualmente
-            // (!!! Prueba el PasswordEncoder de SecurityBeans.java, que maneja el prefijo {noop})
+            if (usuario.isAccountLocked()) {
+                System.out.println("[LOGIN BLOQUEADO] Usuario: " + legajo + " intenta acceder pero su cuenta está bloqueada.");
+                return ResponseEntity.status(403).body("Su cuenta está bloqueada debido a múltiples intentos fallidos. Contacte al administrador.");
+            }
+
+            // 2. Validación MANUAL de contraseña
+            final UserDetails userDetails = userDetailsService.loadUserByUsername(legajo);
+
             if (!passwordEncoder.matches(authenticationRequest.getPassword(), userDetails.getPassword())) {
-                // Si la contraseña no coincide
-                throw new Exception("INVALID_CREDENTIALS");
+                // Contraseña incorrecta - incrementar intentos fallidos
+                usuario.setFailedLoginAttempts(usuario.getFailedLoginAttempts() + 1);
+                
+                int remainingAttempts = 5 - usuario.getFailedLoginAttempts();
+                
+                if (usuario.getFailedLoginAttempts() >= 5) {
+                    // Bloquear la cuenta
+                    usuario.setAccountLocked(true);
+                    usuarioService.updateUsuario(legajo, usuario);
+                    System.out.println("[LOGIN BLOQUEADO] Usuario: " + legajo + " bloqueado por 5 intentos fallidos.");
+                    return ResponseEntity.status(403).body("Su cuenta ha sido bloqueada por seguridad. Contacte al administrador.");
+                } else {
+                    // Actualizar intentos fallidos sin bloquear
+                    usuarioService.updateUsuario(legajo, usuario);
+                    System.out.println("[LOGIN FALLIDO] Usuario: " + legajo + " intento fallido. Intentos restantes: " + remainingAttempts);
+                    return ResponseEntity.status(401).body("Contraseña inválida. Intentos restantes: " + remainingAttempts);
+                }
             }
             
-            // Genera el TOKEN (Si la validacion manual fue exitosa)
+            // 3. Login exitoso - resetear intentos fallidos
+            usuario.setFailedLoginAttempts(0);
+            usuarioService.updateUsuario(legajo, usuario);
+            
+            // 4. Generar token
             final String token = jwtTokenUtil.generateToken(userDetails);
             
-            // Verificar si el usuario debe cambiar su contraseña
-            UsuarioDTO usuario = usuarioService.getUsuarioByLegajo(authenticationRequest.getLegajo());
+            // 5. Verificar si el usuario debe cambiar su contraseña
             boolean requiresPasswordChange = usuario.isMustChangePassword();
-            System.out.println("[LOGIN] Usuario: " + authenticationRequest.getLegajo() + " | mustChangePassword: " + requiresPasswordChange);
+            System.out.println("[LOGIN EXITOSO] Usuario: " + legajo + " | mustChangePassword: " + requiresPasswordChange);
 
             // Respuesta con el token real
             return ResponseEntity.ok(new LoginResponse(token, requiresPasswordChange));
 
         } catch (Exception e) {
-            // Si el usuario no existe o la contraseña fallo
-            // se devuelve un 401 (Unauthorized) manualmente
+            // Si el usuario no existe
+            System.err.println("[LOGIN ERROR] Error para usuario: " + legajo + " - " + e.getMessage());
             return ResponseEntity.status(401).body("Error: Legajo o contraseña inválidos.");
         }
     }
@@ -103,6 +130,40 @@ public class AuthController {
         } catch (Exception e) {
             System.err.println("Error al cambiar contraseña: " + e.getMessage());
             return ResponseEntity.status(500).body("Error al cambiar la contraseña.");
+        }
+    }
+
+    // Endpoint para desbloquear cuenta (solo admin)
+    @PostMapping("/desbloquear-cuenta")
+    public ResponseEntity<?> desbloquearCuenta(@RequestBody Map<String, String> request) {
+        try {
+            String legajo = request.get("legajo");
+
+            if (legajo == null || legajo.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Legajo es requerido.");
+            }
+
+            UsuarioDTO usuario = usuarioService.getUsuarioByLegajo(legajo);
+            
+            if (usuario == null) {
+                return ResponseEntity.status(404).body("Usuario no encontrado.");
+            }
+
+            if (!usuario.isAccountLocked()) {
+                return ResponseEntity.status(400).body("La cuenta no está bloqueada.");
+            }
+
+            // Desbloquear la cuenta y resetear intentos
+            usuario.setAccountLocked(false);
+            usuario.setFailedLoginAttempts(0);
+            usuarioService.updateUsuario(legajo, usuario);
+
+            System.out.println("[DESBLOQUEAR] Usuario: " + legajo + " ha sido desbloqueado.");
+            return ResponseEntity.ok(Map.of("message", "Cuenta desbloqueada exitosamente."));
+
+        } catch (Exception e) {
+            System.err.println("Error al desbloquear cuenta: " + e.getMessage());
+            return ResponseEntity.status(500).body("Error al desbloquear la cuenta.");
         }
     }
         

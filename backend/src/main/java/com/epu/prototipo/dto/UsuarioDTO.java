@@ -15,11 +15,15 @@ public class UsuarioDTO {
     private String password;              // Contraseña del usuario (texto plano con {noop})
     private boolean mustChangePassword;   // true si debe cambiar contraseña en primer ingreso
     private String huellaDigital;          // Hash de huella digital del usuario (simulado)
+    private int failedLoginAttempts;      // Número de intentos fallidos de login
+    private boolean isAccountLocked;      // true si la cuenta está bloqueada
 
     // Constructor vacio para JSON
     public UsuarioDTO() {
         this.roles = new ArrayList<>();
         this.mustChangePassword = false;
+        this.failedLoginAttempts = 0;
+        this.isAccountLocked = false;
     }
 
     // Constructor con parametros (sin roles)
@@ -30,6 +34,8 @@ public class UsuarioDTO {
         this.roles = new ArrayList<>();
         this.password = legajo; // contraseña por defecto = legajo
         this.mustChangePassword = false;
+        this.failedLoginAttempts = 0;
+        this.isAccountLocked = false;
     }
 
     // Constructor completo con roles
@@ -40,6 +46,8 @@ public class UsuarioDTO {
         this.roles = new ArrayList<>(Arrays.asList(roles));
         this.password = legajo; // contraseña por defecto = legajo
         this.mustChangePassword = false;
+        this.failedLoginAttempts = 0;
+        this.isAccountLocked = false;
     }
 
     // Getters y Setters
@@ -97,6 +105,22 @@ public class UsuarioDTO {
 
     public void setHuellaDigital(String huellaDigital) {
         this.huellaDigital = huellaDigital;
+    }
+
+    public int getFailedLoginAttempts() {
+        return failedLoginAttempts;
+    }
+
+    public void setFailedLoginAttempts(int failedLoginAttempts) {
+        this.failedLoginAttempts = failedLoginAttempts;
+    }
+
+    public boolean isAccountLocked() {
+        return isAccountLocked;
+    }
+
+    public void setAccountLocked(boolean accountLocked) {
+        isAccountLocked = accountLocked;
     }
 
     @Override

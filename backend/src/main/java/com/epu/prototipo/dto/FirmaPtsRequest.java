@@ -3,7 +3,7 @@ package com.epu.prototipo.dto;
 // DTO manejar molicitud de firma de un PTS.
 public class FirmaPtsRequest {
 
-    private String ptsId; // ID del documento a firmar en Firestore
+    private String ptsId; // ID del PTS a firmar
     private String dniFirmante; // !!! revisar - DNI del supervisor que esta firmando
     private String firmaBase64; // La imagen de la firma como string Base64
 

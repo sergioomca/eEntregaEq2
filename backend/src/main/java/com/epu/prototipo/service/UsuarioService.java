@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // Servicio in-memory para perfil test
-// Simula la coleccion "usuarios" de Firestore
+// Simula la coleccion "usuarios" en memoria
 
 @Service
 @Primary

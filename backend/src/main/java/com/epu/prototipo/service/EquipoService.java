@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 // Servicio in-memory para perfil test
-// Simula la coleccion "equipos" de Firestore
+// Simula la coleccion "equipos" en memoria
 
 @Service
 @Primary

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-// UserDetailsService que carga usuarios desde IUsuarioService (Firestore o in-memory).
+// UserDetailsService que carga usuarios desde IUsuarioService.
 // La contraseña es el legajo (con prefijo {noop}).
 
 @Service
