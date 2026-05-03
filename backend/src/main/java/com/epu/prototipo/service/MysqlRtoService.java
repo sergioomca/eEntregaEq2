@@ -74,6 +74,22 @@ public class MysqlRtoService implements IRtoService {
     }
 
     @Override
+    public RetornoOperaciones agregarEspecialidades(String rtoId, java.util.List<RetornoOperaciones.EspecialidadRTO> especialidades) {
+        RtoEntity entity = repo.findById(rtoId)
+                .orElseThrow(() -> new RuntimeException("RTO no encontrado: " + rtoId));
+        java.util.List<EspecialidadRtoEmb> embs = especialidades.stream().map(esp -> {
+            EspecialidadRtoEmb emb = new EspecialidadRtoEmb(esp.getNombre(), esp.getResponsableLegajo());
+            emb.setCerrada(esp.isCerrada());
+            emb.setFechaCierre(esp.getFechaCierre());
+            emb.setObservaciones(esp.getObservaciones());
+            return emb;
+        }).collect(Collectors.toList());
+        entity.setEspecialidades(embs);
+        repo.save(entity);
+        return EntityMapper.toModel(entity);
+    }
+
+    @Override
     public RetornoOperaciones cerrarEspecialidad(String rtoId, String especialidadNombre, String responsableLegajo, String observaciones) {
         RtoEntity entity = repo.findById(rtoId)
                 .orElseThrow(() -> new RuntimeException("RTO no encontrado: " + rtoId));

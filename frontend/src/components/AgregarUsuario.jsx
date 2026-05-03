@@ -5,6 +5,7 @@ const ROLES_DISPONIBLES = [
     { value: ROLES.EMISOR, label: 'Emisor' },
     { value: ROLES.SUPERVISOR, label: 'Supervisor' },
     { value: ROLES.EJECUTANTE, label: 'Ejecutante' },
+    { value: ROLES.RECEPTOR, label: 'Receptor' },
     { value: ROLES.ADMIN, label: 'Administrador' },
     { value: ROLES.RTO_MANT, label: 'RTO Mantenimiento' },
     { value: ROLES.EHS, label: 'EH&S' },

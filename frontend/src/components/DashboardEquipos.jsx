@@ -2,6 +2,11 @@
 import React, { useEffect, useState } from 'react';
 
 const estadoStyles = {
+  'SIN_CONEXION': {
+    color: '#6b7280',
+    bgColor: '#f3f4f6',
+    textColor: '#374151',
+  },
   'HABILITADO': {
     color: '#059669',
     bgColor: '#d1fae5',
@@ -24,6 +29,14 @@ const estadoStyles = {
   },
 };
 
+const estadoLabels = {
+  'SIN_CONEXION': 'Sin Conexion',
+  'HABILITADO': 'Habilitado',
+  'DESHABILITADO': 'Deshabilitado',
+  'PARADO': 'Parado',
+  'EN_MARCHA': 'En marcha',
+};
+
 const DashboardEquipos = () => {
   const [equipos, setEquipos] = useState([]);
   const [estadoFiltro, setEstadoFiltro] = useState('TODOS');
@@ -31,7 +44,10 @@ const DashboardEquipos = () => {
   const [busqueda, setBusqueda] = useState('');
 
   useEffect(() => {
-    fetch('/api/equipos')
+    const token = localStorage.getItem('authToken');
+    fetch('/api/equipos', {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
       .then(res => res.ok ? res.json() : [])
       .then(data => setEquipos(Array.isArray(data) ? data : []));
   }, []);
@@ -70,6 +86,7 @@ const DashboardEquipos = () => {
             className="form-input"
           >
             <option value="TODOS">Todos</option>
+            <option value="SIN_CONEXION">Sin Conexion</option>
             <option value="HABILITADO">Habilitado</option>
             <option value="DESHABILITADO">Deshabilitado</option>
             <option value="PARADO">Parado</option>
@@ -102,13 +119,14 @@ const DashboardEquipos = () => {
           <tbody>
             {equiposFiltrados.map(eq => {
               const style = estadoStyles[eq.estadoDcs] || {};
+              const estadoLabel = estadoLabels[eq.estadoDcs] || eq.estadoDcs || 'Sin dato';
               return (
                 <tr key={eq.tag}>
                   <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{eq.tag}</td>
                   <td>{eq.descripcion}</td>
                   <td>
                     <span className="badge" style={{ backgroundColor: style.bgColor, color: style.textColor }}>
-                      {eq.estadoDcs}
+                      {estadoLabel}
                     </span>
                   </td>
                   <td>

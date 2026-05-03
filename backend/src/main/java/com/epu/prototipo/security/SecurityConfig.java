@@ -41,8 +41,16 @@ public class SecurityConfig {
             
             // Configuracion de autorizacion de rutas
             .authorizeHttpRequests(auth -> auth
-                    // Permite acceso libre a la ruta de autenticacion y al listado de PTS
-                    .requestMatchers("/api/auth/**", "/api/pts", "/api/pts/**").permitAll()
+                    // Login público
+                    .requestMatchers("/api/auth/login").permitAll()
+                    // Cambio de contraseña requiere token
+                    .requestMatchers("/api/auth/cambiar-contrasena").authenticated()
+                    // Desbloqueo de cuenta solo para ADMIN
+                    .requestMatchers("/api/auth/desbloquear-cuenta").hasRole("ADMIN")
+                    // Bloqueo de cuenta solo para ADMIN
+                    .requestMatchers("/api/auth/bloquear-cuenta").hasRole("ADMIN")
+                    // Endpoints PTS públicos
+                    .requestMatchers("/api/pts", "/api/pts/**").permitAll()
                     .requestMatchers("/public/consulta/**").permitAll()
                 // PAra prueba de usuarios
                 .requestMatchers("/api/usuarios/test").permitAll()

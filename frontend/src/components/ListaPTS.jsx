@@ -191,8 +191,8 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
     if (pts.rtoEstado === 'FIRMADO_PEND_CIERRE') {
       return 'Firmado (Pend. Cierre)';
     }
-    // Si está pendiente y tiene firma, o no requiere supervisor
-    if (pts.rtoEstado === 'PENDIENTE' && (pts.firmaSupervisorBase64 || !pts.supervisorLegajo)) {
+    // Puede cerrar si fue firmado o si no requiere supervisor.
+    if (pts.rtoEstado === 'PENDIENTE' && (pts.firmaSupervisorBase64 || !pts.supervisorLegajo || !pts.supervisorLegajo.toString().trim())) {
       return 'Firmado (Pend. Cierre)';
     }
     return 'Pendiente de Firma';
@@ -368,7 +368,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
   const handleRowClick = (pts) => {
     const estado = getPtsEstado(pts);
     if (estado === 'Stand by') {
-      navigate('/pts/nuevo', { state: { editingPts: pts } });
+      navigate('/pts/nuevo', { state: { editingPtsId: pts.id, editingPts: pts } });
       return;
     }
     if (estado === 'Pendiente de Firma' && onSelectPtsParaFirma && currentUser && pts.supervisorLegajo === currentUser.dni) {
@@ -616,7 +616,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                   <th style={{ cursor: 'pointer' }} onClick={() => handleSort('descripcionTrabajo')}>
                     Descripción {sortConfig.key === 'descripcionTrabajo' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th>Ubicación</th>
+                  <th>Supervisor</th>
                   <th>Equipos</th>
                   <th style={{ cursor: 'pointer' }} onClick={() => handleSort('nombreSolicitante')}>
                     Solicitante {sortConfig.key === 'nombreSolicitante' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
@@ -685,7 +685,7 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                           {pts.descripcionTrabajo || 'Sin descripción'}
                         </td>
                         <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>
-                          {pts.ubicacion || 'N/A'}
+                          {(pts.supervisorLegajo && pts.supervisorLegajo.toString().trim()) ? pts.supervisorLegajo : '------------'}
                         </td>
                         <td style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b' }}>
                           {pts.equipoOInstalacion || 'N/A'}
@@ -702,14 +702,22 @@ const ListaPTS = ({ onSelectPtsParaFirma, onSelectPtsParaCierre, defaultFilter =
                               style={{ color: '#f59e0b', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}
                               onClick={e => {
                                 e.stopPropagation();
-                                navigate('/pts/nuevo', { state: { editingPts: pts } });
+                                navigate('/pts/nuevo', { state: { editingPtsId: pts.id, editingPts: pts } });
                               }}
                             >
                               Continuar PTS
                             </button>
                           )}
                           {(estado === 'Pendiente de Firma' || estado === 'Firmado (Pend. Cierre)') && 
-                           currentUser && (pts.supervisorLegajo === currentUser.dni || pts.solicitanteLegajo === currentUser.dni) && (
+                           currentUser && (
+                            // Cierre normal con supervisor: supervisor o solicitante.
+                            ((pts.supervisorLegajo && pts.supervisorLegajo.toString().trim()) && (pts.supervisorLegajo === currentUser.dni || pts.solicitanteLegajo === currentUser.dni)) ||
+                            // Cierre sin supervisor: cualquier usuario con rol EMISOR.
+                            ((!pts.supervisorLegajo || !pts.supervisorLegajo.toString().trim()) &&
+                              estado === 'Firmado (Pend. Cierre)' &&
+                              Array.isArray(currentUser.roles) &&
+                              (currentUser.roles.includes('EMISOR') || currentUser.roles.includes('ROLE_EMISOR')))
+                           ) && (
                             <button
                               style={{ color: '#0d7377', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}
                               onClick={e => {

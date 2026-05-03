@@ -43,6 +43,9 @@ public class MysqlEquipoService implements IEquipoService {
     public Equipo actualizarEstadoEquipo(String tag, String nuevoEstadoDcs) {
         Equipo equipo = getEquipoByTag(tag);
         switch (nuevoEstadoDcs) {
+            case EstadoDcs.SIN_CONEXION:
+                equipo.setEstadoDcs(EstadoDcs.SIN_CONEXION);
+                break;
             case EstadoDcs.HABILITADO:
                 dcsGateway.habilitarEquipo(tag);
                 equipo.setEstadoDcs(EstadoDcs.HABILITADO);
@@ -79,6 +82,8 @@ public class MysqlEquipoService implements IEquipoService {
         if (repo.existsById(equipo.getTag())) {
             throw new RuntimeException("Ya existe un equipo con tag: " + equipo.getTag());
         }
+        // Los equipos nuevos se crean siempre sin conexión al DCS.
+        equipo.setEstadoDcs(EstadoDcs.SIN_CONEXION);
         repo.save(EntityMapper.toEntity(equipo));
         return equipo;
     }

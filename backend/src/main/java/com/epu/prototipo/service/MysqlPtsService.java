@@ -108,8 +108,19 @@ public class MysqlPtsService implements IPtsService {
             throw new IllegalStateException("El PTS ID " + request.getPtsId() + " ya ha sido cerrado.");
         if (EstadoPts.CANCELADO.equals(pts.getRtoEstado()))
             throw new IllegalStateException("El PTS ID " + request.getPtsId() + " está cancelado y no puede ser cerrado.");
-        if (pts.getFirmaSupervisorBase64() == null || pts.getFirmaSupervisorBase64().trim().isEmpty())
-            throw new IllegalStateException("El PTS debe estar firmado antes de ser cerrado.");
+
+        boolean tieneSupervisorAsignado = pts.getSupervisorLegajo() != null && !pts.getSupervisorLegajo().trim().isEmpty();
+        boolean tieneFirma = pts.getFirmaSupervisorBase64() != null && !pts.getFirmaSupervisorBase64().trim().isEmpty();
+
+        if (tieneSupervisorAsignado && !tieneFirma)
+            throw new IllegalStateException("El PTS debe estar firmado por el supervisor antes de ser cerrado.");
+
+        // Si no hay supervisor asignado, se permite cierre por emisor y se deja trazabilidad en campos de firma.
+        if (!tieneSupervisorAsignado && !tieneFirma) {
+            entity.setFirmaSupervisorBase64("FIRMA_CIERRE_EMISOR_" + request.getRtoResponsableCierreLegajo() + "_" + LocalDateTime.now());
+            entity.setDniSupervisorFirmante(request.getRtoResponsableCierreLegajo());
+            entity.setFechaHoraFirmaSupervisor(LocalDateTime.now());
+        }
 
         entity.setRtoEstado(EstadoPts.CERRADO);
         entity.setRtoResponsableCierreLegajo(request.getRtoResponsableCierreLegajo());

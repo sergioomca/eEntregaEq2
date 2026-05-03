@@ -9,7 +9,10 @@
         const [equipos, setEquipos] = useState([]);
 
         useEffect(() => {
-          fetch("/api/equipos")
+          const token = localStorage.getItem('authToken');
+          fetch("/api/equipos", {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          })
             .then(res => res.ok ? res.json() : [])
             .then(data => setEquipos(Array.isArray(data) ? data : []));
         }, []);
@@ -25,9 +28,13 @@
           try {
             let msg = "";
             if (estadoDcs && !isBloqueadoDeshabilitado) {
+              const token = localStorage.getItem('authToken');
               const res = await fetch("/api/dcs/update", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({ tag, estado: estadoDcs }),
               });
               const text = await res.text();

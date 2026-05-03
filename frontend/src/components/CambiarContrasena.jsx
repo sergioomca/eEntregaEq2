@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-function CambiarContrasena({ legajo, onPasswordChanged }) {
+// selfService=true: el usuario llega desde el login sin sesión activa
+function CambiarContrasena({ legajo, onPasswordChanged, selfService = false }) {
+    const navigate = useNavigate();
+    const [legajoInput, setLegajoInput] = useState('');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -8,10 +12,18 @@ function CambiarContrasena({ legajo, onPasswordChanged }) {
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // En modo self-service se usa legajoInput; en modo forzado se usa la prop legajo
+    const effectiveLegajo = selfService ? legajoInput.trim() : legajo;
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
+
+        if (selfService && !effectiveLegajo) {
+            setError('Ingrese su legajo.');
+            return;
+        }
 
         if (newPassword.trim().length < 4) {
             setError('La nueva contraseña debe tener al menos 4 caracteres.');
@@ -30,10 +42,37 @@ function CambiarContrasena({ legajo, onPasswordChanged }) {
 
         setLoading(true);
         try {
+            let token = localStorage.getItem('authToken');
+
+            // En modo self-service, autenticarse primero para obtener un token temporal
+            if (selfService) {
+                const loginResp = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ legajo: effectiveLegajo, password: currentPassword }),
+                });
+                if (!loginResp.ok) {
+                    const text = await loginResp.text();
+                    throw new Error(text || 'Credenciales incorrectas. Verifique legajo y contraseña actual.');
+                }
+                const loginData = await loginResp.json();
+                token = loginData.token || loginData.accessToken;
+                if (!token) {
+                    throw new Error('No se pudo obtener el token de autenticación.');
+                }
+            }
+
+            if (!token) {
+                throw new Error('Sesión inválida. Inicie sesión nuevamente.');
+            }
+
             const response = await fetch('/api/auth/cambiar-contrasena', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ legajo, currentPassword, newPassword: newPassword.trim() }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ legajo: effectiveLegajo, currentPassword, newPassword: newPassword.trim() }),
             });
 
             if (!response.ok) {
@@ -44,6 +83,7 @@ function CambiarContrasena({ legajo, onPasswordChanged }) {
             setSuccess('Contraseña actualizada. Redirigiendo al login...');
             setTimeout(() => {
                 if (onPasswordChanged) onPasswordChanged();
+                else navigate('/login');
             }, 1500);
         } catch (err) {
             setError(err.message || 'Error de conexión con el servidor.');
@@ -63,9 +103,25 @@ function CambiarContrasena({ legajo, onPasswordChanged }) {
             <div className="login-card">
                 <h2>Cambiar Contraseña</h2>
                 <p className="login-subtitle">
-                    Por seguridad, debe crear una nueva contraseña para continuar.
+                    {selfService
+                        ? 'Ingrese sus datos para actualizar su contraseña.'
+                        : 'Por seguridad, debe crear una nueva contraseña para continuar.'}
                 </p>
                 <form onSubmit={handleSubmit}>
+                    {selfService && (
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="legajoInput">Legajo</label>
+                            <input
+                                type="text"
+                                id="legajoInput"
+                                required
+                                value={legajoInput}
+                                onChange={(e) => setLegajoInput(e.target.value)}
+                                disabled={loading || !!success}
+                                placeholder="Ej: VINF011422"
+                            />
+                        </div>
+                    )}
                     <div className="form-group">
                         <label className="form-label" htmlFor="currentPassword">Contraseña Actual</label>
                         <input
@@ -108,6 +164,17 @@ function CambiarContrasena({ legajo, onPasswordChanged }) {
                     >
                         {loading ? 'Actualizando...' : 'Cambiar Contraseña'}
                     </button>
+                    {selfService && !success && (
+                        <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{ width: '100%', justifyContent: 'center', padding: '10px', fontSize: '0.9rem', marginTop: 8 }}
+                            onClick={() => { if (onPasswordChanged) onPasswordChanged(); else navigate('/login'); }}
+                            disabled={loading}
+                        >
+                            Volver al inicio de sesión
+                        </button>
+                    )}
                     {error && (
                         <div style={{ color: '#991b1b', background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginTop: 12, fontSize: '0.875rem' }}>
                             {error}

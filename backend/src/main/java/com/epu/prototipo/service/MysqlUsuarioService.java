@@ -16,6 +16,14 @@ public class MysqlUsuarioService implements IUsuarioService {
 
     private final UsuarioRepository repo;
 
+    private String toPersistenceRole(String role) {
+        if (role == null || role.isBlank()) {
+            return role;
+        }
+        String normalized = role.replace(' ', '_');
+        return normalized.startsWith("ROLE_") ? normalized : "ROLE_" + normalized;
+    }
+
     public MysqlUsuarioService(UsuarioRepository repo) {
         this.repo = repo;
     }
@@ -36,7 +44,7 @@ public class MysqlUsuarioService implements IUsuarioService {
 
     @Override
     public List<UsuarioDTO> getUsuariosByRol(String rol) {
-        return repo.findByRolesContaining(rol).stream()
+        return repo.findByRolesContaining(toPersistenceRole(rol)).stream()
                 .map(EntityMapper::toDTO)
                 .collect(Collectors.toList());
     }
@@ -70,8 +78,6 @@ public class MysqlUsuarioService implements IUsuarioService {
         if (usuario.getHuellaDigital() == null && existing.getHuellaDigital() != null) {
             usuario.setHuellaDigital(existing.getHuellaDigital());
         }
-        // Preservar mustChangePassword del existente
-        usuario.setMustChangePassword(existing.isMustChangePassword());
         UsuarioEntity saved = repo.save(EntityMapper.toEntity(usuario));
         return EntityMapper.toDTO(saved);
     }

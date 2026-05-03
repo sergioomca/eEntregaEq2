@@ -9,13 +9,13 @@ import java.util.List;
 public class UsuarioEntity {
 
     @Id
-    @Column(length = 50)
+    @Column(name = "legajo", length = 50)
     private String legajo;
 
-    @Column(length = 200)
+    @Column(name = "nombreCompleto", length = 200)
     private String nombreCompleto;
 
-    @Column(length = 100)
+    @Column(name = "sector", length = 100)
     private String sector;
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -23,16 +23,19 @@ public class UsuarioEntity {
     @Column(name = "rol", length = 50)
     private List<String> roles = new ArrayList<>();
 
-    @Column(length = 200)
+    @Column(name = "password", length = 200)
     private String password;
 
+    @Column(name = "mustChangePassword")
     private boolean mustChangePassword;
 
-    @Column(length = 500)
+    @Column(name = "huellaDigital", length = 500)
     private String huellaDigital;
 
+    @Column(name = "failedLoginAttempts")
     private int failedLoginAttempts = 0;
 
+    @Column(name = "isAccountLocked")
     private boolean isAccountLocked = false;
 
     public UsuarioEntity() {}

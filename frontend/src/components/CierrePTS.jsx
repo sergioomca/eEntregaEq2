@@ -104,6 +104,14 @@ const CierrePTS = ({
       return;
     }
 
+    const supervisorAsignado = permiso && permiso.supervisorLegajo && permiso.supervisorLegajo.toString().trim() !== '';
+    if (supervisorAsignado && permiso && (!permiso.firmaSupervisorBase64 || permiso.firmaSupervisorBase64.toString().trim() === '')) {
+      const errorMessage = `El PTS ${ptsId} debe estar firmado por el supervisor antes de cerrarse.`;
+      setError(errorMessage);
+      alert(`Error: ${errorMessage}`);
+      return;
+    }
+
     // Preparar datos para request
     const cerrarPtsRequest = {
       ptsId: ptsId,
@@ -130,7 +138,13 @@ const CierrePTS = ({
       });
 
       console.log('DEBUG CIERRE - Response status:', response.status);
-      const responseData = await response.json();
+      const responseText = await response.text();
+      let responseData = {};
+      try {
+        responseData = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        responseData = { error: responseText };
+      }
       console.log('DEBUG CIERRE - Response data:', responseData);
 
       if (response.ok) {

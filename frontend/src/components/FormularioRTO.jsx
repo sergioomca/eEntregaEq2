@@ -257,8 +257,14 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
   useEffect(() => {
     if (!rtoId) return;
     setLoading(true);
-    fetch(`/api/rto/${rtoId}`)
-      .then(res => res.ok ? res.json() : null)
+    const token = localStorage.getItem('authToken');
+    fetch(`/api/rto/${rtoId}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
+      .then(res => {
+        if (!res.ok) return null;
+        return res.json();
+      })
       .then(data => {
         if (data) {
           setRtoData(data);
@@ -305,40 +311,49 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
     try {
       const token = localStorage.getItem('authToken');
 
+      // Obtener legajo del usuario actual desde el token JWT
+      let responsableLegajo = '';
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        responsableLegajo = payload.sub || '';
+      } catch (_) {}
+
       // Construir las especialidades para el backend
-      const especialidadesArr = [];
-      if (especialidades.canerias) especialidadesArr.push({ nombre: 'Cañerías', responsableLegajo: '', cerrada: false });
-      if (especialidades.mecanica) especialidadesArr.push({ nombre: 'Mecánica', responsableLegajo: '', cerrada: false });
-      if (especialidades.instrumentos) especialidadesArr.push({ nombre: 'Instrumentos', responsableLegajo: '', cerrada: false });
-      if (especialidades.electricidad) especialidadesArr.push({ nombre: 'Electricidad', responsableLegajo: '', cerrada: false });
+      const especialidadesSeleccionadas = [];
+      if (especialidades.canerias) especialidadesSeleccionadas.push('Cañerías');
+      if (especialidades.mecanica) especialidadesSeleccionadas.push('Mecánica');
+      if (especialidades.instrumentos) especialidadesSeleccionadas.push('Instrumentos');
+      if (especialidades.electricidad) especialidadesSeleccionadas.push('Electricidad');
 
-      const body = {
-        equipoTag: encabezado.equipoSistema,
-        ptsIds: ptsIds,
-        especialidades: especialidadesArr,
-        observaciones: JSON.stringify({
-          encabezado,
-          especialidadesSeleccionadas: especialidades,
-          seccion1: {
-            canerias: especialidades.canerias ? { respuestas: respCanerias, pendientes: pendientesCanerias } : null,
-            mecanica: especialidades.mecanica ? { respuestas: respMecanica, pendientes: pendientesMecanica } : null,
-            instrumentos: especialidades.instrumentos ? { respuestas: respInstrumentos, pendientes: pendientesInstrumentos } : null,
-            electricidad: especialidades.electricidad ? { respuestas: respElectricidad, pendientes: pendientesElectricidad } : null,
-          },
-          seccion2: {
-            operadorIzq: respOperadorIzq,
-            operadorDer: respOperadorDer,
-            chequeos: chequeosOperativos,
-            pendientes: pendientesOperativos,
-          },
-          seccion3: {
-            arranque: respArranque,
-            fechaCierre,
-          },
-        }),
-      };
+      const especialidadesArr = especialidadesSeleccionadas.map(nombre => ({
+        nombre,
+        responsableLegajo,
+        cerrada: false,
+      }));
 
-      let response;
+      const observacionesJson = JSON.stringify({
+        encabezado,
+        especialidadesSeleccionadas: especialidades,
+        seccion1: {
+          canerias: especialidades.canerias ? { respuestas: respCanerias, pendientes: pendientesCanerias } : null,
+          mecanica: especialidades.mecanica ? { respuestas: respMecanica, pendientes: pendientesMecanica } : null,
+          instrumentos: especialidades.instrumentos ? { respuestas: respInstrumentos, pendientes: pendientesInstrumentos } : null,
+          electricidad: especialidades.electricidad ? { respuestas: respElectricidad, pendientes: pendientesElectricidad } : null,
+        },
+        seccion2: {
+          operadorIzq: respOperadorIzq,
+          operadorDer: respOperadorDer,
+          chequeos: chequeosOperativos,
+          pendientes: pendientesOperativos,
+        },
+        seccion3: {
+          arranque: respArranque,
+          fechaCierre,
+        },
+      });
+
+      let rtoFinal;
+
       if (rtoId) {
         // Agregar PTS al RTO existente
         for (const id of ptsIds) {
@@ -347,12 +362,33 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
             headers: { 'Authorization': `Bearer ${token}` },
           });
         }
-        response = await fetch(`/api/rto/${rtoId}`, {
+        // Agregar las especialidades seleccionadas al RTO existente
+        const addEspResp = await fetch(`/api/rto/${rtoId}/especialidades`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(especialidadesArr),
+        });
+        if (!addEspResp.ok) {
+          const text = await addEspResp.text();
+          setError(`Error al agregar especialidades al RTO (HTTP ${addEspResp.status}): ${text}`);
+          return;
+        }
+        const getResp = await fetch(`/api/rto/${rtoId}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
+        rtoFinal = getResp.ok ? await getResp.json() : null;
       } else {
         // Crear nuevo RTO
-        response = await fetch('/api/rto', {
+        const body = {
+          equipoTag: encabezado.equipoSistema,
+          ptsIds,
+          especialidades: especialidadesArr,
+          observaciones: observacionesJson,
+        };
+        const response = await fetch('/api/rto', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -360,17 +396,53 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
           },
           body: JSON.stringify(body),
         });
+        if (!response.ok) {
+          const text = await response.text();
+          setError(`Error al crear el RTO: ${text}`);
+          return;
+        }
+        rtoFinal = await response.json();
       }
 
-      if (response.ok) {
-        const data = await response.json();
-        setSuccess(true);
-        alert(`✅ RTO ${data.id} guardado exitosamente.\n\nEquipo: ${data.equipoTag}\nPTS asociados: ${(data.ptsIds || []).join(', ')}`);
-        if (onSuccess) onSuccess(data);
-      } else {
-        const text = await response.text();
-        setError(`Error al guardar el RTO: ${text}`);
+      if (!rtoFinal) {
+        setError('No se pudo obtener el RTO para completar el cierre.');
+        return;
       }
+
+      // Cerrar cada especialidad → cuando todas cierran, el backend cierra el RTO y desbloquea el equipo
+      for (const nombre of especialidadesSeleccionadas) {
+        const cerrarResp = await fetch(
+          `/api/rto/${rtoFinal.id}/especialidad/${encodeURIComponent(nombre)}/cerrar`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ responsableLegajo, observaciones: observacionesJson }),
+          }
+        );
+        if (!cerrarResp.ok) {
+          const text = await cerrarResp.text();
+          // Si ya estaba cerrada, ignorar; otros errores los reportamos
+          if (!text.includes('ya fue cerrada')) {
+            setError(`Error al cerrar especialidad "${nombre}": ${text}`);
+            return;
+          }
+        } else {
+          rtoFinal = await cerrarResp.json();
+        }
+      }
+
+      setSuccess(true);
+      const estadoFinal = rtoFinal.estado || 'CERRADO';
+      alert(
+        `✅ RTO ${rtoFinal.id} completado exitosamente.\n\n` +
+        `Equipo: ${rtoFinal.equipoTag}\n` +
+        `Estado: ${estadoFinal}\n` +
+        `PTS asociados: ${(rtoFinal.ptsIds || []).join(', ')}`
+      );
+      if (onSuccess) onSuccess(rtoFinal);
     } catch (err) {
       setError('Error de conexión: ' + err.message);
     } finally {
@@ -663,7 +735,7 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
 
             {success && (
               <div style={{ background: '#f0fdf4', color: '#166534', padding: 12, borderRadius: 8, border: '1px solid #86efac', fontSize: '0.9rem' }}>
-                ✅ Formulario RTO guardado exitosamente.
+              ✅ Formulario RTO completado y cerrado exitosamente. El equipo fue desbloqueado.
               </div>
             )}
 
@@ -684,7 +756,7 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
                   opacity: ningunaEspecialidad ? 0.5 : 1,
                 }}
               >
-                {loading ? 'Guardando RTO...' : 'Guardar RTO'}
+                {loading ? 'Cerrando RTO...' : 'Guardar y Cerrar RTO'}
               </button>
               {onCancel && (
                 <button

@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS retorno_operaciones (
     estado        VARCHAR(30),
     fechaCreacion DATETIME    NOT NULL,
     fechaCierre   DATETIME,
-    observaciones VARCHAR(500),
+    observaciones LONGTEXT,
     PRIMARY KEY (id),
     CONSTRAINT fk_rto_equipo FOREIGN KEY (equipoTag)
         REFERENCES equipos (tag) ON DELETE SET NULL ON UPDATE CASCADE
@@ -144,11 +144,12 @@ CREATE TABLE IF NOT EXISTS rto_especialidades (
     responsableLegajo  VARCHAR(50),
     cerrada            BOOLEAN     NOT NULL DEFAULT FALSE,
     fechaCierre        DATETIME,
-    observaciones      VARCHAR(500),
+    observaciones      LONGTEXT,
     PRIMARY KEY (id),
     CONSTRAINT fk_re_rto          FOREIGN KEY (rto_id)            REFERENCES retorno_operaciones (id) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_re_responsable  FOREIGN KEY (responsableLegajo) REFERENCES usuarios (legajo)        ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 
 -- ============================================================

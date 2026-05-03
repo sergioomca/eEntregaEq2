@@ -2,6 +2,7 @@ package com.epu.prototipo.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.Lob;
 import java.time.LocalDateTime;
 
 @Embeddable
@@ -17,7 +18,8 @@ public class EspecialidadRtoEmb {
 
     private LocalDateTime fechaCierre;
 
-    @Column(length = 500)
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String observaciones;
 
     public EspecialidadRtoEmb() {}

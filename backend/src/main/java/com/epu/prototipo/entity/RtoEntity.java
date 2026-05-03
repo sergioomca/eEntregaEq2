@@ -22,7 +22,8 @@ public class RtoEntity {
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaCierre;
 
-    @Column(length = 500)
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String observaciones;
 
     @ElementCollection(fetch = FetchType.EAGER)

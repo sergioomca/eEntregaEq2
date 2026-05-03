@@ -21,9 +21,10 @@ public class PublicConsultaService {
     private IPtsService ptsService;
 
     public EquipoStatusDTO getEquipoStatus(String tag) {
-        Equipo equipo = equipoService.getEquipoByTag(tag); 
-        List<PermisoTrabajoSeguro> permisos = ptsService.buscarPts(tag, null, null, null, null);
-        List<PermisoTrabajoSeguro> permisosActivos = permisos.stream()
+        Equipo equipo = equipoService.getEquipoByTag(tag);
+        List<PermisoTrabajoSeguro> permisosActivos = ptsService.getAllPts().stream()
+            .filter(pts -> pts.getEquipoOInstalacion() != null)
+            .filter(pts -> pts.getEquipoOInstalacion().equalsIgnoreCase(tag))
                 .filter(pts -> pts.getRtoEstado() == null || !EstadoPts.CERRADO.equals(pts.getRtoEstado()))
                 .collect(Collectors.toList());
         return new EquipoStatusDTO(equipo, permisosActivos);

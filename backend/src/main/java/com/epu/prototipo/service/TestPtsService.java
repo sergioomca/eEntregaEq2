@@ -219,14 +219,18 @@ public class TestPtsService implements IPtsService {
             throw new IllegalStateException("El PTS ID " + request.getPtsId() + " está cancelado y no puede ser cerrado.");
         }
 
-        // Solo exigir firma de supervisor si requiereAnalisisRiesgoAdicional es true
-        if (pts.isRequiereAnalisisRiesgoAdicional()) {
-            if (pts.getFirmaSupervisorBase64() == null || pts.getFirmaSupervisorBase64().trim().isEmpty()) {
-                // En modo test, se simula que hay una firma para permitir el cierre
-                pts.setFirmaSupervisorBase64("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==");
-                pts.setDniSupervisorFirmante("12345678");
-                pts.setFechaHoraFirmaSupervisor(LocalDateTime.now().minusMinutes(5)); // Firmado hace 5 minutos
-            }
+        // Solo exigir firma cuando hay supervisor asignado.
+        boolean tieneSupervisorAsignado = pts.getSupervisorLegajo() != null && !pts.getSupervisorLegajo().trim().isEmpty();
+        boolean tieneFirma = pts.getFirmaSupervisorBase64() != null && !pts.getFirmaSupervisorBase64().trim().isEmpty();
+
+        if (tieneSupervisorAsignado && !tieneFirma) {
+            throw new IllegalStateException("El PTS debe estar firmado por el supervisor antes de ser cerrado.");
+        }
+
+        if (!tieneSupervisorAsignado && !tieneFirma) {
+            pts.setFirmaSupervisorBase64("FIRMA_CIERRE_EMISOR_" + request.getRtoResponsableCierreLegajo() + "_" + LocalDateTime.now());
+            pts.setDniSupervisorFirmante(request.getRtoResponsableCierreLegajo());
+            pts.setFechaHoraFirmaSupervisor(LocalDateTime.now());
         }
 
         // Desbloquear el equipo asociado al cerrar el PTS (solo si NO requiere RTO)

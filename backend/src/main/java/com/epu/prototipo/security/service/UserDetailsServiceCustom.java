@@ -40,7 +40,8 @@ public class UserDetailsServiceCustom implements UserDetailsService {
         // Mapear cada rol del usuario a Spring Security GrantedAuthority
         if (roles != null && !roles.isEmpty()) {
             for (String rol : roles) {
-                String springRole = "ROLE_" + rol.replace(" ", "_");
+                String normalizedRole = rol.replace(" ", "_");
+                String springRole = normalizedRole.startsWith("ROLE_") ? normalizedRole : "ROLE_" + normalizedRole;
                 authorities.add(new SimpleGrantedAuthority(springRole));
             }
         } else {

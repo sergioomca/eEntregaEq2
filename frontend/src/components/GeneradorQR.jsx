@@ -10,19 +10,25 @@ const qrStyle = {
   background: "#fff"
 };
 
-export default function GeneradorQR({ tag, url }) {
+export default function GeneradorQR({ tag, url, onQrReady, highlighted = false }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
     if (canvasRef.current && url) {
       QRCode.toCanvas(canvasRef.current, url, { width: 150 }, (error) => {
-        if (error) console.error("Error generando QR:", error);
+        if (error) {
+          console.error("Error generando QR:", error);
+          return;
+        }
+        if (onQrReady) {
+          onQrReady(tag, canvasRef.current.toDataURL("image/png"));
+        }
       });
     }
-  }, [url]);
+  }, [url, tag, onQrReady]);
 
   return (
-    <div style={qrStyle}>
+    <div style={{ ...qrStyle, border: highlighted ? '2px solid #0d7377' : qrStyle.border }}>
       <h3 style={{ margin: "8px 0 4px 0", fontSize: 18 }}>{tag}</h3>
       <canvas ref={canvasRef} />
       <p style={{ fontSize: 12, wordBreak: "break-all", margin: "8px 0 0 0" }}>{url}</p>

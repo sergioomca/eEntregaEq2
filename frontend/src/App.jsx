@@ -34,14 +34,15 @@ const getRoutes = (role) => {
         [ROLES.EMISOR]: [
             { id: 'dashboard', title: 'Dashboards', roles: [ROLES.EMISOR], content: 'pts-dashboard-view' },
             { id: 'crear-pts', title: 'Crear PTS', roles: [ROLES.EMISOR], content: 'pts-form-view' },
-            { id: 'mis-pts', title: 'Mis PTS', roles: [ROLES.EMISOR], content: 'my-pts-list-view' }
+            { id: 'mis-pts', title: 'PTS', roles: [ROLES.EMISOR], content: 'my-pts-list-view' },
+            { id: 'formulario-rto', title: 'RTOs', roles: [ROLES.EMISOR], content: 'formulario-rto-view' }
         ],
         [ROLES.SUPERVISOR]: [
             { id: 'dashboard', title: 'Dashboards', roles: [ROLES.SUPERVISOR], content: 'pts-dashboard-view' },
             { id: 'aprobacion', title: 'Aprobación', roles: [ROLES.SUPERVISOR], content: 'approval-list-view' },
             { id: 'firma-biometrica', title: 'Firma Biométrica', roles: [ROLES.SUPERVISOR], content: 'firma-biometrica-view' },
             { id: 'cierre-rto', title: 'Cierre PTS', roles: [ROLES.SUPERVISOR], content: 'cierre-rto-view' },
-            { id: 'formulario-rto', title: 'Formulario RTO', roles: [ROLES.SUPERVISOR], content: 'formulario-rto-view' }
+            { id: 'formulario-rto', title: 'RTOs', roles: [ROLES.SUPERVISOR], content: 'formulario-rto-view' }
         ],
         [ROLES.EJECUTANTE]: [
             { id: 'dashboard', title: 'Dashboards', roles: [ROLES.EJECUTANTE], content: 'pts-dashboard-view' },
@@ -157,6 +158,7 @@ const decodeToken = (token) => {
 
 // Componente de Login (HU-001)
 const LoginView = ({ handleLogin }) => {
+    const navigate = useNavigate();
     const [legajo, setLegajo] = useState('VINF011422');
     const [password, setPassword] = useState('VINF011422');
     const [error, setError] = useState('');
@@ -202,6 +204,14 @@ const LoginView = ({ handleLogin }) => {
                     </div>
                     <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: '1rem', marginTop: 8 }}>
                         Iniciar Sesión
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-outline"
+                        style={{ width: '100%', justifyContent: 'center', padding: '10px', fontSize: '0.9rem', marginTop: 8 }}
+                        onClick={() => navigate('/cambiar-contrasena')}
+                    >
+                        Cambiar Contraseña
                     </button>
                     {error && <div style={{ color: '#991b1b', background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginTop: 12, fontSize: '0.875rem' }}>{error}</div>}
                 </form>
@@ -328,7 +338,7 @@ const RTOClosureList = ({ onSelectPts }) => {
                                 Firmado por: {pts.dniSupervisorFirmante} | Ubicación: {pts.ubicacion}
                             </p>
                             <p style={{ fontSize: '0.75rem', color: '#059669' }}>
-                                ✅ Firmado el: {pts.fechaHoraFirmaSupervisor ? new Date(pts.fechaHoraFirmaSupervisor).toLocaleString() : 'Fecha no disponible'}
+                                Firmado el: {pts.fechaHoraFirmaSupervisor ? new Date(pts.fechaHoraFirmaSupervisor).toLocaleString() : 'Fecha no disponible'}
                             </p>
                         </div>
                         <button
@@ -336,7 +346,7 @@ const RTOClosureList = ({ onSelectPts }) => {
                             className="btn"
                             style={{ background: '#dc2626', color: '#fff', border: 'none' }}
                         >
-                            🔒 Cerrar RTO
+                            Cerrar RTO
                         </button>
                     </div>
                 </div>
@@ -394,7 +404,7 @@ const RTOListView = ({ onSelectRto }) => {
                                 PTS asociados: {(rto.ptsIds || []).join(', ') || 'Ninguno'}
                             </p>
                             <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                Especialidades: {(rto.especialidades || []).map(e => `${e.nombre}${e.cerrada ? ' ✅' : ''}`).join(', ') || 'Sin definir'}
+                                Especialidades: {(rto.especialidades || []).map(e => `${e.nombre}${e.cerrada ? ' -' : ''}`).join(', ') || 'Sin definir'}
                             </p>
                             <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
                                 Creado: {rto.fechaCreacion ? new Date(rto.fechaCreacion).toLocaleString() : 'N/D'}
@@ -404,7 +414,7 @@ const RTOListView = ({ onSelectRto }) => {
                                 background: rto.estado === 'ABIERTO' ? '#fef3c7' : '#dcfce7',
                                 color: rto.estado === 'ABIERTO' ? '#92400e' : '#166534'
                             }}>
-                                {rto.estado === 'ABIERTO' ? '⏳ Abierto' : '✅ Cerrado'}
+                                {rto.estado === 'ABIERTO' ? 'Abierto' : 'Cerrado'}
                             </span>
                         </div>
                         <button
@@ -412,7 +422,7 @@ const RTOListView = ({ onSelectRto }) => {
                             className="btn"
                             style={{ background: '#7c2d12', color: '#fff', border: 'none' }}
                         >
-                            {rto.estado === 'ABIERTO' ? '📋 Completar RTO' : '👁️ Ver RTO'}
+                            {rto.estado === 'ABIERTO' ? 'Completar RTO' : 'Ver RTO'}
                         </button>
                     </div>
                 </div>
@@ -510,6 +520,7 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
     const [selectedPtsForRTO, setSelectedPtsForRTO] = useState(null);
     const [showRTOComponent, setShowRTOComponent] = useState(false);
     const [selectedRto, setSelectedRto] = useState(null);
+    const [showRoleMenu, setShowRoleMenu] = useState(false);
     
     // Detectar parametro view en la URL
     const urlParams = new URLSearchParams(location.search);
@@ -521,6 +532,10 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
         // Si el usuario navega a /?view=dashboard, por defecto mostrar permisos
         activeView = { title: 'Dashboards', content: currentView && currentView.content === 'equipos-dashboard-view' ? 'equipos-dashboard-view' : 'pts-dashboard-view' };
     }
+
+    useEffect(() => {
+        setShowRoleMenu(false);
+    }, [role]);
 
     // Funcion para manejar la seleccion de PTS para firmar
     const handleFirmar = (pts) => {
@@ -655,7 +670,13 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                     </>
                 );
             case 'my-pts-list-view':
-                return <ListaPTS defaultFilter="MIS_PTS" onSelectPtsParaFirma={handleFirmar} />;
+                return (
+                    <ListaPTS
+                        defaultFilter="MIS_PTS"
+                        onSelectPtsParaFirma={handleFirmar}
+                        onSelectPtsParaCierre={handleSelectPtsForRTO}
+                    />
+                );
             case 'formulario-rto-view':
                 return (
                     <>
@@ -746,7 +767,7 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                 {role === ROLES.EMISOR && (
                     <button
                         onClick={() => {
-                            setCurrentView({ title: 'Crear PTS', content: 'pts-form-view' });
+                            navigate('/pts/nuevo');
                             if (typeof window !== 'undefined') {
                                 window.dispatchEvent(new Event('resetCrearPTS'));
                             }
@@ -760,14 +781,14 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                 {role === ROLES.SUPERVISOR && (
                     <>
                         <button
-                            onClick={() => setCurrentView({ title: 'Aprobación', content: 'approval-list-view' })}
+                            onClick={() => { setCurrentView({ title: 'Aprobación', content: 'approval-list-view' }); navigate('/aprobacion'); }}
                             className="btn btn-primary"
                             style={{ padding: '14px 28px', fontSize: '0.95rem' }}
                         >
                             Revisar Aprobaciones
                         </button>
                         <button
-                            onClick={() => setCurrentView({ title: 'Cierre PTS', content: 'cierre-rto-view' })}
+                            onClick={() => { setCurrentView({ title: 'Cierre PTS', content: 'cierre-rto-view' }); navigate('/cierre-rto'); }}
                             className="btn btn-primary"
                             style={{ padding: '14px 28px', fontSize: '0.95rem' }}
                         >
@@ -792,18 +813,18 @@ const AppContent = ({ user, currentView, setCurrentView, onSwitchRole, available
                     <div className="relative">
                         <button
                             className="btn btn-outline"
-                            onClick={(e) => {
-                                const menu = e.currentTarget.nextElementSibling;
-                                menu.classList.toggle('hidden');
-                            }}
+                            onClick={() => setShowRoleMenu(prev => !prev)}
                         >
                             Cambiar Rol (actual: {role})
                         </button>
-                        <div className="hidden absolute" style={{ left: '50%', transform: 'translateX(-50%)', marginTop: 8, background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.12)', border: '1px solid #e2eff1', zIndex: 20, minWidth: 220 }}>
+                        <div className={`${showRoleMenu ? '' : 'hidden'} absolute`} style={{ left: '50%', transform: 'translateX(-50%)', marginTop: 8, background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.12)', border: '1px solid #e2eff1', zIndex: 20, minWidth: 220 }}>
                             {availableRoles.filter(r => r !== role).map(r => (
                                 <button
                                     key={r}
-                                    onClick={() => onSwitchRole(r)}
+                                    onClick={() => {
+                                        setShowRoleMenu(false);
+                                        onSwitchRole(r);
+                                    }}
                                     style={{ display: 'block', width: '100%', textAlign: 'left', padding: '12px 20px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, color: '#1a2332', fontSize: '0.9rem' }}
                                     onMouseOver={(e) => e.target.style.background = '#f5fbfb'}
                                     onMouseOut={(e) => e.target.style.background = 'none'}
@@ -912,15 +933,16 @@ const App = () => {
             const data = await response.json();
             const newToken = data.token;
 
+            // Guardar token siempre para poder autorizar endpoints protegidos
+            localStorage.setItem('authToken', newToken);
+            setAuthToken(newToken);
+
             // Verificar si debe cambiar contraseña antes de continuar
             console.log('[LOGIN] requiresPasswordChange:', data.requiresPasswordChange, '| response:', data);
             if (data.requiresPasswordChange) {
                 setPendingPasswordChange(legajo);
                 return;
             }
-
-            localStorage.setItem('authToken', newToken);
-            setAuthToken(newToken);
 
             // Verificar si tiene múltiples roles
             const claims = decodeToken(newToken);
@@ -937,7 +959,7 @@ const App = () => {
         } catch (error) {
             console.error("Login fallido:", error);
             const isNetworkError = error instanceof TypeError && error.message === 'Failed to fetch';
-            setError(isNetworkError ? "Error de conexión. Verifique que el servidor esté disponible." : "Legajo o contraseña inválidos.");
+            setError(isNetworkError ? "Error de conexión. Verifique que el servidor esté disponible." : (error.message || "Legajo o contraseña inválidos."));
         }
     };
 
@@ -1062,17 +1084,33 @@ const App = () => {
                             )
                         } 
                     />
-                    {/* Ruta de cambio de contraseña (primer ingreso) */}
+                    {/* Ruta de cambio de contraseña (primer ingreso o voluntario) */}
                     <Route 
                         path="/cambiar-contrasena" 
                         element={
                             pendingPasswordChange ? (
                                 <CambiarContrasena 
                                     legajo={pendingPasswordChange} 
-                                    onPasswordChanged={() => { setPendingPasswordChange(null); }}
+                                    onPasswordChanged={() => {
+                                        setPendingPasswordChange(null);
+                                        localStorage.removeItem('authToken');
+                                        setAuthToken(null);
+                                        setUser(null);
+                                    }}
+                                />
+                            ) : authToken && user ? (
+                                <CambiarContrasena
+                                    legajo={user.legajo || user.sub || user.username}
+                                    onPasswordChanged={() => {
+                                        localStorage.removeItem('authToken');
+                                        setAuthToken(null);
+                                        setUser(null);
+                                    }}
                                 />
                             ) : (
-                                <Navigate to="/login" replace />
+                                <CambiarContrasena
+                                    selfService
+                                />
                             )
                         } 
                     />

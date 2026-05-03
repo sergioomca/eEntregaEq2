@@ -241,14 +241,14 @@ function FirmaBiometrica({ ptsId, dniFirmante, onFirmaExitosa }) {
     
     return (
         <div style={containerStyle}>
-            <h3>Validación Biometrica de Supervisor (HU-005)</h3>
+            <h3>Validación Biometrica de Supervisor </h3>
             <p style={{textAlign: 'center', color: '#555'}}>
                 PTS: **{ptsId ? ptsId : 'Pendiente'}**
             </p>
             <div style={iconStyle}>
                 {biometricoValidado 
                     ? <span role="img" aria-label="Aprobado">✅</span> 
-                    : <span role="img" aria-label="Huella">👆</span>
+                    : <span role="img" aria-label="Huella">🫆</span>
                 }
             </div>
             

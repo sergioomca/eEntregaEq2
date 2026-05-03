@@ -16,6 +16,8 @@ public interface IRtoService {
 
     RetornoOperaciones agregarPtsAlRto(String rtoId, String ptsId);
 
+    RetornoOperaciones agregarEspecialidades(String rtoId, java.util.List<RetornoOperaciones.EspecialidadRTO> especialidades);
+
     RetornoOperaciones cerrarEspecialidad(String rtoId, String especialidadNombre, String responsableLegajo, String observaciones);
 
     List<RetornoOperaciones> getRtosAbiertos();

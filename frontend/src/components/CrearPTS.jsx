@@ -17,7 +17,8 @@ const CrearPTS = () => {
   const navigate = useNavigate();
   const location = useLocation();
   // PTS en standby que se está retomando (viene desde la navegación)
-  const editingPts = location.state?.editingPts || null;
+  const editingPtsId = location.state?.editingPtsId || location.state?.editingPts?.id || null;
+  const [editingPts, setEditingPts] = useState(location.state?.editingPts || null);
   // Estado para el nombre real del solicitante
   const [nombreSolicitante, setNombreSolicitante] = useState('');
   // Lista de supervisores disponibles
@@ -32,11 +33,33 @@ const CrearPTS = () => {
 
   // Cargar equipos al montar el componente
   useEffect(() => {
-    fetch('/api/equipos')
+    const token = localStorage.getItem('authToken');
+    fetch('/api/equipos', {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
       .then(res => res.ok ? res.json() : [])
       .then(data => setEquiposDisponibles(Array.isArray(data) ? data : []))
       .catch(() => setEquiposDisponibles([]));
   }, []);
+
+  // Cargar el PTS más reciente desde backend al continuar uno en Stand By
+  useEffect(() => {
+    if (!editingPtsId) return;
+
+    const token = localStorage.getItem('authToken');
+    fetch(`/api/pts/${editingPtsId}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) {
+          setEditingPts(data);
+        }
+      })
+      .catch(() => {
+        // Mantener fallback con editingPts de navegación si falla la recarga
+      });
+  }, [editingPtsId]);
     // Estado para los datos del formulario
 
     // Generar número de permiso consultando al backend
@@ -468,9 +491,9 @@ const CrearPTS = () => {
         descripcionTrabajo: formData.descripcionTrabajo || '',
         tareaDetallada: formData.descripcionTrabajo || '',
         nombreSolicitante: formData.solicitante || '',
-        solicitanteLegajo: user?.dni || '',
-        supervisorLegajo: formData.supervisor || '',
-        receptorLegajo: formData.receptor || '',
+        solicitanteLegajo: user?.dni || null,
+        supervisorLegajo: formData.supervisor?.trim() ? formData.supervisor.trim() : null,
+        receptorLegajo: formData.receptor?.trim() ? formData.receptor.trim() : null,
         nombreReceptor: formData.nombreReceptor || '',
         observaciones: formData.observaciones || '',
         area: formData.ubicacion || '',
@@ -604,8 +627,11 @@ const CrearPTS = () => {
     const tag = formData.equiposSeguridad[0]?.equipo;
     if (tag) {
       const equipo = equiposDisponibles.find(eq => eq.tag === tag);
-      if (equipo && equipo.estadoDcs !== 'DESHABILITADO') {
-        newErrors.equiposSeguridad = 'Solo se puede crear un PTS si el equipo está DESHABILITADO en DCS.';
+      const estadoDcsNormalizado = (equipo?.estadoDcs || '').toString().trim().toUpperCase();
+      const estaDeshabilitado = estadoDcsNormalizado === 'DESHABILITADO';
+      if (equipo && !estaDeshabilitado) {
+        const estadoTexto = estadoDcsNormalizado || 'DESCONOCIDO';
+        newErrors.equiposSeguridad = `No se puede crear un PTS con estado DCS ${estadoTexto}. Solo está permitido DESHABILITADO.`;
       }
     }
 
@@ -962,8 +988,9 @@ const CrearPTS = () => {
                     if (!equipo) return null;
                     // Mostrar el estadoDcs real
                     let color = 'text-red-600';
-                    let label = equipo.estadoDcs || 'Desconocido';
-                    switch (equipo.estadoDcs) {
+                    const estadoDcsNormalizado = (equipo.estadoDcs || '').toString().trim().toUpperCase();
+                    let label = estadoDcsNormalizado || 'DESCONOCIDO';
+                    switch (estadoDcsNormalizado) {
                       case 'DESHABILITADO':
                         color = 'text-green-700';
                         label = 'Deshabilitado';
@@ -977,9 +1004,13 @@ const CrearPTS = () => {
                       case 'EN_MARCHA':
                         label = 'En marcha';
                         break;
+                      case 'SIN_CONEXION':
+                        color = 'text-red-600';
+                        label = 'Desconocido';
+                        break;
                       default:
-                        color = 'text-gray-600';
-                        label = equipo.estadoDcs || 'Desconocido';
+                        color = 'text-red-600';
+                        label = 'Desconocido';
                     }
                     return (
                       <p className={`mt-2 text-sm font-semibold ${color}`}>

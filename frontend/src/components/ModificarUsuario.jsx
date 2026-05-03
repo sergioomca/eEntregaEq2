@@ -5,6 +5,7 @@ const ROLES_DISPONIBLES = [
     { value: ROLES.EMISOR, label: 'Emisor' },
     { value: ROLES.SUPERVISOR, label: 'Supervisor' },
     { value: ROLES.EJECUTANTE, label: 'Ejecutante' },
+    { value: ROLES.RECEPTOR, label: 'Receptor' },
     { value: ROLES.ADMIN, label: 'Administrador' },
     { value: ROLES.RTO_MANT, label: 'RTO Mantenimiento' },
     { value: ROLES.EHS, label: 'EH&S' },
@@ -79,6 +80,62 @@ export default function ModificarUsuario() {
         setSelectedUser(null);
         setSubmitMessage('');
         setSubmitError('');
+    };
+
+    const isSelectedUserLocked = !!(selectedUser?.accountLocked || selectedUser?.isAccountLocked);
+
+    const handleToggleBloqueo = async () => {
+        if (!selectedUser) return;
+
+        const bloquear = !isSelectedUserLocked;
+        const endpoint = bloquear ? '/api/auth/bloquear-cuenta' : '/api/auth/desbloquear-cuenta';
+
+        setSubmitMessage('');
+        setSubmitError('');
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`,
+                },
+                body: JSON.stringify({ legajo: selectedUser.legajo }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'No se pudo actualizar el bloqueo del usuario.');
+            }
+
+            const nextLocked = bloquear;
+            setSelectedUser(prev => prev ? {
+                ...prev,
+                accountLocked: nextLocked,
+                isAccountLocked: nextLocked,
+                failedLoginAttempts: nextLocked ? 5 : 0,
+                mustChangePassword: nextLocked ? prev.mustChangePassword : true,
+            } : prev);
+
+            setUsuarios(prev => prev.map(u => {
+                if (u.legajo !== selectedUser.legajo) return u;
+                return {
+                    ...u,
+                    accountLocked: nextLocked,
+                    isAccountLocked: nextLocked,
+                    failedLoginAttempts: nextLocked ? 5 : 0,
+                    mustChangePassword: nextLocked ? u.mustChangePassword : true,
+                };
+            }));
+
+            setSubmitMessage(
+                bloquear
+                    ? `Usuario ${selectedUser.legajo} bloqueado exitosamente.`
+                    : `Usuario ${selectedUser.legajo} desbloqueado exitosamente. Se solicitará cambio de contraseña al ingresar.`
+            );
+        } catch (err) {
+            setSubmitError(err.message);
+        }
     };
 
     const handleChange = (e) => {
@@ -183,6 +240,9 @@ export default function ModificarUsuario() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {filteredUsuarios.map(u => (
+                        (() => {
+                            const usuarioBloqueado = !!(u.accountLocked || u.isAccountLocked);
+                            return (
                         <div
                             key={u.legajo}
                             onClick={() => handleSelectUser(u)}
@@ -197,6 +257,24 @@ export default function ModificarUsuario() {
                             <div>
                                 <span style={{ fontWeight: 600, color: '#1a2332' }}>{u.legajo}</span>
                                 <span style={{ color: '#64748b', marginLeft: 12 }}>{u.nombreCompleto || '—'}</span>
+                                {usuarioBloqueado && (
+                                    <span
+                                        title="Cuenta bloqueada"
+                                        style={{
+                                            marginLeft: 10,
+                                            fontSize: '0.72rem',
+                                            fontWeight: 700,
+                                            color: '#991b1b',
+                                            background: '#fee2e2',
+                                            border: '1px solid #fca5a5',
+                                            borderRadius: 999,
+                                            padding: '2px 8px',
+                                            letterSpacing: '0.2px',
+                                        }}
+                                    >
+                                        BLOQUEADO
+                                    </span>
+                                )}
                                 {u.huellaDigital && <span title="Huella registrada" style={{ marginLeft: 8 }}>🟢</span>}
                             </div>
                             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -208,6 +286,8 @@ export default function ModificarUsuario() {
                                 ))}
                             </div>
                         </div>
+                            );
+                        })()
                     ))}
                 </div>
             </div>
@@ -233,6 +313,30 @@ export default function ModificarUsuario() {
                 <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: 20 }}>
                     Legajo: <strong>{selectedUser.legajo}</strong>
                 </p>
+
+                <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                        Estado de cuenta:
+                    </span>
+                    {isSelectedUserLocked ? (
+                        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: 999, border: '1px solid #fca5a5', background: '#fee2e2', color: '#991b1b', fontWeight: 700 }}>
+                            BLOQUEADA
+                        </span>
+                    ) : (
+                        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: 999, border: '1px solid #86efac', background: '#f0fdf4', color: '#166534', fontWeight: 700 }}>
+                            DESBLOQUEADA
+                        </span>
+                    )}
+                    <button
+                        type="button"
+                        onClick={handleToggleBloqueo}
+                        className="btn btn-outline"
+                        disabled={saving}
+                        style={{ marginLeft: 'auto', borderColor: isSelectedUserLocked ? '#86efac' : '#fca5a5', color: isSelectedUserLocked ? '#166534' : '#991b1b' }}
+                    >
+                        {isSelectedUserLocked ? 'Desbloquear usuario' : 'Bloquear usuario'}
+                    </button>
+                </div>
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                     <div className="form-group">

@@ -16,6 +16,29 @@ public final class EntityMapper {
 
     private EntityMapper() {}
 
+    private static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private static String toDomainRole(String role) {
+        if (role == null || role.isBlank()) {
+            return role;
+        }
+        return role.startsWith("ROLE_") ? role.substring("ROLE_".length()) : role;
+    }
+
+    private static String toPersistenceRole(String role) {
+        if (role == null || role.isBlank()) {
+            return role;
+        }
+        String normalized = role.replace(' ', '_');
+        return normalized.startsWith("ROLE_") ? normalized : "ROLE_" + normalized;
+    }
+
     // ==================== USUARIO ====================
 
     public static UsuarioEntity toEntity(UsuarioDTO dto) {
@@ -23,10 +46,14 @@ public final class EntityMapper {
         e.setLegajo(dto.getLegajo());
         e.setNombreCompleto(dto.getNombreCompleto());
         e.setSector(dto.getSector());
-        e.setRoles(dto.getRoles() != null ? new ArrayList<>(dto.getRoles()) : new ArrayList<>());
+        e.setRoles(dto.getRoles() != null
+            ? dto.getRoles().stream().map(EntityMapper::toPersistenceRole).collect(Collectors.toCollection(ArrayList::new))
+            : new ArrayList<>());
         e.setPassword(dto.getPassword());
         e.setMustChangePassword(dto.isMustChangePassword());
         e.setHuellaDigital(dto.getHuellaDigital());
+        e.setFailedLoginAttempts(dto.getFailedLoginAttempts());
+        e.setAccountLocked(dto.isAccountLocked());
         return e;
     }
 
@@ -35,10 +62,14 @@ public final class EntityMapper {
         dto.setLegajo(e.getLegajo());
         dto.setNombreCompleto(e.getNombreCompleto());
         dto.setSector(e.getSector());
-        dto.setRoles(e.getRoles() != null ? new ArrayList<>(e.getRoles()) : new ArrayList<>());
+        dto.setRoles(e.getRoles() != null
+            ? e.getRoles().stream().map(EntityMapper::toDomainRole).collect(Collectors.toCollection(ArrayList::new))
+            : new ArrayList<>());
         dto.setPassword(e.getPassword());
         dto.setMustChangePassword(e.isMustChangePassword());
         dto.setHuellaDigital(e.getHuellaDigital());
+        dto.setFailedLoginAttempts(e.getFailedLoginAttempts());
+        dto.setAccountLocked(e.isAccountLocked());
         return dto;
     }
 
@@ -62,12 +93,12 @@ public final class EntityMapper {
     public static PtsEntity toEntity(PermisoTrabajoSeguro pts) {
         PtsEntity e = new PtsEntity();
         e.setId(pts.getId());
-        e.setEquipoOInstalacion(pts.getEquipoOInstalacion());
+        e.setEquipoOInstalacion(trimToNull(pts.getEquipoOInstalacion()));
         e.setDescripcionTrabajo(pts.getDescripcionTrabajo());
-        e.setSolicitanteLegajo(pts.getSolicitanteLegajo());
+        e.setSolicitanteLegajo(trimToNull(pts.getSolicitanteLegajo()));
         e.setNombreSolicitante(pts.getNombreSolicitante());
-        e.setSupervisorLegajo(pts.getSupervisorLegajo());
-        e.setReceptorLegajo(pts.getReceptorLegajo());
+        e.setSupervisorLegajo(trimToNull(pts.getSupervisorLegajo()));
+        e.setReceptorLegajo(trimToNull(pts.getReceptorLegajo()));
         e.setNombreReceptor(pts.getNombreReceptor());
         e.setFechaInicio(pts.getFechaInicio());
         e.setFechaFin(pts.getFechaFin());
@@ -82,10 +113,10 @@ public final class EntityMapper {
         e.setFechaHoraFirmaSupervisor(pts.getFechaHoraFirmaSupervisor());
         e.setRtoEstado(pts.getRtoEstado());
         e.setRtoObservaciones(pts.getRtoObservaciones());
-        e.setRtoResponsableCierreLegajo(pts.getRtoResponsableCierreLegajo());
+        e.setRtoResponsableCierreLegajo(trimToNull(pts.getRtoResponsableCierreLegajo()));
         e.setRtoFechaHoraCierre(pts.getRtoFechaHoraCierre());
         e.setRequiereRTO(pts.isRequiereRTO());
-        e.setRtoAsociadoId(pts.getRtoAsociadoId());
+        e.setRtoAsociadoId(trimToNull(pts.getRtoAsociadoId()));
 
         if (pts.getRiesgosControles() != null) {
             e.setRiesgosControles(pts.getRiesgosControles().stream()

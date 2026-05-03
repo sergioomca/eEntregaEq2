@@ -9,8 +9,10 @@ import com.epu.prototipo.util.JwtTokenUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -104,8 +106,21 @@ public class AuthController {
             String currentPassword = request.get("currentPassword");
             String newPassword = request.get("newPassword");
 
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+                return ResponseEntity.status(401).body("Debe autenticarse para cambiar la contraseña.");
+            }
+
+            String authLegajo = authentication.getName();
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+
             if (legajo == null || currentPassword == null || newPassword == null) {
                 return ResponseEntity.badRequest().body("Faltan campos requeridos.");
+            }
+
+            if (!isAdmin && !authLegajo.equals(legajo)) {
+                return ResponseEntity.status(403).body("No tiene permisos para cambiar la contraseña de otro usuario.");
             }
 
             if (newPassword.trim().length() < 4) {
@@ -156,6 +171,8 @@ public class AuthController {
             // Desbloquear la cuenta y resetear intentos
             usuario.setAccountLocked(false);
             usuario.setFailedLoginAttempts(0);
+            // Tras desbloquear, forzar cambio de contraseña por seguridad
+            usuario.setMustChangePassword(true);
             usuarioService.updateUsuario(legajo, usuario);
 
             System.out.println("[DESBLOQUEAR] Usuario: " + legajo + " ha sido desbloqueado.");
@@ -164,6 +181,39 @@ public class AuthController {
         } catch (Exception e) {
             System.err.println("Error al desbloquear cuenta: " + e.getMessage());
             return ResponseEntity.status(500).body("Error al desbloquear la cuenta.");
+        }
+    }
+
+    // Endpoint para bloquear cuenta (solo admin)
+    @PostMapping("/bloquear-cuenta")
+    public ResponseEntity<?> bloquearCuenta(@RequestBody Map<String, String> request) {
+        try {
+            String legajo = request.get("legajo");
+
+            if (legajo == null || legajo.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Legajo es requerido.");
+            }
+
+            UsuarioDTO usuario = usuarioService.getUsuarioByLegajo(legajo);
+
+            if (usuario == null) {
+                return ResponseEntity.status(404).body("Usuario no encontrado.");
+            }
+
+            if (usuario.isAccountLocked()) {
+                return ResponseEntity.status(400).body("La cuenta ya está bloqueada.");
+            }
+
+            usuario.setAccountLocked(true);
+            usuario.setFailedLoginAttempts(5);
+            usuarioService.updateUsuario(legajo, usuario);
+
+            System.out.println("[BLOQUEAR] Usuario: " + legajo + " ha sido bloqueado.");
+            return ResponseEntity.ok(Map.of("message", "Cuenta bloqueada exitosamente."));
+
+        } catch (Exception e) {
+            System.err.println("Error al bloquear cuenta: " + e.getMessage());
+            return ResponseEntity.status(500).body("Error al bloquear la cuenta.");
         }
     }
         

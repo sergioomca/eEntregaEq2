@@ -75,6 +75,19 @@ public class RtoController {
         }
     }
 
+    // Agregar/actualizar especialidades en un RTO existente
+    @PutMapping("/{rtoId}/especialidades")
+    public ResponseEntity<?> agregarEspecialidades(
+            @PathVariable String rtoId,
+            @RequestBody java.util.List<RetornoOperaciones.EspecialidadRTO> especialidades) {
+        try {
+            RetornoOperaciones rto = rtoService.agregarEspecialidades(rtoId, especialidades);
+            return ResponseEntity.ok(rto);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     // Cerrar una especialidad del RTO
     @PutMapping("/{rtoId}/especialidad/{nombre}/cerrar")
     public ResponseEntity<?> cerrarEspecialidad(

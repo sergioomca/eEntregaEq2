@@ -74,6 +74,17 @@ public class TestRtoService implements IRtoService {
     }
 
     @Override
+    public RetornoOperaciones agregarEspecialidades(String rtoId, java.util.List<RetornoOperaciones.EspecialidadRTO> especialidades) {
+        RetornoOperaciones rto = rtosInMemory.get(rtoId);
+        if (rto == null) {
+            throw new RuntimeException("RTO no encontrado: " + rtoId);
+        }
+        rto.setEspecialidades(especialidades);
+        System.out.println("[TEST] Especialidades actualizadas en RTO " + rtoId);
+        return rto;
+    }
+
+    @Override
     public RetornoOperaciones cerrarEspecialidad(String rtoId, String especialidadNombre, String responsableLegajo, String observaciones) {
         RetornoOperaciones rto = rtosInMemory.get(rtoId);
         if (rto == null) {
