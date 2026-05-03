@@ -94,26 +94,7 @@ public class AuthController {
         } catch (Exception e) {
             // Si el usuario no existe
             System.err.println("[LOGIN ERROR] Error para usuario: " + legajo + " - " + e.getMessage());
-                return ResponseEntity.status(401).body("Error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-        }
-    }
-
-    // Endpoint de diagnóstico temporal - devuelve estado de la DB
-    @GetMapping("/diag")
-    public ResponseEntity<?> diagnostico() {
-        try {
-            java.util.List<com.epu.prototipo.dto.UsuarioDTO> todos = usuarioService.getAllUsuarios();
-            StringBuilder sb = new StringBuilder();
-            sb.append("Total usuarios: ").append(todos.size()).append("\n");
-            for (com.epu.prototipo.dto.UsuarioDTO u : todos) {
-                sb.append("- ").append(u.getLegajo())
-                  .append(" roles=").append(u.getRoles())
-                  .append(" locked=").append(u.isAccountLocked())
-                  .append("\n");
-            }
-            return ResponseEntity.ok(sb.toString());
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("ERROR: " + e.getMessage());
+            return ResponseEntity.status(401).body("Error: Legajo o contraseña inválidos.");
         }
     }
 

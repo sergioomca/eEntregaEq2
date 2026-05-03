@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +31,26 @@ public class JwtTokenUtil {
 
     // Signing key local secreta
     private java.security.Key signingKey;
+
+    private java.security.Key resolveSigningKey() {
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(secret);
+        } catch (IllegalArgumentException ex) {
+            keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        }
+
+        // HS256 requiere al menos 32 bytes de clave efectiva.
+        if (keyBytes.length < 32) {
+            try {
+                keyBytes = MessageDigest.getInstance("SHA-256").digest(keyBytes);
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException("No se pudo inicializar SHA-256 para clave JWT", e);
+            }
+        }
+
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
 
     // --- Metodos de Extraccien ---
 
@@ -63,16 +86,14 @@ public class JwtTokenUtil {
 
     /**
      * Metodo para obtener todos los claims (cuerpo) del token JWT.
-     * !!! ver CORRECCION: uso sintaxis antigua compilador no encuentra la nueva
+     * !!! ver CORRECCION: sintaxis 
      * @param token El token JWT.
      * @return Todos los claims.
      */
     private Claims getAllClaimsFromToken(String token) {
         // Inicializar signingKey si aún no lo está
         if (signingKey == null) {
-            // Con el ecreto en Base64 
-            byte[] keyBytes = Decoders.BASE64.decode(secret);
-            signingKey = Keys.hmacShaKeyFor(keyBytes);
+            signingKey = resolveSigningKey();
         }
 
         return Jwts.parserBuilder()
@@ -117,8 +138,7 @@ public class JwtTokenUtil {
         final Date expirationDate = new Date(createdDate.getTime() + jwtExpiration);
 
     if (signingKey == null) {
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
-        signingKey = Keys.hmacShaKeyFor(keyBytes);
+        signingKey = resolveSigningKey();
     }
 
     return Jwts.builder()
