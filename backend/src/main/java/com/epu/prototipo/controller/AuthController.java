@@ -94,7 +94,7 @@ public class AuthController {
         } catch (Exception e) {
             // Si el usuario no existe
             System.err.println("[LOGIN ERROR] Error para usuario: " + legajo + " - " + e.getMessage());
-            return ResponseEntity.status(401).body("Error: Legajo o contraseña inválidos.");
+                return ResponseEntity.status(401).body("Error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 
