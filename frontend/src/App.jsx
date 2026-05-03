@@ -156,6 +156,19 @@ const decodeToken = (token) => {
     }
 };
 
+// Normaliza distintos formatos de roles del token a un array sin prefijo ROLE_
+const getRolesFromClaims = (claims) => {
+    if (!claims) return [];
+
+    const rawRoles = claims.roles || claims.authorities || claims.authority || [];
+    const roles = Array.isArray(rawRoles) ? rawRoles : [rawRoles];
+
+    return roles
+        .filter(Boolean)
+        .map(r => String(r).replace('ROLE_', '').trim())
+        .filter(Boolean);
+};
+
 // Componente de Login (HU-001)
 const LoginView = ({ handleLogin }) => {
     const navigate = useNavigate();
@@ -170,7 +183,13 @@ const LoginView = ({ handleLogin }) => {
             setError("Por favor ingrese legajo y contraseña.");
             return;
         }
-        await handleLogin(legajo, password, setError);
+
+        const result = await handleLogin(legajo, password, setError);
+        if (result?.status === 'success') {
+            navigate('/');
+        } else if (result?.status === 'password-change') {
+            navigate('/cambiar-contrasena');
+        }
     };
 
     return (
@@ -889,26 +908,27 @@ const App = () => {
     const processAuthToken = useCallback((token, selectedRole) => {
         if (!token) {
             setUser(null);
-            return;
+            return false;
         }
 
         const claims = decodeToken(token);
-        if (claims && claims.exp * 1000 > Date.now()) {
-            // Obtener todos los roles sin prefijo "ROLE_"
-            const allRoles = (claims.roles || []).map(r => r.replace('ROLE_', ''));
-            const role = selectedRole || allRoles[0];
-            
-            setUser({
-                legajo: claims.sub,
-                role: role,
-            });
-            return true;
-        } else {
+        const isExpired = !claims?.exp || claims.exp * 1000 <= Date.now();
+        if (!claims || isExpired) {
             localStorage.removeItem('authToken');
             setAuthToken(null);
             setUser(null);
             return false;
         }
+
+        const allRoles = getRolesFromClaims(claims);
+        const role = selectedRole || allRoles[0] || ROLES.EMISOR;
+
+        setUser({
+            legajo: claims.sub,
+            role,
+        });
+
+        return true;
     }, []);
 
     // Inicialización y chequeo de token al cargar
@@ -941,25 +961,28 @@ const App = () => {
             console.log('[LOGIN] requiresPasswordChange:', data.requiresPasswordChange, '| response:', data);
             if (data.requiresPasswordChange) {
                 setPendingPasswordChange(legajo);
-                return;
+                return { status: 'password-change' };
             }
 
             // Verificar si tiene múltiples roles
             const claims = decodeToken(newToken);
-            const allRoles = (claims?.roles || []).map(r => r.replace('ROLE_', ''));
+            const allRoles = getRolesFromClaims(claims);
 
             if (allRoles.length > 1) {
                 // Múltiples roles: mostrar selector
                 setPendingRoles(allRoles);
-            } else {
-                // Un solo rol: continuar directamente
-                completeLogin(newToken, allRoles[0]);
+                return { status: 'role-selection' };
             }
+
+            // Un solo rol o sin roles explícitos: continuar directamente
+            completeLogin(newToken, allRoles[0] || ROLES.EMISOR);
+            return { status: 'success' };
 
         } catch (error) {
             console.error("Login fallido:", error);
             const isNetworkError = error instanceof TypeError && error.message === 'Failed to fetch';
             setError(isNetworkError ? "Error de conexión. Verifique que el servidor esté disponible." : (error.message || "Legajo o contraseña inválidos."));
+            return { status: 'error' };
         }
     };
 
@@ -981,8 +1004,7 @@ const App = () => {
     const getUserRoles = useCallback(() => {
         if (!authToken) return [];
         const claims = decodeToken(authToken);
-        if (!claims) return [];
-        return (claims.roles || []).map(r => r.replace('ROLE_', ''));
+        return getRolesFromClaims(claims);
     }, [authToken]);
 
     // Cambiar de rol sin cerrar sesión
