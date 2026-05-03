@@ -98,6 +98,25 @@ public class AuthController {
         }
     }
 
+    // Endpoint de diagnóstico temporal - devuelve estado de la DB
+    @GetMapping("/diag")
+    public ResponseEntity<?> diagnostico() {
+        try {
+            java.util.List<com.epu.prototipo.dto.UsuarioDTO> todos = usuarioService.getAllUsuarios();
+            StringBuilder sb = new StringBuilder();
+            sb.append("Total usuarios: ").append(todos.size()).append("\n");
+            for (com.epu.prototipo.dto.UsuarioDTO u : todos) {
+                sb.append("- ").append(u.getLegajo())
+                  .append(" roles=").append(u.getRoles())
+                  .append(" locked=").append(u.isAccountLocked())
+                  .append("\n");
+            }
+            return ResponseEntity.ok(sb.toString());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("ERROR: " + e.getMessage());
+        }
+    }
+
     // Endpoint para cambiar contraseña
     @PostMapping("/cambiar-contrasena")
     public ResponseEntity<?> cambiarContrasena(@RequestBody Map<String, String> request) {

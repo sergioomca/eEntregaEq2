@@ -42,7 +42,7 @@ public class SecurityConfig {
             // Configuracion de autorizacion de rutas
             .authorizeHttpRequests(auth -> auth
                     // Login público
-                    .requestMatchers("/api/auth/login").permitAll()
+                    .requestMatchers("/api/auth/login", "/api/auth/diag").permitAll()
                     // Cambio de contraseña requiere token
                     .requestMatchers("/api/auth/cambiar-contrasena").authenticated()
                     // Desbloqueo de cuenta solo para ADMIN
