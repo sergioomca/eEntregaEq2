@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://eentregaeq2.onrender.com/api/:path*" },
+    { "source": "/public/:path*", "destination": "https://eentregaeq2.onrender.com/public/:path*" }
+  ]
+}
