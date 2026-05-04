@@ -172,8 +172,8 @@ const getRolesFromClaims = (claims) => {
 // Componente de Login (HU-001)
 const LoginView = ({ handleLogin }) => {
     const navigate = useNavigate();
-    const [legajo, setLegajo] = useState('VINF011422');
-    const [password, setPassword] = useState('VINF011422');
+    const [legajo, setLegajo] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
     const handleSubmit = async (e) => {
@@ -203,11 +203,12 @@ const LoginView = ({ handleLogin }) => {
             <div className="login-card">
                 <h2>Bienvenido de Nuevo</h2>
                 <p className="login-subtitle">Ingrese sus credenciales para acceder al sistema de Entrega de equipos.</p>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} autoComplete="off">
                     <div className="form-group">
                         <label className="form-label" htmlFor="legajo">Usuario</label>
                         <input
                             type="text" id="legajo" required
+                            autoComplete="off"
                             value={legajo}
                             onChange={(e) => setLegajo(e.target.value)}
                             placeholder="ej: operador@eeeq.com"
@@ -217,6 +218,7 @@ const LoginView = ({ handleLogin }) => {
                         <label className="form-label" htmlFor="password">Contraseña</label>
                         <input
                             type="password" id="password" required
+                            autoComplete="new-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />

@@ -57,7 +57,7 @@ try {
 return (
         <div className="login-container">
             <h2>Bienvenido</h2> 
-            <form onSubmit={handleSubmit} className="login-form">
+            <form onSubmit={handleSubmit} className="login-form" autoComplete="off">
                 
                 {/* Campo Usuario */}
                 <div className="form-group">
@@ -65,6 +65,7 @@ return (
                     <input
                         type="text"
                         id="legajo"
+                        autoComplete="off"
                         value={legajo}
                         onChange={(e) => setLegajo(e.target.value)}
                         required
@@ -78,6 +79,7 @@ return (
                     <input
                         type="password"
                         id="password"
+                        autoComplete="new-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
