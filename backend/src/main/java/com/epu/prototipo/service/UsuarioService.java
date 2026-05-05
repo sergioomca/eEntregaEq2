@@ -23,6 +23,17 @@ public class UsuarioService implements IUsuarioService {
     private final Map<String, UsuarioDTO> baseDeDatosUsuarios = new HashMap<>();
     private final PasswordEncoder passwordEncoder;
 
+    private boolean isDelegatingFormat(String password) {
+        return password != null && password.startsWith("{") && password.contains("}");
+    }
+
+    private String ensureEncodedPassword(String password) {
+        if (password == null || password.isEmpty() || isDelegatingFormat(password)) {
+            return password;
+        }
+        return passwordEncoder.encode(password);
+    }
+
     // Inicializacion de datos mock
     public UsuarioService(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
@@ -78,7 +89,7 @@ public class UsuarioService implements IUsuarioService {
         if (usuario.getPassword() == null || usuario.getPassword().isEmpty()) {
             usuario.setPassword(usuario.getLegajo());
         }
-        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+        usuario.setPassword(ensureEncodedPassword(usuario.getPassword()));
         usuario.setMustChangePassword(true);
         baseDeDatosUsuarios.put(usuario.getLegajo(), usuario);
         return usuario;
@@ -95,6 +106,7 @@ public class UsuarioService implements IUsuarioService {
         if (usuario.getPassword() == null || usuario.getPassword().isEmpty()) {
             usuario.setPassword(existing.getPassword());
         }
+        usuario.setPassword(ensureEncodedPassword(usuario.getPassword()));
         if (usuario.getHuellaDigital() == null && existing.getHuellaDigital() != null) {
             usuario.setHuellaDigital(existing.getHuellaDigital());
         }

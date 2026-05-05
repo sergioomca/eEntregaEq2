@@ -26,6 +26,17 @@ public class MysqlUsuarioService implements IUsuarioService {
         return normalized.startsWith("ROLE_") ? normalized : "ROLE_" + normalized;
     }
 
+    private boolean isDelegatingFormat(String password) {
+        return password != null && password.startsWith("{") && password.contains("}");
+    }
+
+    private String ensureEncodedPassword(String password) {
+        if (password == null || password.isEmpty() || isDelegatingFormat(password)) {
+            return password;
+        }
+        return passwordEncoder.encode(password);
+    }
+
     public MysqlUsuarioService(UsuarioRepository repo, PasswordEncoder passwordEncoder) {
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
@@ -65,7 +76,7 @@ public class MysqlUsuarioService implements IUsuarioService {
         if (usuario.getPassword() == null || usuario.getPassword().isEmpty()) {
             usuario.setPassword(usuario.getLegajo());
         }
-        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+        usuario.setPassword(ensureEncodedPassword(usuario.getPassword()));
         usuario.setMustChangePassword(true);
         UsuarioEntity saved = repo.save(EntityMapper.toEntity(usuario));
         return EntityMapper.toDTO(saved);
@@ -79,6 +90,7 @@ public class MysqlUsuarioService implements IUsuarioService {
         if (usuario.getPassword() == null || usuario.getPassword().isEmpty()) {
             usuario.setPassword(existing.getPassword());
         }
+        usuario.setPassword(ensureEncodedPassword(usuario.getPassword()));
         if (usuario.getHuellaDigital() == null && existing.getHuellaDigital() != null) {
             usuario.setHuellaDigital(existing.getHuellaDigital());
         }
