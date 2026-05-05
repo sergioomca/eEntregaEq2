@@ -123,8 +123,10 @@ public class AuthController {
                 return ResponseEntity.status(403).body("No tiene permisos para cambiar la contraseña de otro usuario.");
             }
 
-            if (newPassword.trim().length() < 4) {
-                return ResponseEntity.badRequest().body("La nueva contraseña debe tener al menos 4 caracteres.");
+            String trimmedPassword = newPassword.trim();
+            boolean passwordPolicyValid = trimmedPassword.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$");
+            if (!passwordPolicyValid) {
+                return ResponseEntity.badRequest().body("La nueva contraseña debe tener al menos 8 caracteres e incluir mayúscula, minúscula, número y símbolo especial.");
             }
 
             // Verificar contraseña actual
@@ -135,7 +137,7 @@ public class AuthController {
 
             // Actualizar contraseña
             UsuarioDTO usuario = usuarioService.getUsuarioByLegajo(legajo);
-            usuario.setPassword(newPassword.trim());
+            usuario.setPassword(trimmedPassword);
             usuario.setMustChangePassword(false);
             usuarioService.updateUsuario(legajo, usuario);
 

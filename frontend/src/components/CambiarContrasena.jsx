@@ -25,8 +25,10 @@ function CambiarContrasena({ legajo, onPasswordChanged, selfService = false }) {
             return;
         }
 
-        if (newPassword.trim().length < 4) {
-            setError('La nueva contraseña debe tener al menos 4 caracteres.');
+        const trimmedPassword = newPassword.trim();
+        const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+        if (!passwordPolicy.test(trimmedPassword)) {
+            setError('La nueva contraseña debe tener al menos 8 caracteres e incluir mayúscula, minúscula, número y símbolo especial.');
             return;
         }
 
@@ -72,7 +74,7 @@ function CambiarContrasena({ legajo, onPasswordChanged, selfService = false }) {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
-                body: JSON.stringify({ legajo: effectiveLegajo, currentPassword, newPassword: newPassword.trim() }),
+                body: JSON.stringify({ legajo: effectiveLegajo, currentPassword, newPassword: trimmedPassword }),
             });
 
             if (!response.ok) {
