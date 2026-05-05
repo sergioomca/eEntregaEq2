@@ -3,6 +3,7 @@ package com.epu.prototipo.service;
 import com.epu.prototipo.dto.UsuarioDTO;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -20,9 +21,11 @@ public class UsuarioService implements IUsuarioService {
 
     // Base de datos en memoria
     private final Map<String, UsuarioDTO> baseDeDatosUsuarios = new HashMap<>();
+    private final PasswordEncoder passwordEncoder;
 
     // Inicializacion de datos mock
-    public UsuarioService() {
+    public UsuarioService(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
         baseDeDatosUsuarios.put("VINF011422", new UsuarioDTO("VINF011422", "Sergio Capella", "Control de Proceso", "EMISOR"));
         baseDeDatosUsuarios.put("SUP222", new UsuarioDTO("SUP222", "Carlos Supervisión", "Supervisión de Planta", "SUPERVISOR"));
         baseDeDatosUsuarios.put("EJE444", new UsuarioDTO("EJE444", "Ana Ejecutante", "Mantenimiento Eléctrico", "EJECUTANTE"));
@@ -75,6 +78,7 @@ public class UsuarioService implements IUsuarioService {
         if (usuario.getPassword() == null || usuario.getPassword().isEmpty()) {
             usuario.setPassword(usuario.getLegajo());
         }
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         usuario.setMustChangePassword(true);
         baseDeDatosUsuarios.put(usuario.getLegajo(), usuario);
         return usuario;

@@ -5,6 +5,7 @@ import com.epu.prototipo.entity.EntityMapper;
 import com.epu.prototipo.entity.UsuarioEntity;
 import com.epu.prototipo.repository.UsuarioRepository;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 public class MysqlUsuarioService implements IUsuarioService {
 
     private final UsuarioRepository repo;
+    private final PasswordEncoder passwordEncoder;
 
     private String toPersistenceRole(String role) {
         if (role == null || role.isBlank()) {
@@ -24,8 +26,9 @@ public class MysqlUsuarioService implements IUsuarioService {
         return normalized.startsWith("ROLE_") ? normalized : "ROLE_" + normalized;
     }
 
-    public MysqlUsuarioService(UsuarioRepository repo) {
+    public MysqlUsuarioService(UsuarioRepository repo, PasswordEncoder passwordEncoder) {
         this.repo = repo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -62,6 +65,7 @@ public class MysqlUsuarioService implements IUsuarioService {
         if (usuario.getPassword() == null || usuario.getPassword().isEmpty()) {
             usuario.setPassword(usuario.getLegajo());
         }
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         usuario.setMustChangePassword(true);
         UsuarioEntity saved = repo.save(EntityMapper.toEntity(usuario));
         return EntityMapper.toDTO(saved);

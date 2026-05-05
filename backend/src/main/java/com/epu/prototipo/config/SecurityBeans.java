@@ -3,35 +3,32 @@ package com.epu.prototipo.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder; // Se usa para desarrollo/prototipado
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Se define el PasswordEncoder para la aplicacion.
- * Temporalmente configurado para usar NoOpPasswordEncoder ({noop}) para fines de prototipado,
- * para que permita continuar sin problemas de hash. 
- * !!! Luego reemplazar por BCrypt o PBKDF2.
- */
+// Se define el PasswordEncoder para la aplicacion.
+// Configuracion de transicion: PBKDF2 por defecto + {noop} temporal para compatibilidad
+// con contraseñas legacy en texto plano.
+
 @Configuration
 public class SecurityBeans {
 
-    /**
-     * Se configura un DelegatingPasswordEncoder que usa {noop} como codificador por defecto.
-     * El {noop} es el NoOpPasswordEncoder, que no hace hashing (texto plano),
-     * !!! se usa solo para desarrollo.
-     */
+    // DelegatingPasswordEncoder con PBKDF2 por defecto.
+    // {noop} queda temporalmente para permitir login de usuarios legacy.
+    
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Mapeo de codificadores
+        Pbkdf2PasswordEncoder pbkdf2Encoder = Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+
         Map<String, PasswordEncoder> encoders = new HashMap<>();
-        // Configuración temporal de prototipado: {noop} = NoOpPasswordEncoder
+        encoders.put("pbkdf2", pbkdf2Encoder);
         encoders.put("noop", NoOpPasswordEncoder.getInstance());
         
-        // Se creas el DelegatingPasswordEncoder y se define {noop} como ID por defecto
-        DelegatingPasswordEncoder delegatingPasswordEncoder = new DelegatingPasswordEncoder("noop", encoders);
+        DelegatingPasswordEncoder delegatingPasswordEncoder = new DelegatingPasswordEncoder("pbkdf2", encoders);
         
         return delegatingPasswordEncoder;
     }

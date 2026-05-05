@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // UserDetailsService que carga usuarios desde IUsuarioService.
-// La contraseña es el legajo (con prefijo {noop}).
+// Soporta transición dual: contraseñas legacy en texto plano (noop) y nuevas hash PBKDF2.
 
 @Service
 public class UserDetailsServiceCustom implements UserDetailsService {
@@ -53,8 +53,15 @@ public class UserDetailsServiceCustom implements UserDetailsService {
         if (storedPassword == null || storedPassword.isEmpty()) {
             storedPassword = usuario.getLegajo();
         }
-        String expectedPassword = "{noop}" + storedPassword;
+
+        String expectedPassword = isDelegatingFormat(storedPassword)
+                ? storedPassword
+                : "{noop}" + storedPassword;
 
         return new User(legajo, expectedPassword, authorities);
+    }
+
+    private boolean isDelegatingFormat(String password) {
+        return password != null && password.startsWith("{") && password.contains("}");
     }
 }
