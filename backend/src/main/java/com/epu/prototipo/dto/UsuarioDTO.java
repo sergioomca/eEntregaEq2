@@ -12,7 +12,7 @@ public class UsuarioDTO {
     private String sector;
     // Roles posibles: "EMISOR" | "SUPERVISOR" | "EJECUTANTE" | "RECEPTOR" | "ADMIN" | "RTO_MANT" | "EHS" | "LIDER"
     private List<String> roles;
-    private String password;              // Contraseña del usuario (texto plano con {noop})
+    private String password;              // Contraseña del usuario (codificada)
     private boolean mustChangePassword;   // true si debe cambiar contraseña en primer ingreso
     private String huellaDigital;          // Hash de huella digital del usuario (simulado)
     private int failedLoginAttempts;      // Número de intentos fallidos de login

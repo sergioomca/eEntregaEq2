@@ -79,7 +79,6 @@ public class AuthController {
             
             // 3. Login exitoso - resetear intentos fallidos
             usuario.setFailedLoginAttempts(0);
-            autoUpgradeLegacyPasswordIfNeeded(usuario, authenticationRequest.getPassword());
             usuarioService.updateUsuario(legajo, usuario);
             
             // 4. Generar token
@@ -220,16 +219,4 @@ public class AuthController {
         }
     }
 
-    private void autoUpgradeLegacyPasswordIfNeeded(UsuarioDTO usuario, String rawPassword) {
-        String storedPassword = usuario.getPassword();
-        if (!isDelegatingFormat(storedPassword)) {
-            usuario.setPassword(passwordEncoder.encode(rawPassword));
-            System.out.println("[PASSWORD UPGRADE] Usuario: " + usuario.getLegajo() + " migrado a PBKDF2.");
-        }
-    }
-
-    private boolean isDelegatingFormat(String password) {
-        return password != null && password.startsWith("{") && password.contains("}");
-    }
-        
 }

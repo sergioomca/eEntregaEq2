@@ -158,9 +158,8 @@ CREATE TABLE IF NOT EXISTS rto_especialidades (
 
 -- ============================================================
 -- 3.1 USUARIOS
---     Contraseña por defecto = legajo (prefijo {noop} para Spring Security no-op encoder)
---     El password se guarda SIN el prefijo {noop}, ya que UserDetailsServiceCustom lo agrega al cargar.
---     Si tu UserDetailsServiceCustom ya guarda el prefijo en la BD, cambia a: CONCAT('{noop}', legajo)
+--     Contraseña por defecto = legajo (solo para seed inicial/local)
+--     En el backend actual las contraseñas se persisten codificadas con PBKDF2.
 -- ============================================================
 INSERT INTO usuarios (legajo, nombreCompleto, sector, password, mustChangePassword, failedLoginAttempts, isAccountLocked) VALUES
 ('VINF011422', 'Sergio Capella',     'Control de Proceso',       'VINF011422', FALSE, 0, FALSE),
