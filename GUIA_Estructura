@@ -1,0 +1,127 @@
+# GUIA_Estructura
+
+## Frontend (React + Vite)
+
+### Inventario Frontend
+
+| Archivo | Para que sirve | Estado |
+|---|---|---|
+| frontend/src/main.jsx | Punto de entrada de React, monta App y providers globales | Activo |
+| frontend/src/App.jsx | Router principal, layout general y proteccion de rutas | Activo |
+| frontend/src/App.css | Estilos globales de App | Activo |
+| frontend/src/index.css | Estilos base globales | Activo |
+| frontend/src/index.css.backup | Backup de estilos viejos | Obsoleto |
+| frontend/src/api/supervisores.js | Cliente de API para consultas de supervisores | Activo |
+| frontend/src/constants/roles.js | Constantes de roles y ayudas de autorizacion | Activo |
+| frontend/src/components/AdminEquiposView.jsx | Vista administrativa de equipos | Activo |
+| frontend/src/components/AgregarUsuario.jsx | Alta de usuarios | Activo |
+| frontend/src/components/CambiarContrasena.jsx | Flujo de cambio de contrasena | Activo |
+| frontend/src/components/CierrePTS.jsx | Pantalla para cierre de PTS | Activo |
+| frontend/src/components/CrearPTS.jsx | Formulario de creacion de PTS | Activo |
+| frontend/src/components/DashboardEquipos.jsx | Dashboard operativo de equipos | Activo |
+| frontend/src/components/Dashboard.jsx | Componente vacio, sin implementacion | Obsoleto |
+| frontend/src/components/DcsSimForm.jsx | Simulacion/formulario de integracion DCS | Activo |
+| frontend/src/components/DetallePTS.jsx | Vista de detalle de PTS | Activo |
+| frontend/src/components/EquipoStatusView.jsx | Estado de equipos y condiciones | Activo |
+| frontend/src/components/FirmaDigital.jsx | Firma digital de PTS por supervisor | Activo |
+| frontend/src/components/FormularioRTO.jsx | Formulario del retorno a operaciones (RTO) | Activo |
+| frontend/src/components/GeneradorQR.jsx | Generacion de QR para acceso/consulta | Activo |
+| frontend/src/components/ListaPTS.jsx | Listado y filtros de PTS | Activo |
+| frontend/src/components/Login.jsx | Login legacy alternativo (ya reemplazado por flujo principal) | Obsoleto |
+| frontend/src/components/ModificarUsuario.jsx | Edicion de usuarios existentes | Activo |
+| frontend/src/components/ReportesView.jsx | Exportacion y consulta de reportes | Activo |
+| frontend/src/components/UsuariosView.jsx | Listado y gestion de usuarios | Activo |
+| frontend/src/components/_backup/ | Carpeta de respaldo sin uso productivo | Obsoleto |
+
+### Limpieza (Frontend)
+- Eliminar frontend/src/components/Dashboard.jsx
+- Eliminar frontend/src/components/Login.jsx si no se usa por rutas
+- Eliminar frontend/src/index.css.backup
+- Eliminar frontend/src/components/_backup/
+
+---
+
+## Backend (Spring Boot)
+
+### Nucleo y Configuracion
+
+| Archivo | Para que sirve | Estado |
+|---|---|---|
+| backend/src/main/java/com/epu/prototipo/BackendApplication.java | Entry point de Spring Boot | Activo |
+| backend/src/main/java/com/epu/prototipo/config/SecurityBeans.java | Beans de seguridad (encoder, cors, auth helpers) | Activo |
+| backend/src/main/java/com/epu/prototipo/config/ProdConfig.java | Configuracion de beans para perfil productivo | Activo |
+| backend/src/main/java/com/epu/prototipo/security/SecurityConfig.java | Cadena de seguridad, JWT filter, reglas por endpoint | Activo |
+| backend/src/main/java/com/epu/prototipo/config/JwtAuthenticationEntryPoint.java | Manejo de acceso no autorizado (401) | Activo |
+| backend/src/main/java/com/epu/prototipo/config/JwtRequestFilter.java | Filtro que valida token JWT por request | Activo |
+| backend/src/main/java/com/epu/prototipo/security/TestSecurityConfig.java | Config de seguridad solo para profile test | Obsoleto |
+
+### Controllers
+
+| Archivo | Para que sirve | Estado |
+|---|---|---|
+| backend/src/main/java/com/epu/prototipo/controller/AuthController.java | Login, registro, cambio de contrasena, bloqueo/desbloqueo | Activo |
+| backend/src/main/java/com/epu/prototipo/controller/PtsController.java | API principal de PTS (alta, consulta, firma, cierre) | Activo |
+| backend/src/main/java/com/epu/prototipo/controller/RtoController.java | API de flujo RTO | Activo |
+| backend/src/main/java/com/epu/prototipo/controller/EquipoController.java | API de equipos y estado operativo | Activo |
+| backend/src/main/java/com/epu/prototipo/controller/UsuarioController.java | API de gestion de usuarios | Activo |
+| backend/src/main/java/com/epu/prototipo/controller/DcsSimController.java | API de simulacion DCS para pruebas | Activo |
+| backend/src/main/java/com/epu/prototipo/controller/PublicConsultaController.java | Endpoints publicos de consulta | Activo |
+| backend/src/main/java/com/epu/prototipo/controller/ReporteController.java | Endpoints de exportacion PDF/Excel | Activo |
+| backend/src/main/java/com/epu/prototipo/controller/test/TestController.java | Endpoints de test de roles | Obsoleto |
+| backend/src/main/java/com/epu/prototipo/controller/test/TestPtsController.java | Endpoints de test de PTS | Obsoleto |
+
+### Services
+
+| Archivo | Para que sirve | Estado |
+|---|---|---|
+| backend/src/main/java/com/epu/prototipo/service/MysqlPtsService.java | Logica de negocio PTS sobre MySQL | Activo |
+| backend/src/main/java/com/epu/prototipo/service/MysqlRtoService.java | Logica de negocio RTO sobre MySQL | Activo |
+| backend/src/main/java/com/epu/prototipo/service/MysqlEquipoService.java | Logica de negocio de equipos | Activo |
+| backend/src/main/java/com/epu/prototipo/service/MysqlUsuarioService.java | Logica de negocio de usuarios | Activo |
+| backend/src/main/java/com/epu/prototipo/service/ReporteService.java | Generacion de reportes PDF y Excel | Activo |
+| backend/src/main/java/com/epu/prototipo/service/PublicConsultaService.java | Servicios de consulta publica | Activo |
+| backend/src/main/java/com/epu/prototipo/service/UsuarioService.java | Servicio de usuarios y utilidades de dominio | Activo |
+| backend/src/main/java/com/epu/prototipo/service/EquipoService.java | Servicio de equipos (capa de orquestacion) | Activo |
+| backend/src/main/java/com/epu/prototipo/service/IPtsService.java | Contrato de servicio para PTS | Activo |
+| backend/src/main/java/com/epu/prototipo/service/IRtoService.java | Contrato de servicio para RTO | Activo |
+| backend/src/main/java/com/epu/prototipo/service/IEquipoService.java | Contrato de servicio para equipos | Activo |
+| backend/src/main/java/com/epu/prototipo/service/IUsuarioService.java | Contrato de servicio para usuarios | Activo |
+| backend/src/main/java/com/epu/prototipo/service/TestPtsService.java | Servicio mock de PTS para profile test | Obsoleto |
+| backend/src/main/java/com/epu/prototipo/service/TestRtoService.java | Servicio mock de RTO para profile test | Obsoleto |
+| backend/src/main/java/com/epu/prototipo/service/gateway/DcsGateway.java | Contrato de gateway hacia DCS | Activo |
+| backend/src/main/java/com/epu/prototipo/service/gateway/MockDcsGateway.java | Implementacion mock de DCS | Obsoleto potencial |
+| backend/src/main/java/com/epu/prototipo/security/service/UserDetailsServiceCustom.java | Integracion de usuarios con Spring Security | Activo |
+| backend/src/main/java/com/epu/prototipo/service/userdetails/UserDetailsImpl.java | Adaptador de UserDetails para JWT | Activo |
+
+### Capa de datos y dominio
+
+| Grupo | Archivos | Estado |
+|---|---|---|
+| Repositories | EquipoRepository, PtsRepository, RtoRepository, UsuarioRepository | Activos |
+| Entities | UsuarioEntity, PtsEntity, RtoEntity, EquipoEntity, EquipoSeguridadEmb, RiesgoControlEmb, EspecialidadRtoEmb, EntityMapper | Activos |
+| Modelos de dominio | PermisoTrabajoSeguro, RetornoOperaciones, Equipo, EstadoPts, EstadoRto, EstadoDcs, CondicionEquipo | Activos |
+| DTO/Payload | CerrarPtsRequest, FirmaPtsRequest, EquipoStatusDTO, JwtResponse, UsuarioDTO, LoginRequest, LoginResponse | Activos |
+| Utilitarios | JwtTokenUtil | Activo |
+| Storage | PTSStorage | Activo |
+
+### Resources
+
+| Archivo | Para que sirve | Estado |
+|---|---|---|
+| backend/src/main/resources/application.properties | Config por defecto (entorno local/dev) | Activo |
+| backend/src/main/resources/application-prod.properties | Config para produccion | Activo |
+| backend/src/main/resources/application-test.properties | Config para test | Activo |
+| backend/src/main/resources/schema.sql | Definicion de esquema SQL | Activo |
+
+### Limpieza (Backend)
+- Eliminar backend/src/main/java/com/epu/prototipo/security/TestSecurityConfig.java
+- Eliminar backend/src/main/java/com/epu/prototipo/controller/test/TestController.java
+- Eliminar backend/src/main/java/com/epu/prototipo/controller/test/TestPtsController.java
+- Eliminar backend/src/main/java/com/epu/prototipo/service/TestPtsService.java
+- Eliminar backend/src/main/java/com/epu/prototipo/service/TestRtoService.java
+- Evaluar mover backend/src/main/java/com/epu/prototipo/service/gateway/MockDcsGateway.java a src/test si no se usa en runtime productivo
+
+---
+
+## Estado general
+Estructura general solida y bien separada por capas (controller, service, repository, entity/model, security). La mayor parte de la limpieza pendiente corresponde a artefactos de test y mocks que quedaron en main.

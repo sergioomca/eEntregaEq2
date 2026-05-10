@@ -116,7 +116,7 @@ const initRespuestas = (preguntas) =>
 // ============================================================
 // Componente de tabla checklist reutilizable
 // ============================================================
-const ChecklistTable = ({ preguntas, respuestas, onChange, disabled }) => (
+const ChecklistTable = ({ preguntas, respuestas, onChange, disabled, groupName }) => (
   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
     <thead>
       <tr style={{ background: '#e8f4f5' }}>
@@ -135,7 +135,7 @@ const ChecklistTable = ({ preguntas, respuestas, onChange, disabled }) => (
             <td key={val} style={{ textAlign: 'center', padding: 4 }}>
               <input
                 type="radio"
-                name={`chk_${preguntas[0].substring(0,10)}_${idx}`}
+                name={`chk_${groupName}_${idx}`}
                 value={val}
                 checked={respuestas[idx]?.respuesta === val}
                 onChange={() => onChange(idx, 'respuesta', val)}
@@ -437,7 +437,7 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
       setSuccess(true);
       const estadoFinal = rtoFinal.estado || 'CERRADO';
       alert(
-        `✅ RTO ${rtoFinal.id} completado exitosamente.\n\n` +
+        `RTO ${rtoFinal.id} completado exitosamente.\n\n` +
         `Equipo: ${rtoFinal.equipoTag}\n` +
         `Estado: ${estadoFinal}\n` +
         `PTS asociados: ${(rtoFinal.ptsIds || []).join(', ')}`
@@ -539,6 +539,7 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
                     respuestas={respCanerias}
                     onChange={handleRespuestaChange(setRespCanerias)}
                     disabled={loading}
+                    groupName="canerias"
                   />
                   <TareasPendientes value={pendientesCanerias} onChange={setPendientesCanerias} disabled={loading} />
                 </div>
@@ -555,6 +556,7 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
                     respuestas={respMecanica}
                     onChange={handleRespuestaChange(setRespMecanica)}
                     disabled={loading}
+                    groupName="mecanica"
                   />
                   <TareasPendientes value={pendientesMecanica} onChange={setPendientesMecanica} disabled={loading} />
                 </div>
@@ -571,6 +573,7 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
                     respuestas={respInstrumentos}
                     onChange={handleRespuestaChange(setRespInstrumentos)}
                     disabled={loading}
+                    groupName="instrumentos"
                   />
                   <TareasPendientes value={pendientesInstrumentos} onChange={setPendientesInstrumentos} disabled={loading} />
                 </div>
@@ -587,6 +590,7 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
                     respuestas={respElectricidad}
                     onChange={handleRespuestaChange(setRespElectricidad)}
                     disabled={loading}
+                    groupName="electricidad"
                   />
                   <TareasPendientes value={pendientesElectricidad} onChange={setPendientesElectricidad} disabled={loading} />
                 </div>
@@ -613,6 +617,7 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
                   respuestas={respOperadorIzq}
                   onChange={handleRespuestaChange(setRespOperadorIzq)}
                   disabled={loading}
+                  groupName="operador-izquierda"
                 />
 
                 {/* Campos especiales de chequeos operativos */}
@@ -687,6 +692,7 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
                     respuestas={respOperadorDer}
                     onChange={handleRespuestaChange(setRespOperadorDer)}
                     disabled={loading}
+                    groupName="operador-derecha"
                   />
                 </div>
 
@@ -714,6 +720,7 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
                   respuestas={respArranque}
                   onChange={handleRespuestaChange(setRespArranque)}
                   disabled={loading}
+                  groupName="arranque"
                 />
                 <div style={{ marginTop: 16 }}>
                   <div className="form-group">
@@ -735,7 +742,7 @@ const FormularioRTO = ({ rtoId, ptsIds = [], equipoTag, onSuccess, onCancel }) =
 
             {success && (
               <div style={{ background: '#f0fdf4', color: '#166534', padding: 12, borderRadius: 8, border: '1px solid #86efac', fontSize: '0.9rem' }}>
-              ✅ Formulario RTO completado y cerrado exitosamente. El equipo fue desbloqueado.
+              Formulario RTO completado y cerrado exitosamente. El equipo fue desbloqueado.
               </div>
             )}
 

@@ -85,7 +85,7 @@ function CambiarContrasena({ legajo, onPasswordChanged, selfService = false }) {
             setSuccess('Contraseña actualizada. Redirigiendo al login...');
             setTimeout(() => {
                 if (onPasswordChanged) onPasswordChanged();
-                else navigate('/login');
+                navigate('/login', { replace: true });
             }, 1500);
         } catch (err) {
             setError(err.message || 'Error de conexión con el servidor.');
@@ -144,7 +144,7 @@ function CambiarContrasena({ legajo, onPasswordChanged, selfService = false }) {
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             disabled={loading || !!success}
-                            placeholder="Mínimo 4 caracteres"
+                            placeholder="> 8 caracteres, mayuscula, minuscula y simbolo"
                         />
                     </div>
                     <div className="form-group">
@@ -171,7 +171,10 @@ function CambiarContrasena({ legajo, onPasswordChanged, selfService = false }) {
                             type="button"
                             className="btn btn-outline"
                             style={{ width: '100%', justifyContent: 'center', padding: '10px', fontSize: '0.9rem', marginTop: 8 }}
-                            onClick={() => { if (onPasswordChanged) onPasswordChanged(); else navigate('/login'); }}
+                            onClick={() => {
+                                if (onPasswordChanged) onPasswordChanged();
+                                navigate('/login', { replace: true });
+                            }}
                             disabled={loading}
                         >
                             Volver al inicio de sesión

@@ -211,7 +211,7 @@ const LoginView = ({ handleLogin }) => {
                             autoComplete="off"
                             value={legajo}
                             onChange={(e) => setLegajo(e.target.value)}
-                            placeholder="ej: operador@eeeq.com"
+                            placeholder="ej: VINF011422"
                         />
                     </div>
                     <div className="form-group">
